@@ -1307,14 +1307,53 @@
     async function loadRecentContributions() {
       const countEl = document.getElementById('recentCommitsCount');
       const descEl = document.getElementById('recentActivityDesc');
-      renderCalendar(null);
 
+      // 1. 尝试从本地缓存快速秒开渲染，避免任何网络延迟或失败导致的空白
       try {
-        const res = await fetch('https://github-contributions-api.jogruber.de/v4/xue-moe?y=last');
-        if (!res.ok) throw new Error('Fetch failed');
-        rawContribData = await res.json();
-        renderCalendar(rawContribData);
-      } catch (_) {
+        const cached = localStorage.getItem('xue-contributions-cache');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.data && Array.isArray(parsed.data.contributions)) {
+            rawContribData = parsed.data;
+            renderCalendar(rawContribData);
+          }
+        }
+      } catch (_) {}
+
+      if (!rawContribData) {
+        renderCalendar(null);
+      }
+
+      // 2. 双通道容灾抓取：优先 Cloudflare Pages 同源边缘代理，其次回退第三方开源 API
+      const endpoints = [
+        '/api/contributions',
+        'https://github-contributions-api.jogruber.de/v4/xue-moe?y=last'
+      ];
+
+      for (const endpoint of endpoints) {
+        try {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 6500);
+          const res = await fetch(endpoint, { signal: controller.signal });
+          clearTimeout(timer);
+
+          if (!res.ok) throw new Error('Status ' + res.status);
+          const data = await res.json();
+          if (data && Array.isArray(data.contributions) && data.contributions.length > 0) {
+            rawContribData = data;
+            renderCalendar(rawContribData);
+            try {
+              localStorage.setItem('xue-contributions-cache', JSON.stringify({ ts: Date.now(), data }));
+            } catch (_) {}
+            return;
+          }
+        } catch (_) {
+          // 当前线路受限或失败，自动切换下一条路线
+        }
+      }
+
+      // 仅在无本地有效缓存且所有网络均拉取失败时显示失败文案
+      if (!rawContribData) {
         countEl.textContent = "--";
         descEl.textContent = i18n[currentLang].syncFailed;
       }
