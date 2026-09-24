@@ -3,12 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="多邻国数学 3x3 幻方九宫格快速辅助求解工具" />
-  <!-- 内联 SVG 图标，避免外链 403 碎裂 -->
+  <title>多邻国数学九宫格求解器 - 3x3 幻方在线辅助推导与验证工具 | duo.xue.moe</title>
+  <meta name="description" content="专为多邻国数学（Duolingo Math）幻方关卡打造的 3x3 九宫格在线快速辅助求解工具。支持已知正整数自动补全、目标和值智能推导、候选备选值冲突检测与多解全量展示，助你轻松通关数学挑战。" />
+  <meta name="keywords" content="多邻国数学,多邻国幻方,九宫格求解器,3x3幻方,Duolingo Math,幻方解法,九宫格计算器,幻方辅助工具,数学益智游戏,多邻国攻略" />
+  <link rel="canonical" href="https://duo.xue.moe/" />
+  <meta property="og:title" content="多邻国数学九宫格求解器 - 3x3 幻方在线辅助推导与验证工具 | duo.xue.moe" />
+  <meta property="og:description" content="专为多邻国数学（Duolingo Math）幻方关卡打造的 3x3 九宫格在线快速辅助求解工具。支持已知正整数自动补全、目标和值智能推导、候选备选值冲突检测与多解全量展示。" />
+  <meta property="og:url" content="https://duo.xue.moe/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="xue.moe" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="多邻国数学九宫格求解器 - 3x3 幻方在线辅助推导与验证工具 | duo.xue.moe" />
+  <meta name="twitter:description" content="专为多邻国数学（Duolingo Math）幻方关卡打造的 3x3 九宫格在线快速辅助求解工具。" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🦉</text></svg>">
-  <title>多邻国数学九宫格求解器</title>
+  <script>
+    (function() {
+      const savedLang = localStorage.getItem("xue-lang") || (navigator.language && navigator.language.startsWith("en") ? "en" : "zh");
+      document.documentElement.setAttribute("data-lang", savedLang);
+      document.documentElement.setAttribute("lang", savedLang === "en" ? "en" : "zh-CN");
+    })();
+  </script>
   <style>
-    :root {
+:root {
       --bg: #f7f9fa;
       --card-bg: #ffffff;
       --duo-green: #58cc02;
@@ -105,7 +121,7 @@
       aspect-ratio: 1 / 1;
     }
 
-    /* 移除原生数字箭头 */
+    
     input[type="number"]::-webkit-outer-spin-button,
     input[type="number"]::-webkit-inner-spin-button {
       -webkit-appearance: none;
@@ -445,20 +461,197 @@
       .layout { grid-template-columns: 1fr; gap: 20px; }
       .grid { max-width: 300px; margin: 0 auto; }
     }
+
+html {
+      scroll-behavior: smooth;
+    }
+
+    .top-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      font-size: 13px;
+      padding: 0 4px;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-brand {
+      color: #555;
+      text-decoration: none;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: color .15s ease;
+    }
+
+    .nav-brand:hover {
+      color: var(--duo-green);
+    }
+
+    .nav-sep {
+      color: #bbb;
+    }
+
+    .nav-current {
+      color: #888;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .nav-link {
+      color: #666;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color .15s ease;
+    }
+
+    .nav-link:hover {
+      color: var(--duo-blue);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .side-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-dark);
+      margin: 0 0 14px 0;
+    }
+
+    h2.results-title {
+      margin: 0;
+    }
+
+    .guide-card {
+      margin-top: 24px;
+    }
+
+    .guide-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-dark);
+      margin: 0;
+    }
+
+    .guide-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .guide-item {
+      background: #fafafa;
+      border: 2px solid var(--duo-gray);
+      border-radius: 14px;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+
+    .guide-item h3 {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text-dark);
+      margin: 0 0 8px 0;
+    }
+
+    .guide-item p {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #666;
+      margin: 0;
+    }
+
+    .guide-item code {
+      background: #eee;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--text-dark);
+    }
+
+    .footer-links {
+      margin-bottom: 8px;
+    }
+
+    @media (max-width: 680px) {
+      .wrap { margin: 16px auto; }
+      .card { padding: 18px 16px; border-radius: 16px; }
+      .layout { grid-template-columns: 1fr; gap: 20px; }
+      .grid { max-width: 300px; margin: 0 auto; }
+      .top-nav { font-size: 12px; }
+      .nav-right { gap: 10px; }
+      .guide-grid { grid-template-columns: 1fr; }
+    }
+
+    .nav-lang-btn {
+      border: 1.5px solid var(--duo-gray-border);
+      background: #fff;
+      color: var(--text-dark);
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 11.5px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all .15s ease;
+      line-height: 1.2;
+    }
+
+    .nav-lang-btn:hover {
+      border-color: var(--duo-blue);
+      color: var(--duo-blue);
+      transform: translateY(-1px);
+    }
   </style>
 </head>
-<body>
+<body id="top">
   <div class="wrap">
+    <nav class="top-nav" aria-label="页面导航">
+      <div class="nav-left">
+        <a href="https://xue.moe" class="nav-brand" id="navBrand" title="访问 xue.moe 门户主页">❄️ xue.moe</a>
+        <span class="nav-sep">/</span>
+        <span class="nav-current" id="navCurrent">多邻国数学求解器</span>
+      </div>
+      <div class="nav-right">
+        <a href="#grid-section" class="nav-link" id="navLinkGrid">九宫格</a>
+        <a href="#settings-section" class="nav-link" id="navLinkSettings">参数配置</a>
+        <a href="#guide" class="nav-link" id="navLinkGuide">解题技巧</a>
+        <button id="langToggleBtn" class="nav-lang-btn" title="Switch Language / 切换语言">EN</button>
+      </div>
+    </nav>
+
     <div class="card">
       <div class="header-row">
-        <h1>多邻国幻方求解器</h1>
+        <h1 id="h1Title">多邻国数学幻方求解器</h1>
       </div>
-      <p class="sub">
+      <p class="sub" id="subDesc">
         专为多邻国数学（Duolingo Math）幻方关卡设计。在九宫格内填入已知正整数，程序将自动解出其余数字并标识备选值所在位置。
       </p>
 
       <div class="layout">
-        <div class="grid-wrap">
+        <div class="grid-wrap" id="grid-section">
+          <h2 class="sr-only" id="srOnlyTitle">九宫格输入棋盘</h2>
           <div class="grid" id="grid"></div>
           <div class="grid-nav" id="gridNav">
             <button class="ghost" id="gridPrevBtn">◀ 上一组</button>
@@ -467,14 +660,15 @@
           </div>
         </div>
 
-        <div class="side">
+        <div class="side" id="settings-section">
+          <h2 class="side-title" id="sideTitle">参数配置与计算</h2>
           <div class="field">
-            <label for="targetSum">目标和值 (三数之和)</label>
+            <label for="targetSum" id="labelTargetSum">目标和值 (三数之和)</label>
             <input id="targetSum" type="number" step="1" inputmode="numeric" placeholder="例如：15 (可自动计算)">
           </div>
 
           <div class="field">
-            <label for="candidateValues">备选值 (多邻国给出的候选数字)</label>
+            <label for="candidateValues" id="labelCandidateValues">备选值 (多邻国给出的候选数字)</label>
             <input
               id="candidateValues"
               type="text"
@@ -483,9 +677,9 @@
             >
           </div>
 
-          <label class="check-row">
+          <label class="check-row" id="uniqueCheckRow">
             <input id="uniqueCandidates" type="checkbox" checked>
-            九宫格中的数字不能重复
+            <span id="uniqueCandidatesLabel">九宫格中的数字不能重复</span>
           </label>
 
           <div class="buttons">
@@ -497,7 +691,7 @@
             九宫格为空。请输入已知数字或目标和值。
           </div>
 
-          <div class="hint">
+          <div class="hint" id="hintBox">
             • 颜色指引：<span class="badge-blue">蓝色</span>为已知，<span class="badge-green">绿色</span>为计算填充，<span class="badge-orange">橙色</span>为备选值命中位置。<br>
             • 快速按键：九宫格支持方向键移动；空按 <kbd>Backspace</kbd> 倒退上格；按 <kbd>Enter</kbd> 快速计算。
           </div>
@@ -507,7 +701,7 @@
 
     <div class="card results-card" id="resultsCard">
       <div class="results-head">
-        <div class="results-title">所有符合条件的解</div>
+        <h2 class="results-title" id="resultsTitle">所有符合条件的解</h2>
         <div class="results-count" id="resultsCount"></div>
       </div>
 
@@ -518,28 +712,172 @@
         <button class="ghost" id="nextBtn">下一组 ▶</button>
       </div>
     </div>
+
+    <div class="card guide-card" id="guide">
+      <div class="header-row">
+        <span class="header-icon" aria-hidden="true">💡</span>
+        <h2 class="guide-title" id="guideCardTitle">幻方规则与解题技巧</h2>
+      </div>
+      <div class="guide-grid">
+        <div class="guide-item">
+          <h3 id="guideH1">中心数黄金定律</h3>
+          <p id="guideP1">在任意 3×3 幻方中，<strong>中心数恒等于目标和值的 1/3</strong>（即 <code>目标和值 = 3 × 中心格</code>）。只要填入中心格或目标和值，系统将自动双向推导补全。</p>
+        </div>
+        <div class="guide-item">
+          <h3 id="guideH2">对称互补特性</h3>
+          <p id="guideP2">穿过中心格的 4 条线（行、列及两条对角线）上，相对两数之和恒等于 <code>2 × 中心数</code>。借助该对称律可轻松反推未知格。</p>
+        </div>
+        <div class="guide-item">
+          <h3 id="guideH3">多邻国候选值定位</h3>
+          <p id="guideP3">将多邻国数学题目中给出的可选数字填入「备选值」，求解器将以<strong class="badge-orange">橙色高亮</strong>标识其在解法中的具体格子位置，方便一键通关。</p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <footer>
+    <div class="footer-links">
+      <a href="#top" id="footerLinkTop">回到顶部 ↑</a>
+      <span class="sep">|</span>
+      <a href="#guide" id="footerLinkGuide">解题技巧</a>
+      <span class="sep">|</span>
+      <a href="https://xue.moe" id="footerLinkHome">xue.moe 首页</a>
+    </div>
     <div>
       <span>Designed by Ryosetsu</span>
-      <span class="sep">|</span>
-      <a href="https://xue.moe">xue.moe</a>
       <span class="sep">|</span>
       <span>© <span id="year">2026</span> duo.xue.moe</span>
     </div>
     <div>
-      <a href="https://icp.gov.moe/?keyword=20230238" target="_blank" rel="noopener noreferrer">萌ICP备20230238号</a>
+      <a href="https://icp.gov.moe/?keyword=20230238" target="_blank" rel="noopener noreferrer external" aria-label="萌ICP备20230238号（在新窗口打开）">萌ICP备20230238号</a>
     </div>
   </footer>
 
   <script>
-    // 动态年份（2026 年起步，跨年自动显示范围）
     const curYear = new Date().getFullYear();
     const yearEl = document.getElementById('year');
     if (yearEl) {
       yearEl.textContent = curYear > 2026 ? `2026 - ${curYear}` : '2026';
     }
+
+    const i18n = {
+      zh: {
+        langBtn: "EN",
+        docTitle: "多邻国数学九宫格求解器 - 3x3 幻方在线辅助推导与验证工具 | duo.xue.moe",
+        docDesc: "专为多邻国数学（Duolingo Math）幻方关卡打造的 3x3 九宫格在线快速辅助求解工具。支持已知正整数自动补全、目标和值智能推导、候选备选值冲突检测与多解全量展示，助你轻松通关数学挑战。",
+        navCurrent: "多邻国数学求解器",
+        navGrid: "九宫格",
+        navSettings: "参数配置",
+        navGuide: "解题技巧",
+        h1Title: "多邻国数学幻方求解器",
+        subDesc: "专为多邻国数学（Duolingo Math）幻方关卡设计。在九宫格内填入已知正整数，程序将自动解出其余数字并标识备选值所在位置。",
+        srOnlyTitle: "九宫格输入棋盘",
+        gridPrevBtn: "◀ 上一组",
+        gridNextBtn: "下一组 ▶",
+        sideTitle: "参数配置与计算",
+        labelTargetSum: "目标和值 (三数之和)",
+        placeholderTargetSum: "例如：15 (可自动计算)",
+        labelCandidateValues: "备选值 (多邻国给出的候选数字)",
+        placeholderCandidates: "例如：5 或 5, 10, 6",
+        uniqueCandidatesLabel: "九宫格中的数字不能重复",
+        solveBtn: "计算并补全",
+        clearBtn: "重置",
+        statusEmpty: "九宫格为空。请输入已知数字或目标和值。",
+        hintColors: "• 颜色指引：<span class=\"badge-blue\">蓝色</span>为已知，<span class=\"badge-green\">绿色</span>为计算填充，<span class=\"badge-orange\">橙色</span>为备选值命中位置。<br>• 快速按键：九宫格支持方向键移动；空按 <kbd>Backspace</kbd> 倒退上格；按 <kbd>Enter</kbd> 快速计算。",
+        resultsTitle: "所有符合条件的解",
+        prevBtn: "◀ 上一组",
+        nextBtn: "下一组 ▶",
+        guideCardTitle: "幻方规则与解题技巧",
+        guideH1: "中心数黄金定律",
+        guideP1: "在任意 3×3 幻方中，<strong>中心数恒等于目标和值的 1/3</strong>（即 <code>目标和值 = 3 × 中心格</code>）。只要填入中心格或目标和值，系统将自动双向推导补全。",
+        guideH2: "对称互补特性",
+        guideP2: "穿过中心格的 4 条线（行、列及两条对角线）上，相对两数之和恒等于 <code>2 × 中心数</code>。借助该对称律可轻松反推未知格。",
+        guideH3: "多邻国候选值定位",
+        guideP3: "将多邻国数学题目中给出的可选数字填入「备选值」，求解器将以<strong class=\"badge-orange\">橙色高亮</strong>标识其在解法中的具体格子位置，方便一键通关。",
+        footerTop: "回到顶部 ↑",
+        footerGuide: "解题技巧",
+        footerHome: "xue.moe 首页",
+        statusReset: "九宫格已重置。请输入已知数字或目标和值。",
+        errCellInt: (idx) => `第 ${idx + 1} 格必须输入正整数。`,
+        statusUpdated: "已更新已知数字。",
+        errConflictSum: (sums) => `推导出的目标和值产生冲突：${sums}。请检查输入是否有误。`,
+        okAutoDetected: (val) => `已自动推算目标和值：${val}`,
+        errTargetMismatch: (det, cur) => `根据已知数推算和值为 ${det}，与当前目标和值 ${cur} 矛盾。`,
+        errNeedTarget: "请先输入目标和值，或填入完整行/列/中心格让程序自动推导。",
+        errTargetPosInt: "目标和值必须是正整数。",
+        errCandidatesPosInt: "备选值只能输入正整数，多个请用逗号或空格分隔。",
+        errDupeFixed: (dupes) => `数字不能重复：已知数字中存在重复数字 ${dupes}。`,
+        errDupeCandInFixed: (dupes) => `数字不能重复：备选值 ${dupes} 已经填在九宫格已知数中了。`,
+        errNeedInput: "请先输入至少一个已知数字，或输入备选值。",
+        errTargetDiv3: (tgt) => `目标和值 ${tgt} 不能被 3 整除，九宫格无整数解。`,
+        errNoSolution: "没有找到符合该和值与备选条件的九宫格解，请核对输入。",
+        okSingleSolution: "找到唯一解，已自动补全在九宫格中。",
+        okMultiSolutions: (cnt) => `找到 ${cnt} 组符合条件的解，可切换查看。`,
+        resultsCountAll: (total) => `共 ${total} 组，已全部展示（可点击卡片切换）`,
+        resultsCountPaginated: (total, cur) => `共 ${total} 组，当前第 ${cur} 组`,
+        groupLabel: (idx) => `第 ${idx + 1} 组`,
+        gridNavLabel: (cur, total) => `解法 ${cur} / ${total}`
+      },
+      en: {
+        langBtn: "中",
+        docTitle: "Duolingo Math Magic Square Solver - 3x3 Solver & Validator | duo.xue.moe",
+        docDesc: "Interactive 3x3 Magic Square solver for Duolingo Math levels. Instant auto-completion of positive integers, target sum deduction, candidate validation, and multiple solution viewing.",
+        navCurrent: "Duolingo Math Solver",
+        navGrid: "Grid",
+        navSettings: "Settings",
+        navGuide: "Guide",
+        h1Title: "Duolingo Math Magic Square Solver",
+        subDesc: "Designed for Duolingo Math magic square levels. Enter known positive integers; the solver will auto-complete the remaining cells and highlight candidate positions.",
+        srOnlyTitle: "Magic Square Grid Input",
+        gridPrevBtn: "◀ Prev",
+        gridNextBtn: "Next ▶",
+        sideTitle: "Parameters & Solver",
+        labelTargetSum: "Target Sum (Sum of 3 numbers)",
+        placeholderTargetSum: "e.g. 15 (auto-deduced)",
+        labelCandidateValues: "Candidate Numbers (choices in game)",
+        placeholderCandidates: "e.g. 5 or 5, 10, 6",
+        uniqueCandidatesLabel: "No duplicate numbers in 3x3 grid",
+        solveBtn: "Solve & Fill",
+        clearBtn: "Clear",
+        statusEmpty: "Grid is empty. Enter known numbers or a target sum.",
+        hintColors: "• Colors: <span class=\"badge-blue\">Blue</span> = known, <span class=\"badge-green\">Green</span> = solved, <span class=\"badge-orange\">Orange</span> = candidate hit.<br>• Shortcuts: Arrow keys navigate; <kbd>Backspace</kbd> on empty cell steps back; <kbd>Enter</kbd> solves.",
+        resultsTitle: "All Valid Solutions",
+        prevBtn: "◀ Prev",
+        nextBtn: "Next ▶",
+        guideCardTitle: "Magic Square Rules & Solving Tips",
+        guideH1: "Golden Rule of the Center Cell",
+        guideP1: "In any 3×3 magic square, <strong>the center number is always 1/3 of the target sum</strong> (i.e. <code>Target Sum = 3 × Center</code>). Filling either one auto-deduces the other immediately.",
+        guideH2: "Symmetry & Complementarity",
+        guideP2: "Along all 4 lines through the center (row, column, and 2 diagonals), the sum of opposite pairs equals <code>2 × Center</code>. This allows rapid backward induction of missing numbers.",
+        guideH3: "Pinpoint Duolingo Candidates",
+        guideP3: "Enter the optional numbers provided in the game into 「Candidate Numbers」. The solver highlights their exact positions in <strong class=\"badge-orange\">Orange</strong> for an instant win.",
+        footerTop: "Back to Top ↑",
+        footerGuide: "Tips & Guide",
+        footerHome: "xue.moe Home",
+        statusReset: "Grid reset. Enter known numbers or a target sum.",
+        errCellInt: (idx) => `Cell ${idx + 1} must be a positive integer.`,
+        statusUpdated: "Known numbers updated.",
+        errConflictSum: (sums) => `Conflicting target sums deduced: ${sums}. Please check your inputs.`,
+        okAutoDetected: (val) => `Auto-deduced target sum: ${val}`,
+        errTargetMismatch: (det, cur) => `Deduced sum is ${det}, which contradicts target sum ${cur}.`,
+        errNeedTarget: "Please enter a target sum, or complete a full row/col/center to auto-deduce.",
+        errTargetPosInt: "Target sum must be a positive integer.",
+        errCandidatesPosInt: "Candidate values must be positive integers separated by commas or spaces.",
+        errDupeFixed: (dupes) => `Duplicate numbers not allowed: found duplicate ${dupes} in known cells.`,
+        errDupeCandInFixed: (dupes) => `Duplicate numbers not allowed: candidate ${dupes} already exists in known cells.`,
+        errNeedInput: "Please enter at least one known number or candidate values.",
+        errTargetDiv3: (tgt) => `Target sum ${tgt} is not divisible by 3. No integer solution exists.`,
+        errNoSolution: "No valid magic square solution matches the given sum and candidates. Please check your inputs.",
+        okSingleSolution: "Found unique solution, auto-completed in the 3x3 grid.",
+        okMultiSolutions: (cnt) => `Found ${cnt} valid solutions. Switch to view each.`,
+        resultsCountAll: (total) => `Total ${total} solution(s), all displayed below (click to view)`,
+        resultsCountPaginated: (total, cur) => `Total ${total} solution(s), viewing #${cur}`,
+        groupLabel: (idx) => `Solution #${idx + 1}`,
+        gridNavLabel: (cur, total) => `Solution ${cur} / ${total}`
+      }
+    };
+
+    let currentLang = document.documentElement.getAttribute('data-lang') || 'zh';
 
     const gridEl = document.getElementById('grid');
     const targetSumEl = document.getElementById('targetSum');
@@ -561,6 +899,7 @@
     const gridPrevBtn = document.getElementById('gridPrevBtn');
     const gridNextBtn = document.getElementById('gridNextBtn');
     const gridNavCount = document.getElementById('gridNavCount');
+    const langToggleBtn = document.getElementById('langToggleBtn');
 
     const cells = [];
     let internalUpdate = false;
@@ -576,7 +915,6 @@
       [0,4,8], [2,4,6]
     ];
 
-    // 初始化 9 宫格
     for (let i = 0; i < 9; i++) {
       const input = document.createElement('input');
       input.type = 'number';
@@ -615,7 +953,6 @@
         if (event.key === 'ArrowLeft' && col > 0) next = index - 1;
         if (event.key === 'ArrowRight' && col < 2) next = index + 1;
 
-        // 空格按 Backspace 倒退至上一格
         if (event.key === 'Backspace' && input.value === '' && index > 0) {
           event.preventDefault();
           cells[index - 1].focus();
@@ -689,7 +1026,7 @@
       internalUpdate = false;
 
       clearResults();
-      setStatus('九宫格已重置。请输入已知数字或目标和值。');
+      setStatus(i18n[currentLang].statusReset);
       cells[0].focus();
     }
 
@@ -698,7 +1035,7 @@
         if (cell.dataset.source !== 'manual' || cell.value.trim() === '') return null;
         const value = Number(cell.value);
         if (!Number.isInteger(value) || value <= 0) {
-          throw new Error(`第 ${index + 1} 格必须输入正整数。`);
+          throw new Error(i18n[currentLang].errCellInt(index));
         }
         return value;
       });
@@ -719,7 +1056,6 @@
         }
       }
 
-      // 中心格推算 (中心格 = Target / 3)
       const centerVal = values[4];
       if (centerVal !== null) {
         sums.push(centerVal * 3);
@@ -732,14 +1068,14 @@
           internalUpdate = false;
           targetWasAuto = false;
         }
-        setStatus('已更新已知数字。');
+        setStatus(i18n[currentLang].statusUpdated);
         return;
       }
 
       const uniqueSums = [...new Set(sums)];
       if (uniqueSums.length > 1) {
         setStatus(
-          `推导出的目标和值产生冲突：${uniqueSums.join('、')}。请检查输入是否有误。`,
+          i18n[currentLang].errConflictSum(uniqueSums.join(currentLang === 'zh' ? '、' : ', ')),
           'error'
         );
         return;
@@ -752,28 +1088,28 @@
         targetSumEl.value = detected;
         internalUpdate = false;
         targetWasAuto = true;
-        setStatus(`已自动推算目标和值：${detected}`, 'ok');
+        setStatus(i18n[currentLang].okAutoDetected(detected), 'ok');
         return;
       }
 
       const current = Number(targetSumEl.value);
       if (Number.isFinite(current) && current !== detected) {
         setStatus(
-          `根据已知数推算和值为 ${detected}，与当前目标和值 ${current} 矛盾。`,
+          i18n[currentLang].errTargetMismatch(detected, current),
           'error'
         );
       } else {
-        setStatus('已更新已知数字。');
+        setStatus(i18n[currentLang].statusUpdated);
       }
     }
 
     function readTarget() {
       if (targetSumEl.value.trim() === '') {
-        throw new Error('请先输入目标和值，或填入完整行/列/中心格让程序自动推导。');
+        throw new Error(i18n[currentLang].errNeedTarget);
       }
       const target = Number(targetSumEl.value);
       if (!Number.isInteger(target) || target <= 0) {
-        throw new Error('目标和值必须是正整数。');
+        throw new Error(i18n[currentLang].errTargetPosInt);
       }
       return target;
     }
@@ -789,13 +1125,12 @@
 
       const values = parts.map(Number);
       if (values.some(v => !Number.isInteger(v) || v <= 0)) {
-        throw new Error('备选值只能输入正整数，多个请用逗号或空格分隔。');
+        throw new Error(i18n[currentLang].errCandidatesPosInt);
       }
 
       return [...new Set(values)];
     }
 
-    // 幻方参数化方程
     function equationForCell(index, value, e) {
       switch (index) {
         case 0: return [ 1,  1, 2 * (value - e)];
@@ -856,7 +1191,6 @@
         equations.push(equationForCell(i, value, e));
       }
 
-      // 1. 尝试寻找 2 个非共线方程直接求解唯一 (p, q)
       let uniquePQ = null;
       for (let i = 0; i < equations.length; i++) {
         for (let j = i + 1; j < equations.length; j++) {
@@ -899,7 +1233,6 @@
         return results;
       }
 
-      // 2. 欠定方程系统（0 或 1 组独立方程）：在正整数边界 (-e, e) 内枚举整数解
       const eq = equations[0];
       for (let p = -e + 1; p < e; p++) {
         if (!eq) {
@@ -924,136 +1257,134 @@
     }
 
     function enumerateSolutions(target, fixed, candidates, uniqueOnly) {
+      const fixedSet = new Set(fixed.filter(v => v !== null));
+      const neededCandidates = candidates.filter(c => !fixedSet.has(c));
+
       const emptyPositions = [];
       for (let i = 0; i < 9; i++) {
         if (fixed[i] === null) emptyPositions.push(i);
       }
 
-      if (candidates.length > emptyPositions.length) {
-        return [];
+      if (neededCandidates.length > emptyPositions.length) return [];
+
+      const allFound = [];
+      const globalSeen = new Set();
+
+      function kPermutations(arr, k) {
+        if (k === 0) return [[]];
+        const res = [];
+        for (let i = 0; i < arr.length; i++) {
+          const item = arr[i];
+          const rest = arr.slice(0, i).concat(arr.slice(i + 1));
+          for (const perm of kPermutations(rest, k - 1)) {
+            res.push([item, ...perm]);
+          }
+        }
+        return res;
       }
 
-      const solutions = [];
-      const seen = new Set();
-
-      if (candidates.length === 0) {
+      if (neededCandidates.length === 0) {
         return solveAssignment(target, fixed, new Map(), uniqueOnly);
       }
 
-      function backtrack(k, usedPositions, assignment) {
-        if (k === candidates.length) {
-          const grids = solveAssignment(target, fixed, assignment, uniqueOnly);
-          for (const grid of grids) {
-            const key = grid.join(',');
-            if (!seen.has(key)) {
-              seen.add(key);
-              solutions.push(grid);
-            }
-          }
-          return;
+      const posChoices = kPermutations(emptyPositions, neededCandidates.length);
+
+      for (const positions of posChoices) {
+        const assignment = new Map();
+        for (let i = 0; i < neededCandidates.length; i++) {
+          assignment.set(positions[i], neededCandidates[i]);
         }
 
-        const value = candidates[k];
-        for (const pos of emptyPositions) {
-          if (usedPositions.has(pos)) continue;
-          usedPositions.add(pos);
-          assignment.set(pos, value);
-
-          backtrack(k + 1, usedPositions, assignment);
-
-          assignment.delete(pos);
-          usedPositions.delete(pos);
+        const sols = solveAssignment(target, fixed, assignment, uniqueOnly);
+        for (const sol of sols) {
+          const key = sol.join(',');
+          if (!globalSeen.has(key)) {
+            globalSeen.add(key);
+            allFound.push(sol);
+          }
         }
       }
 
-      backtrack(0, new Set(), new Map());
-      return solutions;
+      return allFound;
     }
 
-    function showSolutionInMainGrid(values, indexForLabel = null) {
-      internalUpdate = true;
+    function createResultItem(gridValues, labelText, index) {
+      const item = document.createElement('div');
+      item.className = 'result-item';
+      if (index === currentResultIndex) item.classList.add('active');
 
-      cells.forEach((cell, i) => {
-        const isKnown = lastFixed[i] !== null;
-        const isCandidate = !isKnown && lastCandidates.includes(values[i]);
+      const label = document.createElement('div');
+      label.className = 'result-label';
+      label.textContent = labelText;
 
-        cell.value = values[i];
-        cell.classList.remove('manual', 'solved', 'candidate');
+      const miniGrid = document.createElement('div');
+      miniGrid.className = 'result-grid';
 
-        if (isKnown) {
-          cell.dataset.source = 'manual';
-          cell.classList.add('manual');
-        } else if (isCandidate) {
-          cell.dataset.source = 'solved';
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'result-cell';
+        cell.textContent = gridValues[i];
+
+        if (lastFixed[i] !== null) {
+          cell.classList.add('known');
+        } else if (lastCandidates.includes(gridValues[i])) {
           cell.classList.add('candidate');
         } else {
-          cell.dataset.source = 'solved';
           cell.classList.add('solved');
         }
+
+        miniGrid.appendChild(cell);
+      }
+
+      item.appendChild(label);
+      item.appendChild(miniGrid);
+
+      item.addEventListener('click', () => {
+        goToSolution(index);
       });
 
+      return item;
+    }
+
+    function showSolutionInMainGrid(solution, index) {
+      internalUpdate = true;
+      for (let i = 0; i < 9; i++) {
+        const cell = cells[i];
+        if (cell.dataset.source !== 'manual') {
+          cell.value = solution[i];
+          cell.dataset.source = 'solved';
+          cell.classList.remove('known', 'candidate', 'solved');
+
+          if (lastCandidates.includes(solution[i])) {
+            cell.classList.add('candidate');
+          } else {
+            cell.classList.add('solved');
+          }
+        }
+      }
       internalUpdate = false;
 
       if (allSolutions.length > 1) {
         gridNav.classList.add('show');
-        const displayIndex = indexForLabel === null ? currentResultIndex : indexForLabel;
-        gridNavCount.textContent = `第 ${displayIndex + 1} / ${allSolutions.length} 组`;
-        gridPrevBtn.disabled = displayIndex === 0;
-        gridNextBtn.disabled = displayIndex === allSolutions.length - 1;
+        gridNavCount.textContent = i18n[currentLang].gridNavLabel(index + 1, allSolutions.length);
+        gridPrevBtn.disabled = index === 0;
+        gridNextBtn.disabled = index === allSolutions.length - 1;
       } else {
         gridNav.classList.remove('show');
       }
     }
 
-    function createResultItem(grid, label, index) {
-      const item = document.createElement('div');
-      item.className = 'result-item';
-      if (index === currentResultIndex) {
-        item.classList.add('active');
-      }
-      item.title = '点击在上方九宫格查看此解';
-      item.addEventListener('click', () => {
-        goToSolution(index);
-      });
+    function goToSolution(index) {
+      if (index < 0 || index >= allSolutions.length) return;
+      currentResultIndex = index;
+      showSolutionInMainGrid(allSolutions[index], index);
 
-      const title = document.createElement('div');
-      title.className = 'result-label';
-      title.textContent = label;
-      item.appendChild(title);
-
-      const resultGrid = document.createElement('div');
-      resultGrid.className = 'result-grid';
-
-      grid.forEach((v, cellIdx) => {
-        const cell = document.createElement('div');
-        cell.className = 'result-cell';
-
-        if (lastFixed[cellIdx] !== null) {
-          cell.classList.add('known');
-        } else if (lastCandidates.includes(v)) {
-          cell.classList.add('candidate');
-        } else {
-          cell.classList.add('solved');
-        }
-
-        cell.textContent = v;
-        resultGrid.appendChild(cell);
-      });
-
-      item.appendChild(resultGrid);
-      return item;
-    }
-
-    function goToSolution(idx) {
-      if (idx < 0 || idx >= allSolutions.length) return;
-      currentResultIndex = idx;
-      showSolutionInMainGrid(allSolutions[currentResultIndex], currentResultIndex);
-
+      const t = i18n[currentLang];
       if (allSolutions.length >= 5) {
-        resultsCountEl.textContent = `共 ${allSolutions.length} 组，当前第 ${currentResultIndex + 1} 组`;
+        resultsCountEl.textContent = t.resultsCountPaginated(allSolutions.length, currentResultIndex + 1);
         resultsList.innerHTML = '';
         resultsList.appendChild(
-          createResultItem(allSolutions[currentResultIndex], `第 ${currentResultIndex + 1} 组`, currentResultIndex)
+          createResultItem(allSolutions[currentResultIndex], t.groupLabel(currentResultIndex), currentResultIndex)
         );
         prevBtn.disabled = currentResultIndex === 0;
         nextBtn.disabled = currentResultIndex === allSolutions.length - 1;
@@ -1078,16 +1409,17 @@
       currentResultIndex = Math.max(0, Math.min(currentResultIndex, allSolutions.length - 1));
       showSolutionInMainGrid(allSolutions[currentResultIndex], currentResultIndex);
 
+      const t = i18n[currentLang];
       if (allSolutions.length < 5) {
-        resultsCountEl.textContent = `共 ${allSolutions.length} 组，已全部展示（可点击卡片切换）`;
+        resultsCountEl.textContent = t.resultsCountAll(allSolutions.length);
         nav.classList.remove('show');
         allSolutions.forEach((grid, index) => {
-          resultsList.appendChild(createResultItem(grid, `第 ${index + 1} 组`, index));
+          resultsList.appendChild(createResultItem(grid, t.groupLabel(index), index));
         });
       } else {
-        resultsCountEl.textContent = `共 ${allSolutions.length} 组，当前第 ${currentResultIndex + 1} 组`;
+        resultsCountEl.textContent = t.resultsCountPaginated(allSolutions.length, currentResultIndex + 1);
         resultsList.appendChild(
-          createResultItem(allSolutions[currentResultIndex], `第 ${currentResultIndex + 1} 组`, currentResultIndex)
+          createResultItem(allSolutions[currentResultIndex], t.groupLabel(currentResultIndex), currentResultIndex)
         );
         nav.classList.add('show');
         prevBtn.disabled = currentResultIndex === 0;
@@ -1099,12 +1431,12 @@
       clearSolvedCells();
       clearResults();
 
+      const t = i18n[currentLang];
       const target = readTarget();
       const fixed = readManualValues();
       const candidates = readCandidates();
       const uniqueOnly = uniqueCandidatesEl.checked;
 
-      // 重复数字校验
       if (uniqueOnly) {
         const knownVals = fixed.filter(v => v !== null);
         const seenFixed = new Set();
@@ -1114,14 +1446,14 @@
           else seenFixed.add(v);
         }
         if (dupes.length > 0) {
-          setStatus(`数字不能重复：已知数字中存在重复数字 ${dupes.join('、')}。`, 'error');
+          setStatus(t.errDupeFixed(dupes.join(currentLang === 'zh' ? '、' : ', ')), 'error');
           return;
         }
 
         if (candidates.length > 0) {
           const candDupes = candidates.filter(c => seenFixed.has(c));
           if (candDupes.length > 0) {
-            setStatus(`数字不能重复：备选值 ${candDupes.join('、')} 已经填在九宫格已知数中了。`, 'error');
+            setStatus(t.errDupeCandInFixed(candDupes.join(currentLang === 'zh' ? '、' : ', ')), 'error');
             return;
           }
         }
@@ -1131,19 +1463,19 @@
       lastCandidates = candidates.slice();
 
       if (fixed.every(v => v === null) && candidates.length === 0) {
-        setStatus('请先输入至少一个已知数字，或输入备选值。', 'error');
+        setStatus(t.errNeedInput, 'error');
         return;
       }
 
       if (target % 3 !== 0) {
-        setStatus(`目标和值 ${target} 不能被 3 整除，九宫格无整数解。`, 'error');
+        setStatus(t.errTargetDiv3(target), 'error');
         return;
       }
 
       const solutions = enumerateSolutions(target, fixed, candidates, uniqueOnly);
 
       if (solutions.length === 0) {
-        setStatus('没有找到符合该和值与备选条件的九宫格解，请核对输入。', 'error');
+        setStatus(t.errNoSolution, 'error');
         return;
       }
 
@@ -1152,9 +1484,9 @@
 
       if (allSolutions.length === 1) {
         showSolutionInMainGrid(allSolutions[0], 0);
-        setStatus('找到唯一解，已自动补全在九宫格中。', 'ok');
+        setStatus(t.okSingleSolution, 'ok');
       } else {
-        setStatus(`找到 ${allSolutions.length} 组符合条件的解，可切换查看。`, 'ok');
+        setStatus(t.okMultiSolutions(allSolutions.length), 'ok');
       }
     }
 
@@ -1167,6 +1499,68 @@
       }
     }
 
+    function applyLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.setAttribute('data-lang', lang);
+      document.documentElement.setAttribute('lang', lang === 'en' ? 'en' : 'zh-CN');
+      localStorage.setItem('xue-lang', lang);
+
+      const t = i18n[lang];
+      document.title = t.docTitle;
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) metaDesc.setAttribute('content', t.docDesc);
+
+      langToggleBtn.textContent = t.langBtn;
+      document.getElementById('navCurrent').textContent = t.navCurrent;
+      document.getElementById('navLinkGrid').textContent = t.navGrid;
+      document.getElementById('navLinkSettings').textContent = t.navSettings;
+      document.getElementById('navLinkGuide').textContent = t.navGuide;
+
+      document.getElementById('h1Title').textContent = t.h1Title;
+      document.getElementById('subDesc').textContent = t.subDesc;
+      document.getElementById('srOnlyTitle').textContent = t.srOnlyTitle;
+      gridPrevBtn.textContent = t.gridPrevBtn;
+      gridNextBtn.textContent = t.gridNextBtn;
+
+      document.getElementById('sideTitle').textContent = t.sideTitle;
+      document.getElementById('labelTargetSum').textContent = t.labelTargetSum;
+      targetSumEl.placeholder = t.placeholderTargetSum;
+      document.getElementById('labelCandidateValues').textContent = t.labelCandidateValues;
+      candidateValuesEl.placeholder = t.placeholderCandidates;
+      document.getElementById('uniqueCandidatesLabel').textContent = t.uniqueCandidatesLabel;
+
+      solveBtn.textContent = t.solveBtn;
+      clearBtn.textContent = t.clearBtn;
+      document.getElementById('hintBox').innerHTML = t.hintColors;
+
+      document.getElementById('resultsTitle').textContent = t.resultsTitle;
+      prevBtn.textContent = t.prevBtn;
+      nextBtn.textContent = t.nextBtn;
+
+      document.getElementById('guideCardTitle').textContent = t.guideCardTitle;
+      document.getElementById('guideH1').textContent = t.guideH1;
+      document.getElementById('guideP1').innerHTML = t.guideP1;
+      document.getElementById('guideH2').textContent = t.guideH2;
+      document.getElementById('guideP2').innerHTML = t.guideP2;
+      document.getElementById('guideH3').textContent = t.guideH3;
+      document.getElementById('guideP3').innerHTML = t.guideP3;
+
+      document.getElementById('footerLinkTop').textContent = t.footerTop;
+      document.getElementById('footerLinkGuide').textContent = t.footerGuide;
+      document.getElementById('footerLinkHome').textContent = t.footerHome;
+
+      if (allSolutions.length > 0) {
+        renderResults();
+      } else {
+        setStatus(t.statusEmpty);
+      }
+    }
+
+    langToggleBtn.addEventListener('click', () => {
+      const nextLang = currentLang === 'zh' ? 'en' : 'zh';
+      applyLanguage(nextLang);
+    });
+
     targetSumEl.addEventListener('input', () => {
       if (internalUpdate) return;
       targetWasAuto = false;
@@ -1175,7 +1569,7 @@
       if (targetSumEl.value.trim() === '') {
         autoDetectTarget();
       } else {
-        setStatus('和值已更改。按 Enter 键可立即计算。');
+        setStatus(currentLang === 'zh' ? '和值已更改。按 Enter 键可立即计算。' : 'Target sum changed. Press Enter to calculate.');
       }
     });
 
@@ -1189,7 +1583,7 @@
     candidateValuesEl.addEventListener('input', () => {
       clearSolvedCells();
       clearResults();
-      setStatus('备选值已更新。按 Enter 键可立即计算。');
+      setStatus(currentLang === 'zh' ? '备选值已更新。按 Enter 键可立即计算。' : 'Candidates updated. Press Enter to calculate.');
     });
 
     candidateValuesEl.addEventListener('keydown', e => {
@@ -1202,7 +1596,7 @@
     uniqueCandidatesEl.addEventListener('change', () => {
       clearSolvedCells();
       clearResults();
-      setStatus('重复数字规则已更新。');
+      setStatus(currentLang === 'zh' ? '重复数字规则已更新。' : 'Duplicate rule updated.');
     });
 
     solveBtn.addEventListener('click', runSolve);
@@ -1213,7 +1607,8 @@
     gridPrevBtn.addEventListener('click', () => goToSolution(currentResultIndex - 1));
     gridNextBtn.addEventListener('click', () => goToSolution(currentResultIndex + 1));
 
+    applyLanguage(currentLang);
     cells[0].focus();
-  </script>
+    </script>
 </body>
 </html>
