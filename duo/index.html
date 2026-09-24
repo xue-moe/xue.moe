@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="多邻国数学 3x3 幻方九宫格快速辅助求解工具" />
+  <!-- 内联 SVG 图标，避免外链 403 碎裂 -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🦉</text></svg>">
+  <title>多邻国数学九宫格求解器</title>
+  <style>
+    :root {
+      --bg: #f7f9fa;
+      --card-bg: #ffffff;
+      --duo-green: #58cc02;
+      --duo-green-border: #46a302;
+      --duo-green-light: #d7ffb8;
+      --duo-blue: #1cb0f6;
+      --duo-blue-border: #1899d6;
+      --duo-blue-bg: #ddf4ff;
+      --duo-orange: #ff9600;
+      --duo-orange-border: #e08300;
+      --duo-orange-bg: #fff5ea;
+      --duo-red: #ff4b4b;
+      --duo-red-border: #ea2b2b;
+      --duo-gray: #e5e5e5;
+      --duo-gray-border: #afafaf;
+      --text: #4b4b4b;
+      --text-dark: #3c3c3c;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .wrap {
+      width: min(880px, calc(100% - 24px));
+      margin: 28px auto 30px;
+      flex: 1 0 auto;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 24px;
+      border: 2px solid var(--duo-gray);
+      border-bottom: 5px solid var(--duo-gray);
+      margin-bottom: 20px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .header-icon {
+      font-size: 32px;
+      line-height: 1;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-dark);
+    }
+
+    .sub {
+      margin: 0 0 20px;
+      color: #777;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 320px) 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+
+    .grid-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+    }
+
+    /* 移除原生数字箭头 */
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    .grid input,
+    .result-cell {
+      width: 100%;
+      min-width: 0;
+      border: 2px solid var(--duo-gray);
+      border-bottom: 4px solid var(--duo-gray);
+      border-radius: 14px;
+      background: #fff;
+      text-align: center;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-dark);
+      transition: all .12s ease;
+    }
+
+    .grid input:focus {
+      outline: none;
+      border-color: var(--duo-blue);
+      border-bottom-color: var(--duo-blue-border);
+      transform: translateY(-1px);
+    }
+
+    .grid input.manual {
+      background: var(--duo-blue-bg);
+      border-color: var(--duo-blue);
+      border-bottom-color: var(--duo-blue-border);
+      color: #0c6994;
+    }
+
+    .grid input.solved {
+      background: var(--duo-green-light);
+      border-color: var(--duo-green);
+      border-bottom-color: var(--duo-green-border);
+      color: #2b6d00;
+    }
+
+    .grid input.candidate {
+      background: var(--duo-orange-bg);
+      border-color: var(--duo-orange);
+      border-bottom-color: var(--duo-orange-border);
+      color: #b05700;
+    }
+
+    .side {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 13px;
+      font-weight: 800;
+      color: #555;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid var(--duo-gray);
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      outline: none;
+      background: #fff;
+      transition: border-color .15s;
+    }
+
+    .field input:focus {
+      border-color: var(--duo-blue);
+    }
+
+    .check-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      color: #4b4b4b;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .check-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--duo-green);
+      cursor: pointer;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 16px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .08s ease, filter .08s ease;
+      user-select: none;
+    }
+
+    button:hover { filter: brightness(1.04); }
+    button:active {
+      transform: translateY(3px) !important;
+    }
+    button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      transform: none !important;
+      filter: none;
+    }
+
+    .primary {
+      background: var(--duo-green);
+      border-bottom: 4px solid var(--duo-green-border);
+      color: #fff;
+    }
+
+    .ghost {
+      background: #f0f2f5;
+      border-bottom: 4px solid #d5d9de;
+      color: #4b4b4b;
+    }
+
+    .status {
+      min-height: 60px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #f7f9fa;
+      border: 2px solid var(--duo-gray);
+      font-size: 13px;
+      line-height: 1.6;
+      color: #666;
+      display: flex;
+      align-items: center;
+    }
+
+    .status.ok {
+      background: #eefbee;
+      border-color: #a7f3d0;
+      color: #047857;
+      font-weight: 600;
+    }
+
+    .status.error {
+      background: #fff3f3;
+      border-color: #fecaca;
+      color: #d93025;
+      font-weight: 600;
+    }
+
+    .hint {
+      font-size: 12px;
+      line-height: 1.6;
+      color: #888;
+      background: #fdfdfd;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px dashed var(--duo-gray);
+    }
+
+    kbd {
+      background: #eee;
+      border-radius: 4px;
+      padding: 2px 5px;
+      font-family: inherit;
+      font-size: 11px;
+      border: 1px solid #ccc;
+    }
+
+    .badge-blue { color: #0284c7; font-weight: 700; }
+    .badge-green { color: #15803d; font-weight: 700; }
+    .badge-orange { color: #c2410c; font-weight: 700; }
+
+    .results-card { display: none; }
+    .results-card.show { display: block; }
+
+    .results-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .results-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--text-dark);
+    }
+
+    .results-count {
+      color: #777;
+      font-size: 13px;
+    }
+
+    .results-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+    }
+
+    .result-item {
+      border: 2px solid var(--duo-gray);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fafafa;
+      transition: all .15s ease;
+      cursor: pointer;
+    }
+
+    .result-item:hover {
+      border-color: var(--duo-blue);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(28, 176, 246, 0.12);
+    }
+
+    .result-item.active {
+      border-color: var(--duo-blue);
+      box-shadow: 0 0 0 2px var(--duo-blue-border);
+      background: var(--duo-blue-bg);
+    }
+
+    .result-label {
+      text-align: center;
+      color: #666;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .result-grid {
+      width: min(100%, 220px);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      aspect-ratio: 1 / 1;
+    }
+
+    .result-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      border-width: 2px;
+      border-bottom-width: 3px;
+      border-radius: 10px;
+    }
+
+    .result-cell.known {
+      background: var(--duo-blue-bg);
+      border-color: var(--duo-blue);
+      color: #0c6994;
+    }
+
+    .result-cell.candidate {
+      background: var(--duo-orange-bg);
+      border-color: var(--duo-orange);
+      color: #b05700;
+    }
+
+    .result-cell.solved {
+      background: var(--duo-green-light);
+      border-color: var(--duo-green);
+      color: #2b6d00;
+    }
+
+    .grid-nav, .nav {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .grid-nav.show, .nav.show {
+      display: flex;
+    }
+
+    .grid-nav-count {
+      min-width: 100px;
+      text-align: center;
+      color: #666;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    footer {
+      flex-shrink: 0;
+      text-align: center;
+      padding: 20px 14px 30px;
+      font-size: 13px;
+      color: #999;
+      line-height: 1.8;
+    }
+
+    footer a {
+      color: #777;
+      text-decoration: none;
+      transition: color .15s ease;
+    }
+
+    footer a:hover {
+      color: var(--duo-green);
+      text-decoration: underline;
+    }
+
+    footer .sep {
+      margin: 0 8px;
+      color: #ccc;
+    }
+
+    @media (max-width: 680px) {
+      .wrap { margin: 16px auto; }
+      .card { padding: 18px 16px; border-radius: 16px; }
+      .layout { grid-template-columns: 1fr; gap: 20px; }
+      .grid { max-width: 300px; margin: 0 auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="header-row">
+        <h1>多邻国幻方求解器</h1>
+      </div>
+      <p class="sub">
+        专为多邻国数学（Duolingo Math）幻方关卡设计。在九宫格内填入已知正整数，程序将自动解出其余数字并标识备选值所在位置。
+      </p>
+
+      <div class="layout">
+        <div class="grid-wrap">
+          <div class="grid" id="grid"></div>
+          <div class="grid-nav" id="gridNav">
+            <button class="ghost" id="gridPrevBtn">◀ 上一组</button>
+            <div class="grid-nav-count" id="gridNavCount"></div>
+            <button class="ghost" id="gridNextBtn">下一组 ▶</button>
+          </div>
+        </div>
+
+        <div class="side">
+          <div class="field">
+            <label for="targetSum">目标和值 (三数之和)</label>
+            <input id="targetSum" type="number" step="1" inputmode="numeric" placeholder="例如：15 (可自动计算)">
+          </div>
+
+          <div class="field">
+            <label for="candidateValues">备选值 (多邻国给出的候选数字)</label>
+            <input
+              id="candidateValues"
+              type="text"
+              inputmode="decimal"
+              placeholder="例如：5 或 5, 10, 6"
+            >
+          </div>
+
+          <label class="check-row">
+            <input id="uniqueCandidates" type="checkbox" checked>
+            九宫格中的数字不能重复
+          </label>
+
+          <div class="buttons">
+            <button class="primary" id="solveBtn">计算并补全</button>
+            <button class="ghost" id="clearBtn">重置</button>
+          </div>
+
+          <div class="status" id="status">
+            九宫格为空。请输入已知数字或目标和值。
+          </div>
+
+          <div class="hint">
+            • 颜色指引：<span class="badge-blue">蓝色</span>为已知，<span class="badge-green">绿色</span>为计算填充，<span class="badge-orange">橙色</span>为备选值命中位置。<br>
+            • 快速按键：九宫格支持方向键移动；空按 <kbd>Backspace</kbd> 倒退上格；按 <kbd>Enter</kbd> 快速计算。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card results-card" id="resultsCard">
+      <div class="results-head">
+        <div class="results-title">所有符合条件的解</div>
+        <div class="results-count" id="resultsCount"></div>
+      </div>
+
+      <div class="results-list" id="resultsList"></div>
+
+      <div class="nav" id="nav">
+        <button class="ghost" id="prevBtn">◀ 上一组</button>
+        <button class="ghost" id="nextBtn">下一组 ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div>
+      <span>Designed by Ryosetsu</span>
+      <span class="sep">|</span>
+      <a href="https://xue.moe">xue.moe</a>
+      <span class="sep">|</span>
+      <span>© <span id="year">2026</span> duo.xue.moe</span>
+    </div>
+    <div>
+      <a href="https://icp.gov.moe/?keyword=20230238" target="_blank" rel="noopener noreferrer">萌ICP备20230238号</a>
+    </div>
+  </footer>
+
+  <script>
+    // 动态年份（2026 年起步，跨年自动显示范围）
+    const curYear = new Date().getFullYear();
+    const yearEl = document.getElementById('year');
+    if (yearEl) {
+      yearEl.textContent = curYear > 2026 ? `2026 - ${curYear}` : '2026';
+    }
+
+    const gridEl = document.getElementById('grid');
+    const targetSumEl = document.getElementById('targetSum');
+    const candidateValuesEl = document.getElementById('candidateValues');
+    const uniqueCandidatesEl = document.getElementById('uniqueCandidates');
+
+    const solveBtn = document.getElementById('solveBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const statusEl = document.getElementById('status');
+
+    const resultsCard = document.getElementById('resultsCard');
+    const resultsCountEl = document.getElementById('resultsCount');
+    const resultsList = document.getElementById('resultsList');
+    const nav = document.getElementById('nav');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    const gridNav = document.getElementById('gridNav');
+    const gridPrevBtn = document.getElementById('gridPrevBtn');
+    const gridNextBtn = document.getElementById('gridNextBtn');
+    const gridNavCount = document.getElementById('gridNavCount');
+
+    const cells = [];
+    let internalUpdate = false;
+    let targetWasAuto = false;
+    let allSolutions = [];
+    let currentResultIndex = 0;
+    let lastFixed = [];
+    let lastCandidates = [];
+
+    const lines = [
+      [0,1,2], [3,4,5], [6,7,8],
+      [0,3,6], [1,4,7], [2,5,8],
+      [0,4,8], [2,4,6]
+    ];
+
+    // 初始化 9 宫格
+    for (let i = 0; i < 9; i++) {
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.step = '1';
+      input.min = '1';
+      input.inputMode = 'numeric';
+      input.dataset.index = i;
+      input.dataset.source = '';
+
+      input.addEventListener('input', () => {
+        if (internalUpdate) return;
+        const val = input.value.trim();
+
+        if (val === '') {
+          input.classList.remove('manual', 'solved', 'candidate');
+          input.dataset.source = '';
+        } else {
+          input.classList.remove('solved', 'candidate');
+          input.classList.add('manual');
+          input.dataset.source = 'manual';
+        }
+
+        clearSolvedCells(input);
+        clearResults();
+        autoDetectTarget();
+      });
+
+      input.addEventListener('keydown', event => {
+        const index = Number(input.dataset.index);
+        const row = Math.floor(index / 3);
+        const col = index % 3;
+        let next = null;
+
+        if (event.key === 'ArrowUp' && row > 0) next = index - 3;
+        if (event.key === 'ArrowDown' && row < 2) next = index + 3;
+        if (event.key === 'ArrowLeft' && col > 0) next = index - 1;
+        if (event.key === 'ArrowRight' && col < 2) next = index + 1;
+
+        // 空格按 Backspace 倒退至上一格
+        if (event.key === 'Backspace' && input.value === '' && index > 0) {
+          event.preventDefault();
+          cells[index - 1].focus();
+          cells[index - 1].select();
+          return;
+        }
+
+        if (next !== null) {
+          event.preventDefault();
+          cells[next].focus();
+          cells[next].select();
+          return;
+        }
+
+        if (event.key === 'Tab' && !event.shiftKey && index === 8) {
+          event.preventDefault();
+          targetSumEl.focus();
+          targetSumEl.select();
+          return;
+        }
+
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          runSolve();
+        }
+      });
+
+      gridEl.appendChild(input);
+      cells.push(input);
+    }
+
+    function setStatus(message, type = '') {
+      statusEl.textContent = message;
+      statusEl.className = 'status' + (type ? ' ' + type : '');
+    }
+
+    function clearSolvedCells(exceptCell = null) {
+      internalUpdate = true;
+      cells.forEach(cell => {
+        if (cell !== exceptCell && cell.dataset.source === 'solved') {
+          cell.value = '';
+          cell.dataset.source = '';
+          cell.classList.remove('solved', 'candidate');
+        }
+      });
+      internalUpdate = false;
+    }
+
+    function clearResults() {
+      allSolutions = [];
+      currentResultIndex = 0;
+      resultsList.innerHTML = '';
+      resultsCountEl.textContent = '';
+      resultsCard.classList.remove('show');
+      nav.classList.remove('show');
+      gridNav.classList.remove('show');
+      gridNavCount.textContent = '';
+    }
+
+    function clearAll() {
+      internalUpdate = true;
+      cells.forEach(cell => {
+        cell.value = '';
+        cell.dataset.source = '';
+        cell.classList.remove('manual', 'solved', 'candidate');
+      });
+      targetSumEl.value = '';
+      candidateValuesEl.value = '';
+      uniqueCandidatesEl.checked = true;
+      targetWasAuto = false;
+      internalUpdate = false;
+
+      clearResults();
+      setStatus('九宫格已重置。请输入已知数字或目标和值。');
+      cells[0].focus();
+    }
+
+    function readManualValues() {
+      return cells.map((cell, index) => {
+        if (cell.dataset.source !== 'manual' || cell.value.trim() === '') return null;
+        const value = Number(cell.value);
+        if (!Number.isInteger(value) || value <= 0) {
+          throw new Error(`第 ${index + 1} 格必须输入正整数。`);
+        }
+        return value;
+      });
+    }
+
+    function autoDetectTarget() {
+      const values = cells.map(cell => {
+        if (cell.dataset.source !== 'manual' || cell.value.trim() === '') return null;
+        const n = Number(cell.value);
+        return Number.isInteger(n) && n > 0 ? n : null;
+      });
+
+      const sums = [];
+      for (const line of lines) {
+        const v = line.map(i => values[i]);
+        if (v.every(x => x !== null)) {
+          sums.push(v[0] + v[1] + v[2]);
+        }
+      }
+
+      // 中心格推算 (中心格 = Target / 3)
+      const centerVal = values[4];
+      if (centerVal !== null) {
+        sums.push(centerVal * 3);
+      }
+
+      if (sums.length === 0) {
+        if (targetWasAuto) {
+          internalUpdate = true;
+          targetSumEl.value = '';
+          internalUpdate = false;
+          targetWasAuto = false;
+        }
+        setStatus('已更新已知数字。');
+        return;
+      }
+
+      const uniqueSums = [...new Set(sums)];
+      if (uniqueSums.length > 1) {
+        setStatus(
+          `推导出的目标和值产生冲突：${uniqueSums.join('、')}。请检查输入是否有误。`,
+          'error'
+        );
+        return;
+      }
+
+      const detected = uniqueSums[0];
+
+      if (targetSumEl.value.trim() === '' || targetWasAuto) {
+        internalUpdate = true;
+        targetSumEl.value = detected;
+        internalUpdate = false;
+        targetWasAuto = true;
+        setStatus(`已自动推算目标和值：${detected}`, 'ok');
+        return;
+      }
+
+      const current = Number(targetSumEl.value);
+      if (Number.isFinite(current) && current !== detected) {
+        setStatus(
+          `根据已知数推算和值为 ${detected}，与当前目标和值 ${current} 矛盾。`,
+          'error'
+        );
+      } else {
+        setStatus('已更新已知数字。');
+      }
+    }
+
+    function readTarget() {
+      if (targetSumEl.value.trim() === '') {
+        throw new Error('请先输入目标和值，或填入完整行/列/中心格让程序自动推导。');
+      }
+      const target = Number(targetSumEl.value);
+      if (!Number.isInteger(target) || target <= 0) {
+        throw new Error('目标和值必须是正整数。');
+      }
+      return target;
+    }
+
+    function readCandidates() {
+      const text = candidateValuesEl.value.trim();
+      if (!text) return [];
+
+      const parts = text
+        .split(/[\s,，;；]+/)
+        .map(v => v.trim())
+        .filter(Boolean);
+
+      const values = parts.map(Number);
+      if (values.some(v => !Number.isInteger(v) || v <= 0)) {
+        throw new Error('备选值只能输入正整数，多个请用逗号或空格分隔。');
+      }
+
+      return [...new Set(values)];
+    }
+
+    // 幻方参数化方程
+    function equationForCell(index, value, e) {
+      switch (index) {
+        case 0: return [ 1,  1, 2 * (value - e)];
+        case 1: return [ 1,  0, e - value];
+        case 2: return [ 1, -1, 2 * (value - e)];
+        case 3: return [ 0,  1, e - value];
+        case 4: return null;
+        case 5: return [ 0,  1, value - e];
+        case 6: return [-1,  1, 2 * (value - e)];
+        case 7: return [ 1,  0, value - e];
+        case 8: return [-1, -1, 2 * (value - e)];
+      }
+    }
+
+    function buildGrid(e, p, q) {
+      return [
+        e + (p + q) / 2,
+        e - p,
+        e + (p - q) / 2,
+        e - q,
+        e,
+        e + q,
+        e + (-p + q) / 2,
+        e + p,
+        e - (p + q) / 2
+      ];
+    }
+
+    function validateGrid(grid, fixed, target, uniqueOnly) {
+      if (grid.some(v => !Number.isInteger(v) || v <= 0)) return false;
+
+      for (let i = 0; i < 9; i++) {
+        if (fixed[i] !== null && grid[i] !== fixed[i]) return false;
+      }
+
+      if (uniqueOnly && new Set(grid).size !== 9) return false;
+
+      return lines.every(line =>
+        line.reduce((sum, i) => sum + grid[i], 0) === target
+      );
+    }
+
+    function solveAssignment(target, fixed, assignment, uniqueOnly) {
+      if (target % 3 !== 0) return [];
+
+      const e = target / 3;
+      if (fixed[4] !== null && fixed[4] !== e) return [];
+      if (assignment.has(4) && assignment.get(4) !== e) return [];
+
+      const equations = [];
+      for (let i = 0; i < 9; i++) {
+        let value = fixed[i];
+        if (assignment.has(i)) {
+          if (value !== null && value !== assignment.get(i)) return [];
+          value = assignment.get(i);
+        }
+        if (value === null || i === 4) continue;
+        equations.push(equationForCell(i, value, e));
+      }
+
+      // 1. 尝试寻找 2 个非共线方程直接求解唯一 (p, q)
+      let uniquePQ = null;
+      for (let i = 0; i < equations.length; i++) {
+        for (let j = i + 1; j < equations.length; j++) {
+          const [a1, b1, c1] = equations[i];
+          const [a2, b2, c2] = equations[j];
+          const det = a1 * b2 - a2 * b1;
+          if (det !== 0) {
+            const p = (c1 * b2 - c2 * b1) / det;
+            const q = (a1 * c2 - a2 * c1) / det;
+            uniquePQ = { p, q };
+            break;
+          }
+        }
+        if (uniquePQ) break;
+      }
+
+      const results = [];
+      const seen = new Set();
+
+      function testPQ(p, q) {
+        if (!Number.isInteger(p) || !Number.isInteger(q)) return;
+        if ((p + q) % 2 !== 0) return;
+        if (equations.some(([a, b, c]) => a * p + b * q !== c)) return;
+
+        const grid = buildGrid(e, p, q);
+        if (!validateGrid(grid, fixed, target, uniqueOnly)) return;
+        for (const [pos, val] of assignment) {
+          if (grid[pos] !== val) return;
+        }
+
+        const key = grid.join(',');
+        if (!seen.has(key)) {
+          seen.add(key);
+          results.push(grid);
+        }
+      }
+
+      if (uniquePQ) {
+        testPQ(uniquePQ.p, uniquePQ.q);
+        return results;
+      }
+
+      // 2. 欠定方程系统（0 或 1 组独立方程）：在正整数边界 (-e, e) 内枚举整数解
+      const eq = equations[0];
+      for (let p = -e + 1; p < e; p++) {
+        if (!eq) {
+          for (let q = -e + 1; q < e; q++) {
+            testPQ(p, q);
+          }
+        } else {
+          const [a, b, c] = eq;
+          if (b === 0) {
+            if (a * p !== c) continue;
+            for (let q = -e + 1; q < e; q++) {
+              testPQ(p, q);
+            }
+          } else {
+            const q = (c - a * p) / b;
+            testPQ(p, q);
+          }
+        }
+      }
+
+      return results;
+    }
+
+    function enumerateSolutions(target, fixed, candidates, uniqueOnly) {
+      const emptyPositions = [];
+      for (let i = 0; i < 9; i++) {
+        if (fixed[i] === null) emptyPositions.push(i);
+      }
+
+      if (candidates.length > emptyPositions.length) {
+        return [];
+      }
+
+      const solutions = [];
+      const seen = new Set();
+
+      if (candidates.length === 0) {
+        return solveAssignment(target, fixed, new Map(), uniqueOnly);
+      }
+
+      function backtrack(k, usedPositions, assignment) {
+        if (k === candidates.length) {
+          const grids = solveAssignment(target, fixed, assignment, uniqueOnly);
+          for (const grid of grids) {
+            const key = grid.join(',');
+            if (!seen.has(key)) {
+              seen.add(key);
+              solutions.push(grid);
+            }
+          }
+          return;
+        }
+
+        const value = candidates[k];
+        for (const pos of emptyPositions) {
+          if (usedPositions.has(pos)) continue;
+          usedPositions.add(pos);
+          assignment.set(pos, value);
+
+          backtrack(k + 1, usedPositions, assignment);
+
+          assignment.delete(pos);
+          usedPositions.delete(pos);
+        }
+      }
+
+      backtrack(0, new Set(), new Map());
+      return solutions;
+    }
+
+    function showSolutionInMainGrid(values, indexForLabel = null) {
+      internalUpdate = true;
+
+      cells.forEach((cell, i) => {
+        const isKnown = lastFixed[i] !== null;
+        const isCandidate = !isKnown && lastCandidates.includes(values[i]);
+
+        cell.value = values[i];
+        cell.classList.remove('manual', 'solved', 'candidate');
+
+        if (isKnown) {
+          cell.dataset.source = 'manual';
+          cell.classList.add('manual');
+        } else if (isCandidate) {
+          cell.dataset.source = 'solved';
+          cell.classList.add('candidate');
+        } else {
+          cell.dataset.source = 'solved';
+          cell.classList.add('solved');
+        }
+      });
+
+      internalUpdate = false;
+
+      if (allSolutions.length > 1) {
+        gridNav.classList.add('show');
+        const displayIndex = indexForLabel === null ? currentResultIndex : indexForLabel;
+        gridNavCount.textContent = `第 ${displayIndex + 1} / ${allSolutions.length} 组`;
+        gridPrevBtn.disabled = displayIndex === 0;
+        gridNextBtn.disabled = displayIndex === allSolutions.length - 1;
+      } else {
+        gridNav.classList.remove('show');
+      }
+    }
+
+    function createResultItem(grid, label, index) {
+      const item = document.createElement('div');
+      item.className = 'result-item';
+      if (index === currentResultIndex) {
+        item.classList.add('active');
+      }
+      item.title = '点击在上方九宫格查看此解';
+      item.addEventListener('click', () => {
+        goToSolution(index);
+      });
+
+      const title = document.createElement('div');
+      title.className = 'result-label';
+      title.textContent = label;
+      item.appendChild(title);
+
+      const resultGrid = document.createElement('div');
+      resultGrid.className = 'result-grid';
+
+      grid.forEach((v, cellIdx) => {
+        const cell = document.createElement('div');
+        cell.className = 'result-cell';
+
+        if (lastFixed[cellIdx] !== null) {
+          cell.classList.add('known');
+        } else if (lastCandidates.includes(v)) {
+          cell.classList.add('candidate');
+        } else {
+          cell.classList.add('solved');
+        }
+
+        cell.textContent = v;
+        resultGrid.appendChild(cell);
+      });
+
+      item.appendChild(resultGrid);
+      return item;
+    }
+
+    function goToSolution(idx) {
+      if (idx < 0 || idx >= allSolutions.length) return;
+      currentResultIndex = idx;
+      showSolutionInMainGrid(allSolutions[currentResultIndex], currentResultIndex);
+
+      if (allSolutions.length >= 5) {
+        resultsCountEl.textContent = `共 ${allSolutions.length} 组，当前第 ${currentResultIndex + 1} 组`;
+        resultsList.innerHTML = '';
+        resultsList.appendChild(
+          createResultItem(allSolutions[currentResultIndex], `第 ${currentResultIndex + 1} 组`, currentResultIndex)
+        );
+        prevBtn.disabled = currentResultIndex === 0;
+        nextBtn.disabled = currentResultIndex === allSolutions.length - 1;
+      } else {
+        Array.from(resultsList.children).forEach((child, i) => {
+          if (i === currentResultIndex) child.classList.add('active');
+          else child.classList.remove('active');
+        });
+      }
+    }
+
+    function renderResults() {
+      resultsList.innerHTML = '';
+
+      if (allSolutions.length === 0) {
+        resultsCard.classList.remove('show');
+        nav.classList.remove('show');
+        return;
+      }
+
+      resultsCard.classList.add('show');
+      currentResultIndex = Math.max(0, Math.min(currentResultIndex, allSolutions.length - 1));
+      showSolutionInMainGrid(allSolutions[currentResultIndex], currentResultIndex);
+
+      if (allSolutions.length < 5) {
+        resultsCountEl.textContent = `共 ${allSolutions.length} 组，已全部展示（可点击卡片切换）`;
+        nav.classList.remove('show');
+        allSolutions.forEach((grid, index) => {
+          resultsList.appendChild(createResultItem(grid, `第 ${index + 1} 组`, index));
+        });
+      } else {
+        resultsCountEl.textContent = `共 ${allSolutions.length} 组，当前第 ${currentResultIndex + 1} 组`;
+        resultsList.appendChild(
+          createResultItem(allSolutions[currentResultIndex], `第 ${currentResultIndex + 1} 组`, currentResultIndex)
+        );
+        nav.classList.add('show');
+        prevBtn.disabled = currentResultIndex === 0;
+        nextBtn.disabled = currentResultIndex === allSolutions.length - 1;
+      }
+    }
+
+    function solve() {
+      clearSolvedCells();
+      clearResults();
+
+      const target = readTarget();
+      const fixed = readManualValues();
+      const candidates = readCandidates();
+      const uniqueOnly = uniqueCandidatesEl.checked;
+
+      // 重复数字校验
+      if (uniqueOnly) {
+        const knownVals = fixed.filter(v => v !== null);
+        const seenFixed = new Set();
+        const dupes = [];
+        for (const v of knownVals) {
+          if (seenFixed.has(v)) dupes.push(v);
+          else seenFixed.add(v);
+        }
+        if (dupes.length > 0) {
+          setStatus(`数字不能重复：已知数字中存在重复数字 ${dupes.join('、')}。`, 'error');
+          return;
+        }
+
+        if (candidates.length > 0) {
+          const candDupes = candidates.filter(c => seenFixed.has(c));
+          if (candDupes.length > 0) {
+            setStatus(`数字不能重复：备选值 ${candDupes.join('、')} 已经填在九宫格已知数中了。`, 'error');
+            return;
+          }
+        }
+      }
+
+      lastFixed = fixed.slice();
+      lastCandidates = candidates.slice();
+
+      if (fixed.every(v => v === null) && candidates.length === 0) {
+        setStatus('请先输入至少一个已知数字，或输入备选值。', 'error');
+        return;
+      }
+
+      if (target % 3 !== 0) {
+        setStatus(`目标和值 ${target} 不能被 3 整除，九宫格无整数解。`, 'error');
+        return;
+      }
+
+      const solutions = enumerateSolutions(target, fixed, candidates, uniqueOnly);
+
+      if (solutions.length === 0) {
+        setStatus('没有找到符合该和值与备选条件的九宫格解，请核对输入。', 'error');
+        return;
+      }
+
+      allSolutions = solutions;
+      renderResults();
+
+      if (allSolutions.length === 1) {
+        showSolutionInMainGrid(allSolutions[0], 0);
+        setStatus('找到唯一解，已自动补全在九宫格中。', 'ok');
+      } else {
+        setStatus(`找到 ${allSolutions.length} 组符合条件的解，可切换查看。`, 'ok');
+      }
+    }
+
+    function runSolve() {
+      try {
+        solve();
+      } catch (err) {
+        clearResults();
+        setStatus(err.message, 'error');
+      }
+    }
+
+    targetSumEl.addEventListener('input', () => {
+      if (internalUpdate) return;
+      targetWasAuto = false;
+      clearSolvedCells();
+      clearResults();
+      if (targetSumEl.value.trim() === '') {
+        autoDetectTarget();
+      } else {
+        setStatus('和值已更改。按 Enter 键可立即计算。');
+      }
+    });
+
+    targetSumEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        runSolve();
+      }
+    });
+
+    candidateValuesEl.addEventListener('input', () => {
+      clearSolvedCells();
+      clearResults();
+      setStatus('备选值已更新。按 Enter 键可立即计算。');
+    });
+
+    candidateValuesEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        runSolve();
+      }
+    });
+
+    uniqueCandidatesEl.addEventListener('change', () => {
+      clearSolvedCells();
+      clearResults();
+      setStatus('重复数字规则已更新。');
+    });
+
+    solveBtn.addEventListener('click', runSolve);
+    clearBtn.addEventListener('click', clearAll);
+
+    prevBtn.addEventListener('click', () => goToSolution(currentResultIndex - 1));
+    nextBtn.addEventListener('click', () => goToSolution(currentResultIndex + 1));
+    gridPrevBtn.addEventListener('click', () => goToSolution(currentResultIndex - 1));
+    gridNextBtn.addEventListener('click', () => goToSolution(currentResultIndex + 1));
+
+    cells[0].focus();
+  </script>
+</body>
+</html>

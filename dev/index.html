@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>dev · xue.moe</title>
+  <meta name="description" content="Ryosetsu's dev lab & experiments — dev.xue.moe" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22snowB%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%220%25%22%20y2%3D%22100%25%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23ffffff%22%2F%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23e2e8f0%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22eyeBlue%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%220%25%22%20y2%3D%22100%25%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%230284c7%22%2F%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%230369a1%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22snowShadow%22%20x%3D%22-10%25%22%20y%3D%22-10%25%22%20width%3D%22120%25%22%20height%3D%22120%25%22%3E%3CfeDropShadow%20dx%3D%220%22%20dy%3D%221.5%22%20stdDeviation%3D%221.5%22%20flood-color%3D%22%230f172a%22%20flood-opacity%3D%220.18%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20filter%3D%22url(%23snowShadow)%22%3E%3Cpath%20d%3D%22M7%2032%20C3%2016%2014%206%2022%2010%20C27%2012%2028.5%2020%2032%2020%20C35.5%2020%2037%2012%2042%2010%20C50%206%2061%2016%2057%2032%20C61%2045%2056%2058%2032%2058%20C8%2058%203%2045%207%2032%20Z%22%20fill%3D%22url(%23snowB)%22%2F%3E%3Cpath%20d%3D%22M12%2028%20C9%2019%2016%2013%2020%2015%20C22.5%2017%2022%2026%2017%2026.5%20Z%22%20fill%3D%22%23fda4af%22%2F%3E%3Cpath%20d%3D%22M52%2028%20C55%2019%2048%2013%2044%2015%20C41.5%2017%2042%2026%2047%2026.5%20Z%22%20fill%3D%22%23fda4af%22%2F%3E%3Cellipse%20cx%3D%2222%22%20cy%3D%2238%22%20rx%3D%224.8%22%20ry%3D%225.8%22%20fill%3D%22url(%23eyeBlue)%22%2F%3E%3Cellipse%20cx%3D%2242%22%20cy%3D%2238%22%20rx%3D%224.8%22%20ry%3D%225.8%22%20fill%3D%22url(%23eyeBlue)%22%2F%3E%3Cpath%20d%3D%22M19%2040%20C20%2042.5%2024%2042.5%2025%2040%22%20stroke%3D%22%2338bdf8%22%20stroke-width%3D%221.2%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3Cpath%20d%3D%22M39%2040%20C40%2042.5%2044%2042.5%2045%2040%22%20stroke%3D%22%2338bdf8%22%20stroke-width%3D%221.2%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3Ccircle%20cx%3D%2220.5%22%20cy%3D%2235.5%22%20r%3D%221.8%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%2240.5%22%20cy%3D%2235.5%22%20r%3D%221.8%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%2223.5%22%20cy%3D%2240.5%22%20r%3D%220.8%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%2243.5%22%20cy%3D%2240.5%22%20r%3D%220.8%22%20fill%3D%22%23ffffff%22%2F%3E%3Cellipse%20cx%3D%2214%22%20cy%3D%2244%22%20rx%3D%223.5%22%20ry%3D%221.8%22%20fill%3D%22%23f43f5e%22%20opacity%3D%220.16%22%2F%3E%3Cellipse%20cx%3D%2250%22%20cy%3D%2244%22%20rx%3D%223.5%22%20ry%3D%221.8%22%20fill%3D%22%23f43f5e%22%20opacity%3D%220.16%22%2F%3E%3Cpath%20d%3D%22M32%2042.5%20L30.6%2040.5%20C31.2%2040%2032.8%2040%2033.4%2040.5%20Z%22%20fill%3D%22%23f43f5e%22%2F%3E%3Cpath%20d%3D%22M29.5%2044.5%20C31%2046%2032%2044.5%2032%2043.5%20C32%2044.5%2033%2046%2034.5%2044.5%22%20stroke%3D%22%23cbd5e1%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E">
+  <style>
+    /* 开源字体 Borel (SIL Open Font License) */
+    @font-face {
+      font-family: 'Borel';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url('/fonts/borel.woff2') format('woff2'),
+           url('https://fonts.gstatic.com/s/borel/v10/6qLOKZsftAPisjsmaSIFOSwF.woff2') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+
+    :root {
+      --primary: #4c6ef5;
+      --primary-soft: rgba(76, 110, 245, 0.12);
+      --primary-glow: rgba(92, 124, 250, 0.22);
+      --bg-ambient: radial-gradient(at 0% 0%, rgba(224, 231, 255, 0.7) 0px, transparent 50%),
+                    radial-gradient(at 100% 0%, rgba(243, 232, 255, 0.7) 0px, transparent 50%),
+                    radial-gradient(at 50% 100%, rgba(224, 242, 254, 0.6) 0px, transparent 50%),
+                    #f8fafc;
+      --card-bg: rgba(255, 255, 255, 0.68);
+      --card-border: rgba(255, 255, 255, 0.75);
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --shadow-soft: 0 12px 32px -4px rgba(79, 94, 130, 0.08), 0 4px 12px -2px rgba(79, 94, 130, 0.04);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --primary: #91a7ff;
+        --primary-soft: rgba(145, 167, 255, 0.14);
+        --primary-glow: rgba(145, 167, 255, 0.22);
+        --bg-ambient: radial-gradient(at 0% 0%, rgba(30, 41, 67, 0.8) 0px, transparent 50%),
+                      radial-gradient(at 100% 0%, rgba(46, 32, 69, 0.7) 0px, transparent 50%),
+                      radial-gradient(at 50% 100%, rgba(17, 24, 39, 0.9) 0px, transparent 50%),
+                      #0f172a;
+        --card-bg: rgba(30, 41, 59, 0.65);
+        --card-border: rgba(255, 255, 255, 0.08);
+        --text-main: #f1f5f9;
+        --text-muted: #94a3b8;
+        --shadow-soft: 0 12px 36px -4px rgba(0, 0, 0, 0.4);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg-ambient);
+      color: var(--text-main);
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      padding: 48px 36px;
+      box-shadow: var(--shadow-soft);
+      text-align: center;
+      max-width: 460px;
+      width: 100%;
+      animation: fadeInDown 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .brand-hello {
+      font-family: 'Borel', 'Snell Roundhand', 'Brush Script MT', 'Segoe Script', cursive;
+      font-weight: 400;
+      letter-spacing: -0.5px;
+      color: var(--primary);
+      font-size: 52px;
+      line-height: 1.1;
+      display: inline-block;
+      margin-bottom: 6px;
+      user-select: none;
+    }
+
+    .domain-tag {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-soft);
+      padding: 3px 12px;
+      border-radius: 999px;
+      display: inline-block;
+      margin-bottom: 16px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    p {
+      color: var(--text-muted);
+      font-size: 14.5px;
+      line-height: 1.7;
+      margin-bottom: 28px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 22px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      color: #fff;
+      background: var(--primary);
+      box-shadow: 0 4px 14px var(--primary-glow);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--primary-glow);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--text-main);
+      border: 1px solid var(--card-border);
+      box-shadow: none;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    footer {
+      margin-top: auto;
+      text-align: center;
+      padding: 24px 16px 12px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+
+    footer a {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    footer a:hover {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+
+    footer .sep {
+      margin: 0 7px;
+      opacity: 0.35;
+    }
+  </style>
+</head>
+<body>
+  <div class="card" style="margin: auto 0;">
+    <div class="brand-hello">xue.moe</div>
+    <div>
+      <span class="domain-tag">dev.xue.moe</span>
+    </div>
+    <p>实验性项目与开发原型孵化中。<br>打磨完成后将在此上线，敬请期待。</p>
+    <div class="btn-group">
+      <a href="https://xue.moe" class="btn">返回主站</a>
+      <a href="https://github.com/xue-moe" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">GitHub</a>
+    </div>
+  </div>
+
+  <footer>
+    <div>
+      <span>Designed by Ryosetsu</span>
+      <span class="sep">|</span>
+      <a href="https://xue.moe">xue.moe</a>
+      <span class="sep">|</span>
+      <span>© <span id="year">2026</span> dev.xue.moe</span>
+    </div>
+    <div>
+      <a href="https://icp.gov.moe/?keyword=20230238" target="_blank" rel="noopener noreferrer">萌ICP备20230238号</a>
+    </div>
+  </footer>
+
+  <script>
+    // 动态年份（2026 年起步，跨年自动显示范围）
+    const curYear = new Date().getFullYear();
+    const yearEl = document.getElementById('year');
+    if (yearEl) {
+      yearEl.textContent = curYear > 2026 ? `2026 - ${curYear}` : '2026';
+    }
+  </script>
+</body>
+</html>
