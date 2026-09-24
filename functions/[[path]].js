@@ -7,7 +7,7 @@ function applySecurityHeaders(res) {
   headers.set('X-XSS-Protection', '1; mode=block');
   headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), browsing-topics=()');
-  headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://github-contributions-api.jogruber.de https://api.github.com; frame-ancestors 'self';");
+  headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://github-contributions-api.jogruber.de https://api.github.com https://cloudflareinsights.com; frame-ancestors 'self';");
 
   return new Response(res.body, {
     status: res.status,
@@ -33,7 +33,6 @@ async function fetchAsset(context, targetPath) {
 }
 
 async function handleRoute(context, url, hostname) {
-  // 0. 代码足迹同源边缘代理（带边缘缓存与降级）
   if (url.pathname === '/api/contributions') {
     try {
       const apiRes = await fetch('https://github-contributions-api.jogruber.de/v4/xue-moe?y=last', {

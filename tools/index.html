@@ -2506,7 +2506,6 @@
       '一': { romaji: 'yī/ichi', group: 'chouon-ichi', noteZh: '汉字 一 [U+4E00] · 易混: 长音符 ー [U+30FC]', noteEn: 'Kanji 一 · Confusable with prolonged mark ー' }
     };
 
-    // 和制漢字 (Kokuji) — kanji invented in Japan with no standard Chinese reading
     const kokujiMap = {
       '峠': { reading: 'tōge', meaning: '山口、峠道' },
       '辻': { reading: 'tsuji', meaning: '十字路口' },
@@ -3666,10 +3665,8 @@
       return Array.from(text);
     }
 
-    // Detect whether text is Japanese (contains kana) or Chinese
     function detectTextContext(text) {
       if (!text) return 'zh';
-      // If any hiragana or katakana is present, treat as Japanese
       if (/[\u3040-\u309f\u30a0-\u30ff]/.test(text)) return 'ja';
       return 'zh';
     }
@@ -3692,7 +3689,6 @@
       if (ch === '\r') return { glyph: '␍', label: isEn ? 'CR' : '回车', cls: 'whitespace', note: isEn ? 'Carriage Return (\\r)' : '回车符 (\\r)' };
       if (ch === '\u3000') return { glyph: '␣', label: isEn ? 'Full Space' : '全角空格', cls: 'fullwidth whitespace', note: isEn ? 'CJK full-width space (U+3000)' : '全角空格 (U+3000)' };
 
-      // Japanese lookalikes
       if (jpLookalikes[ch]) {
         const item = jpLookalikes[ch];
         return {
@@ -3703,7 +3699,6 @@
         };
       }
 
-      // Japanese kana
       if (kanaRomaji[ch]) {
         const r = kanaRomaji[ch];
         return {
@@ -3722,7 +3717,6 @@
       if (fullCharMap[ch]) return { glyph: ch, label: isEn ? 'Full-width' : fullCharMap[ch], cls: 'fullwidth', note: `${isEn ? 'Full-width: ' : '全角符号: '}${fullCharMap[ch]}` };
       if (/[\uff01-\uffee]/.test(ch)) return { glyph: ch, label: isEn ? 'Full-width' : '全角符号', cls: 'fullwidth', note: isEn ? 'Full-width Unicode symbol' : '全角 Unicode 符号' };
 
-      // Kokuji (和制漢字) — Japanese-only kanji, no valid Chinese pinyin
       if (kokujiMap[ch]) {
         const kk = kokujiMap[ch];
         return {
@@ -3735,19 +3729,15 @@
         };
       }
 
-      // CJK characters — only show Pinyin in Chinese context
       if (/[\u4e00-\u9fff\u3400-\u4dbf]/.test(ch)) {
         if (isJpCtx) {
-          // Japanese context: don't show Chinese pinyin, label as kanji
           return { glyph: ch, label: isEn ? 'Kanji' : '漢字', cls: 'cjk', note: isEn ? `Kanji: ${ch}` : `漢字: ${ch}` };
         }
         if (window.pinyinPro && window.pinyinPro.pinyin) {
           const py = window.pinyinPro.pinyin(ch, { toneType: 'symbol' });
-          // pinyin-pro returns the character itself if no reading found
           if (py && py !== ch) {
             return { glyph: ch, label: py, cls: 'cjk', note: `${isEn ? 'CJK Kanji' : '中文汉字'}: ${ch} [${py}]` };
           }
-          // No pinyin found — likely a rare character or Japanese-only kanji
           return { glyph: ch, label: isEn ? 'Kanji' : '汉字', cls: 'cjk', note: isEn ? `CJK Kanji: ${ch} (no Pinyin)` : `汉字: ${ch}（无拼音）` };
         }
         ensurePinyinPro(() => {
@@ -3820,7 +3810,6 @@
         charFullwidthBadge.style.display = 'none';
       }
 
-      // Dynamic legend: only show categories present in current text
       const hasAnyLegend = hasAmbiguousAscii || hasKana || hasKokuji || hasDigit || (fullCount > 0) || hasWhitespace;
       if (inspectorLegend) {
         inspectorLegend.style.display = hasAnyLegend ? 'flex' : 'none';
@@ -3984,7 +3973,6 @@
           res += (res && !res.endsWith(' ') ? ' ' : '') + kokujiMap[ch].reading;
         } else if (/[\u4e00-\u9fff\u3400-\u4dbf]/.test(ch)) {
           if (isJpCtx) {
-            // Japanese context: keep kanji as-is (no Chinese pinyin)
             res += ch;
           } else if (window.pinyinPro && window.pinyinPro.pinyin) {
             const py = window.pinyinPro.pinyin(ch, { toneType: 'symbol' });
@@ -4272,7 +4260,6 @@
       analyzeText();
     }
 
-    // Character Inspector Zoom & Enlarge Controller
     const charInspector = document.getElementById('charInspector');
     const charInspectorBackdrop = document.getElementById('charInspectorBackdrop');
     const btnTileZoomOut = document.getElementById('btnTileZoomOut');
@@ -4282,7 +4269,7 @@
     const btnEnlargeText = document.getElementById('btnEnlargeText');
 
     const ZOOM_SCALES = [0.85, 1.0, 1.25, 1.5, 1.8, 2.15, 2.5];
-    let currentZoomIdx = 1; // default 100%
+    let currentZoomIdx = 1;
 
     try {
       const savedScaleIdx = parseInt(localStorage.getItem('xue-char-scale-idx'), 10);
@@ -4319,7 +4306,6 @@
       });
     }
 
-    // Store original parent so we can move inspector back
     let inspectorOriginalParent = charInspector ? charInspector.parentNode : null;
     let inspectorOriginalNext = charInspector ? charInspector.nextSibling : null;
     let zoomIdxBeforeEnlarge = currentZoomIdx;
@@ -4329,20 +4315,15 @@
       const isEnlarged = typeof force === 'boolean' ? force : !charInspector.classList.contains('is-enlarged');
 
       if (isEnlarged) {
-        // Save current zoom and boost to enlarged scale
         zoomIdxBeforeEnlarge = currentZoomIdx;
-        // Move inspector to body to escape glass-card's stacking context
         inspectorOriginalParent = charInspector.parentNode;
         inspectorOriginalNext = charInspector.nextSibling;
         document.body.appendChild(charInspector);
-        // Auto-boost: if current scale is small, jump to 1.8x (index 4)
         if (currentZoomIdx < 4) {
           applyTileScale(4);
         }
       } else {
-        // Restore original zoom
         applyTileScale(zoomIdxBeforeEnlarge);
-        // Move inspector back to its original position
         if (inspectorOriginalParent) {
           if (inspectorOriginalNext && inspectorOriginalNext.parentNode === inspectorOriginalParent) {
             inspectorOriginalParent.insertBefore(charInspector, inspectorOriginalNext);
