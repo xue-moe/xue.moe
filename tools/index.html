@@ -868,6 +868,18 @@
       z-index: 0;
     }
 
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     .clock-hero-card > * {
       position: relative;
       z-index: 1;
@@ -1903,7 +1915,7 @@
 
     
     <section id="panel-clock" class="panel">
-      
+      <h1 class="sr-only" id="clockHeading">北京时间 - 当前准确时间 · 高精度原子时钟对时</h1>
       <div class="glass-card clock-hero-card" id="clockHero">
         <button class="clock-fullscreen-exit" id="btnExitFullscreen" title="退出全屏 (ESC键)">退出全屏 ✕</button>
 
@@ -1962,6 +1974,42 @@
           <span id="worldClockSub" style="font-size:12px; color:var(--text-muted);">相对本地时差</span>
         </div>
         <div class="world-clock-grid" id="worldClockGrid"></div>
+      </div>
+
+      <div class="glass-card clock-seo-card" style="margin-top: 16px;">
+        <div class="seo-card-head" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <h2 id="faqTitle" style="font-size:15px; font-weight:700; color:var(--text-main); margin:0;">高精度原子授时与标准时间服务</h2>
+          <span id="faqBadge" style="font-size:11px; color:var(--primary); font-weight:600; background:var(--primary-soft); padding:2px 8px; border-radius:999px;">纯净无广告 · 毫秒级对时</span>
+        </div>
+        <p class="seo-intro" id="faqIntro" style="font-size:12.5px; color:var(--text-muted); line-height:1.6; margin-top:8px; margin-bottom:0;">
+          time.xue.moe 致力于提供毫秒级高精度标准时间与北京时间校准服务。依托 Cloudflare 全球边缘 Anycast 网络与克里斯蒂安网络授时算法（Christian's Algorithm / SNTP），多样本实时过滤网络抖动，实现高精度原子对时与世界主要时区动态时差换算。
+        </p>
+
+        <div class="seo-features-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-top:14px;">
+          <div class="seo-feature-item" style="background:var(--card-inner); padding:10px 12px; border-radius:10px; border:1px solid var(--card-border);">
+            <div style="font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:4px;" id="feat1Title">⚡ 边缘低延迟授时</div>
+            <div style="font-size:11.5px; color:var(--text-muted); line-height:1.5;" id="feat1Desc">就近路由至最近边缘计算节点，网络往返时延极低（通常仅 8~70ms），授时理论误差上限低至 ±0.035秒。</div>
+          </div>
+          <div class="seo-feature-item" style="background:var(--card-inner); padding:10px 12px; border-radius:10px; border:1px solid var(--card-border);">
+            <div style="font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:4px;" id="feat2Title">🛡️ 纯净零广告无干扰</div>
+            <div style="font-size:11.5px; color:var(--text-muted); line-height:1.5;" id="feat2Desc">拒绝横幅弹窗与视频广告干扰，零追踪脚本，极致轻量极速加载，享受专注的时间体验。</div>
+          </div>
+          <div class="seo-feature-item" style="background:var(--card-inner); padding:10px 12px; border-radius:10px; border:1px solid var(--card-border);">
+            <div style="font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:4px;" id="feat3Title">🌍 全球时区与夏令时换算</div>
+            <div style="font-size:11.5px; color:var(--text-muted); line-height:1.5;" id="feat3Desc">动态计算世界各主要城市实时夏令时（DST）与 UTC 相对偏移，分秒不差整齐对齐。</div>
+          </div>
+        </div>
+
+        <div class="seo-faq-wrap" style="margin-top:16px;">
+          <details style="margin-bottom:8px; background:var(--card-inner); padding:8px 12px; border-radius:10px; border:1px solid var(--card-border);">
+            <summary style="font-size:12.5px; font-weight:600; color:var(--text-main); cursor:pointer;" id="faqQ1">为什么电脑或手机本地时间会存在偏差？</summary>
+            <p style="font-size:12px; color:var(--text-muted); line-height:1.6; margin-top:6px; margin-bottom:0;" id="faqA1">大部分消费级电子设备的晶体振荡器会随温度变化和硬件老化产生走时飘移，常规系统网络对时往往数小时乃至数天同步一次。通过 time.xue.moe 可即刻与标准原子钟进行毫秒级差量比对。</p>
+          </details>
+          <details style="background:var(--card-inner); padding:8px 12px; border-radius:10px; border:1px solid var(--card-border);">
+            <summary style="font-size:12.5px; font-weight:600; color:var(--text-main); cursor:pointer;" id="faqQ2">克里斯蒂安算法（Christian's Algorithm）是如何消除网络延迟的？</summary>
+            <p style="font-size:12px; color:var(--text-muted); line-height:1.6; margin-top:6px; margin-bottom:0;" id="faqA2">算法通过连续向授时服务器发起多次探针测量，精确记录发送与接收时刻，筛选往返网络抖动最小的最优样本，将单程传播延迟从总时间中扣除，使得最终授时精度达到毫秒级。</p>
+          </details>
+        </div>
       </div>
     </section>
 
@@ -2227,6 +2275,20 @@
         dateLine: (y, m, d, wName, wNum, dNum) => `${y}年${m}月${d}日 ${wName} · 第 ${wNum} 周 · ${y} 年第 ${dNum} 天`,
         dayProgVal: (pct, h, m) => `${pct}% (${h}小时${m}分)`,
         yearProgVal: (pct, dNum, total) => `${pct}% (${dNum} / ${total} 天)`,
+        clockHeading: '标准时间 - 任何时区的精确时间 · 高精度原子时钟对时',
+        faqTitle: '高精度原子授时与标准时间服务',
+        faqBadge: '纯净无广告 · 毫秒级对时',
+        faqIntro: 'time.xue.moe 致力于提供毫秒级高精度标准时间与任何时区的精确时间校准服务。依托 Cloudflare 全球边缘 Anycast 网络与克里斯蒂安网络授时算法（Christian\'s Algorithm / SNTP），多样本实时过滤网络抖动，实现高精度原子对时与世界主要时区动态时差换算。',
+        feat1Title: '⚡ 边缘低延迟授时',
+        feat1Desc: '就近路由至最近边缘计算节点，网络往返时延极低（通常仅 8~70ms），授时理论误差上限低至 ±0.035秒。',
+        feat2Title: '🛡️ 纯净零广告无干扰',
+        feat2Desc: '拒绝横幅弹窗与视频广告干扰，零追踪脚本，极致轻量极速加载，享受专注的时间体验。',
+        feat3Title: '🌍 全球时区与夏令时换算',
+        feat3Desc: '动态计算世界各主要城市实时夏令时（DST）与 UTC 相对偏移，分秒不差整齐对齐。',
+        faqQ1: '为什么电脑或手机本地时间会存在偏差？',
+        faqA1: '大部分消费级电子设备的晶体振荡器会随温度变化和硬件老化产生走时飘移，常规系统网络对时往往数小时乃至数天同步一次。通过 time.xue.moe 可即刻与标准原子钟进行毫秒级差量比对。',
+        faqQ2: '克里斯蒂安算法（Christian\'s Algorithm）是如何消除网络延迟的？',
+        faqA2: '算法通过连续向授时服务器发起多次探针测量，精确记录发送与接收时刻，筛选往返网络抖动最小的最优样本，将单程传播延迟从总时间中扣除，使得最终授时精度达到毫秒级。',
 
         // Timer
         timerTitle: '专注倒计时',
@@ -2396,6 +2458,20 @@
         dateLine: (y, m, d, wName, wNum, dNum) => `${wName}, ${m}/${d}/${y} · Week ${wNum} · Day ${dNum} of ${y}`,
         dayProgVal: (pct, h, m) => `${pct}% (${h}h ${m}m)`,
         yearProgVal: (pct, dNum, total) => `${pct}% (${dNum} / ${total} days)`,
+        clockHeading: 'Exact Time - Any Time Zone · Atomic Clock Synchronization',
+        faqTitle: 'High-Precision Atomic Clock & Exact Time Service',
+        faqBadge: 'Zero Ads · Sub-second Accuracy',
+        faqIntro: 'time.xue.moe is dedicated to providing millisecond-accurate time synchronization and exact standard time for any time zone. Powered by Cloudflare global Anycast edge network and Christian’s synchronization algorithm (SNTP), it filters network jitter to deliver exact atomic time and dynamic world clock conversions.',
+        feat1Title: '⚡ Ultra-Low Latency Synchronization',
+        feat1Desc: 'Directly routed to the nearest edge computing node with minimal RTT (typically 8–70ms), achieving synchronization accuracy within ±0.035 seconds.',
+        feat2Title: '🛡️ Pure & Ad-Free Experience',
+        feat2Desc: 'Free from intrusive banners and video ads, zero tracking scripts, ultra-fast page load, offering a distraction-free timing experience.',
+        feat3Title: '🌍 Global Time Zones & Daylight Saving Time',
+        feat3Desc: 'Dynamically computes real-time Daylight Saving Time (DST) and UTC offsets for major world cities with seamless alignment.',
+        faqQ1: 'Why does local computer or phone time drift?',
+        faqA1: 'Most consumer quartz oscillators drift due to temperature and aging, while OS updates sync hours or days apart. time.xue.moe compares your local clock against standard atomic time in milliseconds.',
+        faqQ2: 'How does Christian’s algorithm eliminate network latency?',
+        faqA2: 'The algorithm sends multiple probe requests to record send and receive timestamps, selects the sample with minimal round-trip jitter, and subtracts one-way transit latency to achieve millisecond precision.',
 
         // Timer
         timerTitle: 'Focus Timer',
@@ -2716,12 +2792,12 @@
       const isTimeHost = window.location.hostname.startsWith('time.');
       const t = i18n[currentLang] || i18n.zh;
       if (isTimeHost && tabName === 'clock') {
-        document.title = currentLang === 'en' ? 'Exact Time · time.xue.moe' : '现在时间 · time.xue.moe - 高精度原子对时';
+        document.title = currentLang === 'en' ? 'Exact Time - Any Time Zone · Atomic Clock Synchronization · time.xue.moe' : '标准时间 - 任何时区的精确时间 · 高精度原子对时 · time.xue.moe';
         return;
       }
       const titles = {
         todo: isTimeHost ? (currentLang === 'en' ? 'Todo · time.xue.moe' : '待办清单 · time.xue.moe') : t.titleTodo,
-        clock: isTimeHost ? (currentLang === 'en' ? 'Exact Time · time.xue.moe' : '现在时间 · time.xue.moe - 高精度原子对时') : t.titleClock,
+        clock: isTimeHost ? (currentLang === 'en' ? 'Exact Time - Any Time Zone · Atomic Clock Synchronization · time.xue.moe' : '标准时间 - 任何时区的精确时间 · 高精度原子对时 · time.xue.moe') : t.titleClock,
         timer: isTimeHost ? (currentLang === 'en' ? 'Timer · time.xue.moe' : '专注倒计时 · time.xue.moe') : t.titleTimer,
         text: isTimeHost ? (currentLang === 'en' ? 'Text Lab · time.xue.moe' : '文本排错 · time.xue.moe') : t.titleText
       };
@@ -4392,6 +4468,35 @@
       const worldClockSub = document.getElementById('worldClockSub');
       if (worldClockSub) worldClockSub.textContent = t.worldClockSub;
       updateWorldClocks(getAccurateTime(), true);
+
+      const clockHeading = document.getElementById('clockHeading');
+      if (clockHeading && t.clockHeading) clockHeading.textContent = t.clockHeading;
+      const faqTitle = document.getElementById('faqTitle');
+      if (faqTitle && t.faqTitle) faqTitle.textContent = t.faqTitle;
+      const faqBadge = document.getElementById('faqBadge');
+      if (faqBadge && t.faqBadge) faqBadge.textContent = t.faqBadge;
+      const faqIntro = document.getElementById('faqIntro');
+      if (faqIntro && t.faqIntro) faqIntro.textContent = t.faqIntro;
+      const feat1Title = document.getElementById('feat1Title');
+      if (feat1Title && t.feat1Title) feat1Title.textContent = t.feat1Title;
+      const feat1Desc = document.getElementById('feat1Desc');
+      if (feat1Desc && t.feat1Desc) feat1Desc.textContent = t.feat1Desc;
+      const feat2Title = document.getElementById('feat2Title');
+      if (feat2Title && t.feat2Title) feat2Title.textContent = t.feat2Title;
+      const feat2Desc = document.getElementById('feat2Desc');
+      if (feat2Desc && t.feat2Desc) feat2Desc.textContent = t.feat2Desc;
+      const feat3Title = document.getElementById('feat3Title');
+      if (feat3Title && t.feat3Title) feat3Title.textContent = t.feat3Title;
+      const feat3Desc = document.getElementById('feat3Desc');
+      if (feat3Desc && t.feat3Desc) feat3Desc.textContent = t.feat3Desc;
+      const faqQ1 = document.getElementById('faqQ1');
+      if (faqQ1 && t.faqQ1) faqQ1.textContent = t.faqQ1;
+      const faqA1 = document.getElementById('faqA1');
+      if (faqA1 && t.faqA1) faqA1.textContent = t.faqA1;
+      const faqQ2 = document.getElementById('faqQ2');
+      if (faqQ2 && t.faqQ2) faqQ2.textContent = t.faqQ2;
+      const faqA2 = document.getElementById('faqA2');
+      if (faqA2 && t.faqA2) faqA2.textContent = t.faqA2;
 
       // Timer panel
       const timerTitle = document.getElementById('timerTitle');

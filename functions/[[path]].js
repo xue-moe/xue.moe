@@ -146,7 +146,116 @@ async function handleRoute(context, url, hostname) {
     }
     const isStaticFile = /\.[a-zA-Z0-9]+$/.test(url.pathname);
     if (!isStaticFile) {
-      return fetchAsset(context, '/tools/');
+      const res = await fetchAsset(context, '/tools/');
+      const seoStructuredData = JSON.stringify({
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "name": "time.xue.moe",
+            "url": "https://time.xue.moe/",
+            "description": "高精度原子对时与任何时区的精确时间校准服务，毫秒级网络时延估算，纯净无广告。"
+          },
+          {
+            "@type": "WebApplication",
+            "name": "time.xue.moe 高精度原子时钟",
+            "url": "https://time.xue.moe/",
+            "applicationCategory": "UtilitiesApplication",
+            "operatingSystem": "All",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            }
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "如何通过网络高精度校准本地时钟？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "time.xue.moe 采用高精度克里斯蒂安网络授时算法（Christian's Algorithm / SNTP），向边缘服务器连续发起探针以精确测算双向往返网络时延（RTT），剔除抖动并计算单程传播偏差，实现与原子钟毫秒级精准对齐。"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "为什么 time.xue.moe 的授时精度比传统对时网站更高？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "因为授时服务直接运行在 Cloudflare 全球边缘 Anycast 计算节点上，网络往返时延极低（通常仅 8~70ms），授时误差上限可收敛至 ±0.035秒以内，且全站无任何广告干扰。"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "如何查询世界主要城市与当前时间的时差？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "页面提供东京、伦敦、巴黎、纽约、旧金山、UTC等世界主要时区实时对照，自动计算夏令时（DST）与本地时差，分钟级精确对齐。"
+                }
+              }
+            ]
+          }
+        ]
+      });
+
+      return new HTMLRewriter()
+        .on('title', {
+          element(el) {
+            el.setInnerContent('标准时间 - 任何时区的精确时间 · 高精度原子对时 · time.xue.moe');
+          }
+        })
+        .on('meta[name="description"]', {
+          element(el) {
+            el.setAttribute('content', 'time.xue.moe 专注于提供毫秒级高精度标准时间与任何时区的精确时间校准服务，实时估算网络往返延迟，支持世界主要时区对比、全屏时钟与专注倒计时，纯净无广告。');
+          }
+        })
+        .on('link[rel="canonical"]', {
+          element(el) {
+            el.setAttribute('href', 'https://time.xue.moe/');
+          }
+        })
+        .on('head', {
+          element(el) {
+            el.append('<meta name="keywords" content="标准时间,当前时间,精确时间,时间校准,原子时钟,现在几点,对时,世界时钟,世界时区,exact time,atomic clock,time.is,world clock,current time">', { html: true });
+            el.append('<meta property="og:title" content="标准时间 - 任何时区的精确时间 · 高精度原子对时 · time.xue.moe">', { html: true });
+            el.append('<meta property="og:description" content="毫秒级高精度标准时间与任何时区的精确时间校准，实时估算网络往返延迟，纯净无广告。">', { html: true });
+            el.append('<meta property="og:url" content="https://time.xue.moe/">', { html: true });
+            el.append('<meta property="og:type" content="website">', { html: true });
+            el.append('<meta property="og:site_name" content="time.xue.moe">', { html: true });
+            el.append('<meta name="twitter:card" content="summary">', { html: true });
+            el.append('<meta name="twitter:title" content="标准时间 - 任何时区的精确时间 · 高精度原子对时 · time.xue.moe">', { html: true });
+            el.append('<meta name="twitter:description" content="毫秒级高精度标准时间与任何时区的精确时间校准，实时估算网络往返延迟，纯净无广告。">', { html: true });
+            el.append(`<script type="application/ld+json">${seoStructuredData}</script>`, { html: true });
+          }
+        })
+        .on('.seg-btn[data-tab="todo"]', {
+          element(el) {
+            el.setAttribute('class', 'seg-btn');
+          }
+        })
+        .on('.seg-btn[data-tab="clock"]', {
+          element(el) {
+            el.setAttribute('class', 'seg-btn active');
+          }
+        })
+        .on('#panel-todo', {
+          element(el) {
+            el.setAttribute('class', 'panel');
+          }
+        })
+        .on('#panel-clock', {
+          element(el) {
+            el.setAttribute('class', 'panel active');
+          }
+        })
+        .on('#navBrandSub', {
+          element(el) {
+            el.setInnerContent('time');
+          }
+        })
+        .transform(res);
     }
     return fetchAsset(context, '/tools' + url.pathname);
   }
