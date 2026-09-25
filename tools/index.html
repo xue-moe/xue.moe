@@ -1075,6 +1075,23 @@
       font-weight: 700;
       color: var(--text-main);
       margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .world-tz-tag {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-soft);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      letter-spacing: -0.2px;
+      line-height: 1.2;
     }
 
     .world-diff {
@@ -3418,7 +3435,7 @@
       { nameZh: '巴黎 / 柏林', nameEn: 'Paris / Berlin', tz: 'Europe/Paris' },
       { nameZh: '纽约', nameEn: 'New York', tz: 'America/New_York' },
       { nameZh: '旧金山', nameEn: 'San Francisco', tz: 'America/Los_Angeles' },
-      { nameZh: '协调世界时 (UTC)', nameEn: 'UTC', tz: 'UTC' }
+      { nameZh: '协调世界时', nameEn: 'Universal Time', tz: 'UTC' }
     ];
 
     function getDayOfYear(d) {
@@ -3507,22 +3524,65 @@
         if (yearProgressBar) yearProgressBar.style.width = `${yearPercent}%`;
       }
 
-      if (worldClockGrid && (!worldClockGrid.hasChildNodes() || now.getMilliseconds() < 100)) {
-        renderWorldClocks(now);
+      if (worldClockGrid) {
+        updateWorldClocks(now);
       }
     }
 
-    function renderWorldClocks(now) {
+    function getCityUtcOffset(tz, now) {
+      if (tz === 'UTC') return 'UTC';
+      try {
+        const parts = new Intl.DateTimeFormat('en-US', {
+          timeZone: tz,
+          timeZoneName: 'shortOffset'
+        }).formatToParts(now);
+        const tzPart = parts.find(p => p.type === 'timeZoneName');
+        if (tzPart && tzPart.value) {
+          return tzPart.value.replace('GMT', 'UTC');
+        }
+      } catch (_) {}
+      return 'UTC';
+    }
+
+    let lastWorldClockSecond = -1;
+    function updateWorldClocks(now, force = false) {
       if (!worldClockGrid) return;
-      worldClockGrid.innerHTML = '';
+      const currentSec = now.getSeconds();
+      if (!force && currentSec === lastWorldClockSecond && worldClockGrid.children.length === worldCities.length) {
+        return;
+      }
+      lastWorldClockSecond = currentSec;
+
       const loc = currentLang === 'en' ? 'en-US' : 'zh-CN';
-      worldCities.forEach(city => {
+      if (worldClockGrid.children.length !== worldCities.length) {
+        worldClockGrid.innerHTML = '';
+        worldCities.forEach(city => {
+          const card = document.createElement('div');
+          card.className = 'world-clock-card';
+          card.innerHTML = `
+            <div class="world-city">
+              <span class="world-city-name"></span>
+              <span class="world-tz-tag"></span>
+            </div>
+            <div class="world-diff"></div>
+            <div class="world-time"></div>
+            <div class="world-date"></div>
+          `;
+          worldClockGrid.appendChild(card);
+        });
+      }
+
+      worldCities.forEach((city, index) => {
         try {
+          const card = worldClockGrid.children[index];
+          if (!card) return;
+
+          const cityName = currentLang === 'en' ? city.nameEn : city.nameZh;
+          const tzTag = getCityUtcOffset(city.tz, now);
           const timeStr = new Intl.DateTimeFormat(loc, {
             timeZone: city.tz,
             hour: '2-digit',
             minute: '2-digit',
-            second: '2-digit',
             hour12: false
           }).format(now);
 
@@ -3534,17 +3594,18 @@
           }).format(now);
 
           const diffStr = getTzDifference(city.tz, now);
-          const cityName = currentLang === 'en' ? city.nameEn : city.nameZh;
 
-          const card = document.createElement('div');
-          card.className = 'world-clock-card';
-          card.innerHTML = `
-            <div class="world-city">${cityName}</div>
-            <div class="world-diff">${diffStr}</div>
-            <div class="world-time">${timeStr}</div>
-            <div class="world-date">${dateStr}</div>
-          `;
-          worldClockGrid.appendChild(card);
+          const cityEl = card.querySelector('.world-city-name');
+          const tzEl = card.querySelector('.world-tz-tag');
+          const diffEl = card.querySelector('.world-diff');
+          const timeEl = card.querySelector('.world-time');
+          const dateEl = card.querySelector('.world-date');
+
+          if (cityEl && cityEl.textContent !== cityName) cityEl.textContent = cityName;
+          if (tzEl && tzEl.textContent !== tzTag) tzEl.textContent = tzTag;
+          if (diffEl && diffEl.textContent !== diffStr) diffEl.textContent = diffStr;
+          if (timeEl && timeEl.textContent !== timeStr) timeEl.textContent = timeStr;
+          if (dateEl && dateEl.textContent !== dateStr) dateEl.textContent = dateStr;
         } catch (_) {}
       });
     }
@@ -4330,6 +4391,7 @@
       if (worldClockTitle) worldClockTitle.textContent = t.worldClockTitle;
       const worldClockSub = document.getElementById('worldClockSub');
       if (worldClockSub) worldClockSub.textContent = t.worldClockSub;
+      updateWorldClocks(getAccurateTime(), true);
 
       // Timer panel
       const timerTitle = document.getElementById('timerTitle');
