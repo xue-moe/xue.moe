@@ -1185,6 +1185,9 @@
     }
 
     let rawContribData = null;
+    let homeTimeOffset = 0;
+    let homeTimeAccuracy = 35;
+    let isHomeClockSynced = false;
 
     function applyLanguage(lang) {
       currentLang = lang;
@@ -1506,10 +1509,6 @@
 
     applyLanguage(currentLang);
     loadRecentContributions();
-
-    let homeTimeOffset = 0;
-    let homeTimeAccuracy = 35;
-    let isHomeClockSynced = false;
 
     function updateHomeClock() {
       const el = document.getElementById('homeClockDigits');
