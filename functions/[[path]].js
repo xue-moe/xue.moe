@@ -131,6 +131,26 @@ async function handleRoute(context, url, hostname) {
     return fetchAsset(context, '/tools' + url.pathname);
   }
 
+  if (hostname.startsWith('time.')) {
+    if (url.pathname === '/tools' || url.pathname === '/tools/') {
+      return Response.redirect(`${url.origin}/${url.search}`, 301);
+    }
+    if (url.pathname.startsWith('/tools/')) {
+      return Response.redirect(`${url.origin}${url.pathname.replace(/^\/tools/, '')}${url.search}`, 301);
+    }
+    if (url.pathname === '/apps/clock' || url.pathname === '/apps/clock/') {
+      return Response.redirect(`${url.origin}/${url.search}`, 301);
+    }
+    if (url.pathname.startsWith('/fonts/')) {
+      return context.env.ASSETS.fetch(context.request);
+    }
+    const isStaticFile = /\.[a-zA-Z0-9]+$/.test(url.pathname);
+    if (!isStaticFile) {
+      return fetchAsset(context, '/tools/');
+    }
+    return fetchAsset(context, '/tools' + url.pathname);
+  }
+
   // 根域名 xue.moe 正常访问根目录
   return context.next();
 }

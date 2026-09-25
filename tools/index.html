@@ -1748,7 +1748,7 @@
       <a href="https://xue.moe" class="brand" id="navBrandLink" title="返回 xue.moe">
         <span class="brand-hello">xue.moe</span>
         <span class="brand-slash">/</span>
-        <span class="brand-sub">tools</span>
+        <span class="brand-sub" id="navBrandSub">tools</span>
       </a>
 
       <nav class="nav-segmented" role="tablist">
@@ -2186,10 +2186,10 @@
         btnExitFullscreen: '退出全屏 ✕',
         btnExitFullscreenTip: '退出全屏 (ESC键)',
         clockSyncing: '高精度网络授时同步中...',
-        clockSyncExact: (acc) => `时间精确 (误差 < 0.05秒 · 精度 ±${acc}毫秒)`,
-        clockSyncFast: (sec, acc) => `本地快了 ${sec}秒 (精度 ±${acc}毫秒)`,
-        clockSyncSlow: (sec, acc) => `本地慢了 ${sec}秒 (精度 ±${acc}毫秒)`,
-        clockSyncTip: (rtt, offset, acc) => `网络往返: ${rtt}毫秒\n校准偏差: ${offset}毫秒\n授时精度: ±${acc}毫秒\n点击重新校准`,
+        clockSyncExact: (acc) => `时间精确 (误差 < 0.05秒 · 精度 ±${(acc / 1000).toFixed(3)}秒)`,
+        clockSyncFast: (sec, acc) => `本地快了 ${sec}秒 (精度 ±${(acc / 1000).toFixed(3)}秒)`,
+        clockSyncSlow: (sec, acc) => `本地慢了 ${sec}秒 (精度 ±${(acc / 1000).toFixed(3)}秒)`,
+        clockSyncTip: (rtt, offset, acc) => `网络往返: ${rtt}毫秒\n校准偏差: ${offset}毫秒\n授时精度: ±${(acc / 1000).toFixed(3)}秒\n点击重新校准`,
         clockSyncFailed: '网络授时失败，使用系统时间',
         clockDisplayTip: '点击切换小时制',
         btnSwitch12H: '切换 12小时制',
@@ -2355,10 +2355,10 @@
         btnExitFullscreen: 'Exit Fullscreen ✕',
         btnExitFullscreenTip: 'Exit Fullscreen (ESC)',
         clockSyncing: 'Syncing high-precision time...',
-        clockSyncExact: (acc) => `In sync (< 0.05s · ±${acc}ms)`,
-        clockSyncFast: (sec, acc) => `${sec}s fast (±${acc}ms)`,
-        clockSyncSlow: (sec, acc) => `${sec}s slow (±${acc}ms)`,
-        clockSyncTip: (rtt, offset, acc) => `Round-trip: ${rtt}ms\nOffset: ${offset}ms\nAccuracy: ±${acc}ms\nClick to re-sync`,
+        clockSyncExact: (acc) => `In sync (< 0.05s · ±${(acc / 1000).toFixed(3)}s)`,
+        clockSyncFast: (sec, acc) => `${sec}s fast (±${(acc / 1000).toFixed(3)}s)`,
+        clockSyncSlow: (sec, acc) => `${sec}s slow (±${(acc / 1000).toFixed(3)}s)`,
+        clockSyncTip: (rtt, offset, acc) => `Round-trip: ${rtt}ms\nOffset: ${offset}ms\nAccuracy: ±${(acc / 1000).toFixed(3)}s\nClick to re-sync`,
         clockSyncFailed: 'Sync failed, using system time',
         clockDisplayTip: 'Click to toggle 12/24 hour format',
         btnSwitch12H: 'Switch 12H',
@@ -2696,12 +2696,17 @@
     const TAB_STORAGE_KEY = 'xue-tools-active-tab';
 
     function updateDocumentTitle(tabName) {
+      const isTimeHost = window.location.hostname.startsWith('time.');
       const t = i18n[currentLang] || i18n.zh;
+      if (isTimeHost && tabName === 'clock') {
+        document.title = currentLang === 'en' ? 'Exact Time · time.xue.moe' : '现在时间 · time.xue.moe - 高精度原子对时';
+        return;
+      }
       const titles = {
-        todo: t.titleTodo,
-        clock: t.titleClock,
-        timer: t.titleTimer,
-        text: t.titleText
+        todo: isTimeHost ? (currentLang === 'en' ? 'Todo · time.xue.moe' : '待办清单 · time.xue.moe') : t.titleTodo,
+        clock: isTimeHost ? (currentLang === 'en' ? 'Exact Time · time.xue.moe' : '现在时间 · time.xue.moe - 高精度原子对时') : t.titleClock,
+        timer: isTimeHost ? (currentLang === 'en' ? 'Timer · time.xue.moe' : '专注倒计时 · time.xue.moe') : t.titleTimer,
+        text: isTimeHost ? (currentLang === 'en' ? 'Text Lab · time.xue.moe' : '文本排错 · time.xue.moe') : t.titleText
       };
       document.title = titles[tabName] || t.titleTodo;
     }
@@ -2730,13 +2735,14 @@
       if (updateUrl) {
         try {
           if (window.location.protocol.startsWith('http')) {
+            const isTimeHost = window.location.hostname.startsWith('time.');
             const pathMap = {
               todo: '/apps/todo',
-              clock: '/apps/clock',
+              clock: isTimeHost ? '/' : '/apps/clock',
               timer: '/apps/timer',
               text: '/apps/text'
             };
-            const newPath = pathMap[tabName] || '/apps/todo';
+            const newPath = pathMap[tabName] || (isTimeHost ? '/' : '/apps/todo');
             if (window.location.pathname !== newPath) {
               history.pushState({ tab: tabName }, '', newPath);
             }
@@ -2754,6 +2760,25 @@
     });
 
     function getInitialTab() {
+      const isTimeHost = window.location.hostname.startsWith('time.');
+      if (isTimeHost) {
+        if (window.location.protocol.startsWith('http')) {
+          const p = window.location.pathname.toLowerCase();
+          if (p.includes('timer') || p.includes('pomodoro')) return 'timer';
+          if (p.includes('text') || p.includes('lab')) return 'text';
+          if (p.includes('todo')) return 'todo';
+        }
+        const hash = (window.location.hash || '').toLowerCase();
+        if (hash.includes('timer') || hash.includes('pomodoro')) return 'timer';
+        if (hash.includes('text') || hash.includes('lab')) return 'text';
+        if (hash.includes('todo')) return 'todo';
+        try {
+          const qTab = new URLSearchParams(window.location.search).get('tab');
+          if (qTab && panels[qTab]) return qTab;
+        } catch (_) {}
+        return 'clock';
+      }
+
       if (window.location.protocol.startsWith('http')) {
         const p = window.location.pathname.toLowerCase();
         if (p.includes('clock') || p.includes('time')) return 'clock';
@@ -3615,7 +3640,7 @@
     function updateSyncUI() {
       if (!clockSyncStatus) return;
       const t = i18n[currentLang] || i18n.zh;
-      const absOffsetSec = (Math.abs(networkTimeOffset) / 1000).toFixed(2);
+      const absOffsetSec = (Math.abs(networkTimeOffset) / 1000).toFixed(3);
       let text = '';
       if (Math.abs(networkTimeOffset) < 50) {
         text = t.clockSyncExact(networkTimeAccuracy);
@@ -4198,8 +4223,15 @@
       const activeTab = document.querySelector('.seg-btn.active')?.dataset.tab || 'todo';
       updateDocumentTitle(activeTab);
 
+      const isTimeHost = window.location.hostname.startsWith('time.');
       const navBrand = document.getElementById('navBrandLink');
-      if (navBrand) navBrand.title = t.brandTitle;
+      if (navBrand) {
+        navBrand.title = isTimeHost ? (lang === 'en' ? 'xue.moe · Exact Time' : 'xue.moe · 高精度原子对时') : t.brandTitle;
+      }
+      const navBrandSub = document.getElementById('navBrandSub');
+      if (navBrandSub && isTimeHost) {
+        navBrandSub.textContent = 'time';
+      }
       const langBtn = document.getElementById('langToggleBtn');
       if (langBtn) langBtn.textContent = t.langBtnText;
 
