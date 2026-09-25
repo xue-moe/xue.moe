@@ -1915,9 +1915,9 @@
 
     
     <section id="panel-clock" class="panel">
-      <h1 class="sr-only" id="clockHeading">北京时间 - 当前准确时间 · 高精度原子时钟对时</h1>
+      <h1 class="sr-only" id="clockHeading">标准时间 - 任何时区的精确时间 · 高精度原子时钟对时</h1>
       <div class="glass-card clock-hero-card" id="clockHero">
-        <button class="clock-fullscreen-exit" id="btnExitFullscreen" title="退出全屏 (ESC键)">退出全屏 ✕</button>
+        <button class="clock-fullscreen-exit" id="btnExitFullscreen" title="退出全屏 (ESC键)">退出全屏</button>
 
         <div class="clock-sync-badge" id="clockSyncBadge">
           <span class="sync-dot"></span>
@@ -1982,20 +1982,20 @@
           <span id="faqBadge" style="font-size:11px; color:var(--primary); font-weight:600; background:var(--primary-soft); padding:2px 8px; border-radius:999px;">纯净无广告 · 毫秒级对时</span>
         </div>
         <p class="seo-intro" id="faqIntro" style="font-size:12.5px; color:var(--text-muted); line-height:1.6; margin-top:8px; margin-bottom:0;">
-          time.xue.moe 致力于提供毫秒级高精度标准时间与北京时间校准服务。依托 Cloudflare 全球边缘 Anycast 网络与克里斯蒂安网络授时算法（Christian's Algorithm / SNTP），多样本实时过滤网络抖动，实现高精度原子对时与世界主要时区动态时差换算。
+          time.xue.moe 致力于提供毫秒级高精度标准时间与任何时区的精确时间校准服务。依托 Cloudflare 全球边缘 Anycast 网络与克里斯蒂安网络授时算法（Christian's Algorithm / SNTP），多样本实时过滤网络抖动，实现高精度原子对时与世界主要时区动态时差换算。
         </p>
 
         <div class="seo-features-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-top:14px;">
           <div class="seo-feature-item" style="background:var(--card-inner); padding:10px 12px; border-radius:10px; border:1px solid var(--card-border);">
-            <div style="font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:4px;" id="feat1Title">⚡ 边缘低延迟授时</div>
+            <div style="font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:4px;" id="feat1Title">边缘低延迟授时</div>
             <div style="font-size:11.5px; color:var(--text-muted); line-height:1.5;" id="feat1Desc">就近路由至最近边缘计算节点，网络往返时延极低（通常仅 8~70ms），授时理论误差上限低至 ±0.035秒。</div>
           </div>
           <div class="seo-feature-item" style="background:var(--card-inner); padding:10px 12px; border-radius:10px; border:1px solid var(--card-border);">
-            <div style="font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:4px;" id="feat2Title">🛡️ 纯净零广告无干扰</div>
+            <div style="font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:4px;" id="feat2Title">纯净零广告无干扰</div>
             <div style="font-size:11.5px; color:var(--text-muted); line-height:1.5;" id="feat2Desc">拒绝横幅弹窗与视频广告干扰，零追踪脚本，极致轻量极速加载，享受专注的时间体验。</div>
           </div>
           <div class="seo-feature-item" style="background:var(--card-inner); padding:10px 12px; border-radius:10px; border:1px solid var(--card-border);">
-            <div style="font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:4px;" id="feat3Title">🌍 全球时区与夏令时换算</div>
+            <div style="font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:4px;" id="feat3Title">全球时区与夏令时换算</div>
             <div style="font-size:11.5px; color:var(--text-muted); line-height:1.5;" id="feat3Desc">动态计算世界各主要城市实时夏令时（DST）与 UTC 相对偏移，分秒不差整齐对齐。</div>
           </div>
         </div>
@@ -2248,7 +2248,7 @@
         deadlineMinsOverdue: (m) => `逾期 ${m}分钟`,
 
         // Clock
-        btnExitFullscreen: '退出全屏 ✕',
+        btnExitFullscreen: '退出全屏',
         btnExitFullscreenTip: '退出全屏 (ESC键)',
         clockSyncing: '高精度网络授时同步中...',
         clockSyncExact: (acc) => `你的时钟时间完全一致 (精度 ±${(acc / 1000).toFixed(3)}秒)`,
@@ -2279,11 +2279,11 @@
         faqTitle: '高精度原子授时与标准时间服务',
         faqBadge: '纯净无广告 · 毫秒级对时',
         faqIntro: 'time.xue.moe 致力于提供毫秒级高精度标准时间与任何时区的精确时间校准服务。依托 Cloudflare 全球边缘 Anycast 网络与克里斯蒂安网络授时算法（Christian\'s Algorithm / SNTP），多样本实时过滤网络抖动，实现高精度原子对时与世界主要时区动态时差换算。',
-        feat1Title: '⚡ 边缘低延迟授时',
+        feat1Title: '边缘低延迟授时',
         feat1Desc: '就近路由至最近边缘计算节点，网络往返时延极低（通常仅 8~70ms），授时理论误差上限低至 ±0.035秒。',
-        feat2Title: '🛡️ 纯净零广告无干扰',
+        feat2Title: '纯净零广告无干扰',
         feat2Desc: '拒绝横幅弹窗与视频广告干扰，零追踪脚本，极致轻量极速加载，享受专注的时间体验。',
-        feat3Title: '🌍 全球时区与夏令时换算',
+        feat3Title: '全球时区与夏令时换算',
         feat3Desc: '动态计算世界各主要城市实时夏令时（DST）与 UTC 相对偏移，分秒不差整齐对齐。',
         faqQ1: '为什么电脑或手机本地时间会存在偏差？',
         faqA1: '大部分消费级电子设备的晶体振荡器会随温度变化和硬件老化产生走时飘移，常规系统网络对时往往数小时乃至数天同步一次。通过 time.xue.moe 可即刻与标准原子钟进行毫秒级差量比对。',
@@ -2431,7 +2431,7 @@
         deadlineMinsOverdue: (m) => `${m}m overdue`,
 
         // Clock
-        btnExitFullscreen: 'Exit Fullscreen ✕',
+        btnExitFullscreen: 'Exit Fullscreen',
         btnExitFullscreenTip: 'Exit Fullscreen (ESC)',
         clockSyncing: 'Syncing high-precision time...',
         clockSyncExact: (acc) => `Your clock is in sync (±${(acc / 1000).toFixed(3)}s)`,
@@ -2462,11 +2462,11 @@
         faqTitle: 'High-Precision Atomic Clock & Exact Time Service',
         faqBadge: 'Zero Ads · Sub-second Accuracy',
         faqIntro: 'time.xue.moe is dedicated to providing millisecond-accurate time synchronization and exact standard time for any time zone. Powered by Cloudflare global Anycast edge network and Christian’s synchronization algorithm (SNTP), it filters network jitter to deliver exact atomic time and dynamic world clock conversions.',
-        feat1Title: '⚡ Ultra-Low Latency Synchronization',
+        feat1Title: 'Ultra-Low Latency Synchronization',
         feat1Desc: 'Directly routed to the nearest edge computing node with minimal RTT (typically 8–70ms), achieving synchronization accuracy within ±0.035 seconds.',
-        feat2Title: '🛡️ Pure & Ad-Free Experience',
+        feat2Title: 'Pure & Ad-Free Experience',
         feat2Desc: 'Free from intrusive banners and video ads, zero tracking scripts, ultra-fast page load, offering a distraction-free timing experience.',
-        feat3Title: '🌍 Global Time Zones & Daylight Saving Time',
+        feat3Title: 'Global Time Zones & Daylight Saving Time',
         feat3Desc: 'Dynamically computes real-time Daylight Saving Time (DST) and UTC offsets for major world cities with seamless alignment.',
         faqQ1: 'Why does local computer or phone time drift?',
         faqA1: 'Most consumer quartz oscillators drift due to temperature and aging, while OS updates sync hours or days apart. time.xue.moe compares your local clock against standard atomic time in milliseconds.',
