@@ -600,8 +600,8 @@ html {
       .card { padding: 18px 16px; border-radius: 16px; }
       .layout { grid-template-columns: 1fr; gap: 20px; }
       .grid { max-width: 300px; margin: 0 auto; }
-      .top-nav { font-size: 12px; }
-      .nav-right { gap: 10px; }
+      .top-nav { font-size: 12px; flex-wrap: wrap; gap: 8px; }
+      .nav-right { gap: 10px; flex-wrap: wrap; }
       .guide-grid { grid-template-columns: 1fr; }
     }
 
@@ -629,7 +629,7 @@ html {
   <div class="wrap">
     <nav class="top-nav" aria-label="页面导航">
       <div class="nav-left">
-        <a href="https://xue.moe" class="nav-brand" id="navBrand" title="访问 xue.moe 门户主页">❄️ xue.moe</a>
+        <a href="https://xue.moe" class="nav-brand" id="navBrand" title="访问 xue.moe 门户主页">xue.moe</a>
         <span class="nav-sep">/</span>
         <span class="nav-current" id="navCurrent">多邻国数学求解器</span>
       </div>
@@ -715,7 +715,6 @@ html {
 
     <div class="card guide-card" id="guide">
       <div class="header-row">
-        <span class="header-icon" aria-hidden="true">💡</span>
         <h2 class="guide-title" id="guideCardTitle">幻方规则与解题技巧</h2>
       </div>
       <div class="guide-grid">

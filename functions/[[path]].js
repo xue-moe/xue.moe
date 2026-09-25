@@ -176,7 +176,7 @@ async function handleRoute(context, url, hostname) {
                 "name": "如何通过网络高精度校准本地时钟？",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "time.xue.moe 采用高精度克里斯蒂安网络授时算法（Christian's Algorithm / SNTP），向边缘服务器连续发起探针以精确测算双向往返网络时延（RTT），剔除抖动并计算单程传播偏差，实现与原子钟毫秒级精准对齐。"
+                  "text": "time.xue.moe 采用高精度克里斯蒂安网络授时算法，向边缘服务器连续发起探针以精确测算双向往返网络时延，剔除抖动并计算单程传播偏差，实现与原子钟毫秒级精准对齐。"
                 }
               },
               {
@@ -184,7 +184,7 @@ async function handleRoute(context, url, hostname) {
                 "name": "为什么 time.xue.moe 的授时精度比传统对时网站更高？",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "因为授时服务直接运行在 Cloudflare 全球边缘 Anycast 计算节点上，网络往返时延极低（通常仅 8~70ms），授时误差上限可收敛至 ±0.035秒以内，且全站无任何广告干扰。"
+                  "text": "因为授时服务直接运行在全球边缘计算节点上，网络往返时延极低（通常仅 8 至 70 毫秒），授时误差上限可收敛至 ±0.035秒以内，且全站无任何广告干扰。"
                 }
               },
               {
@@ -192,7 +192,7 @@ async function handleRoute(context, url, hostname) {
                 "name": "如何查询世界主要城市与当前时间的时差？",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "页面提供东京、伦敦、巴黎、纽约、旧金山、UTC等世界主要时区实时对照，自动计算夏令时（DST）与本地时差，分钟级精确对齐。"
+                  "text": "页面提供世界主要时区实时对照，自动计算夏令时与本地时差，分钟级精确对齐。"
                 }
               }
             ]

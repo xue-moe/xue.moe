@@ -610,12 +610,13 @@
       }
       .cal-weekdays,
       .cal-days-grid {
-        grid-template-columns: repeat(7, 34px);
-        gap: 5px;
+        grid-template-columns: repeat(7, 30px);
+        gap: 4px;
       }
       .cal-day {
-        width: 34px;
-        height: 34px;
+        width: 30px;
+        height: 30px;
+        font-size: 11px;
       }
     }
 
@@ -732,6 +733,40 @@
     .badge-blog { background: rgba(255, 107, 107, 0.12); color: #e03131; border: 1px solid rgba(255, 107, 107, 0.22); }
     .badge-dev { background: rgba(76, 110, 245, 0.12); color: #3b5bdb; border: 1px solid rgba(76, 110, 245, 0.22); }
     .badge-tools { background: rgba(168, 85, 247, 0.12); color: #9333ea; border: 1px solid rgba(168, 85, 247, 0.22); }
+    .badge-time { background: rgba(14, 165, 233, 0.12); color: #0284c7; border: 1px solid rgba(14, 165, 233, 0.22); }
+    :root[data-theme="dark"] .badge-time,
+    :root:not([data-theme="light"]) .badge-time {
+      color: #38bdf8;
+    }
+
+    .home-clock-box {
+      background: var(--card-inner);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .home-clock-digits {
+      font-size: 24px;
+      font-weight: 800;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+      color: var(--primary);
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+    }
+
+    .home-clock-status {
+      font-size: 11px;
+      font-weight: 600;
+      color: #10b981;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
 
     .site-title {
       font-size: 17px;
@@ -758,6 +793,7 @@
     }
 
     .site-arrow {
+      margin-top: auto;
       align-self: flex-end;
       font-size: 13px;
       font-weight: 700;
@@ -928,6 +964,22 @@
     <h2 class="section-title" id="siteIndexTitle">站点索引</h2>
 
     <div class="grid-sites">
+      <a href="https://time.xue.moe" class="site-card" target="_blank">
+        <div class="site-head">
+          <span class="site-badge badge-time">time.xue.moe</span>
+          <span class="status-dot" title="服务在线"></span>
+        </div>
+        <h3 class="site-title" id="timeTitle">原子授时标准时间</h3>
+        <div class="home-clock-box">
+          <div class="home-clock-digits" id="homeClockDigits">--:--:--</div>
+          <div class="home-clock-status" id="homeClockStatus">同步中...</div>
+        </div>
+        <p class="site-desc" id="timeDesc">
+          高精度网络授时同步，实时毫秒校准与全球时区标准时间。
+        </p>
+        <span class="site-arrow" id="timeArrow">访问 ↗</span>
+      </a>
+
       <a href="https://duo.xue.moe" class="site-card" target="_blank">
         <div class="site-head">
           <span class="site-badge badge-duo">duo.xue.moe</span>
@@ -1026,6 +1078,10 @@
         tooltipCommit: (cnt) => `${cnt} 次代码提交`,
         tooltipToday: ", 今日",
         siteIndex: "站点索引",
+        timeTitle: "原子授时标准时间",
+        timeDesc: "高精度网络授时同步，实时毫秒校准与全球时区标准时间。",
+        timeSyncing: "同步中...",
+        timeSynced: (acc) => `已与原子钟校准 (精度 ±${(acc / 1000).toFixed(3)}秒)`,
         duoTitle: "多邻国幻方求解器",
         duoDesc: "多邻国数学 3×3 幻方关卡求解器，支持唯一解快速推导与候选数校验。",
         toolsTitle: "Tools 工具箱",
@@ -1068,6 +1124,10 @@
         tooltipCommit: (cnt) => `${cnt} commit${cnt > 1 ? 's' : ''}`,
         tooltipToday: ", Today",
         siteIndex: "Project Index",
+        timeTitle: "Atomic Standard Time",
+        timeDesc: "High-precision network time sync with real-time millisecond calibration.",
+        timeSyncing: "Syncing...",
+        timeSynced: (acc) => `In sync (±${(acc / 1000).toFixed(3)}s)`,
         duoTitle: "Duolingo Math Solver",
         duoDesc: "Duolingo Math 3×3 magic square solver with rapid deduction and candidate validation.",
         toolsTitle: "Utility Toolbox",
@@ -1147,6 +1207,17 @@
       document.getElementById('legendLess').textContent = t.less;
       document.getElementById('legendMore').textContent = t.more;
       document.getElementById('siteIndexTitle').textContent = t.siteIndex;
+
+      const timeTitleEl = document.getElementById('timeTitle');
+      if (timeTitleEl) timeTitleEl.textContent = t.timeTitle;
+      const timeDescEl = document.getElementById('timeDesc');
+      if (timeDescEl) timeDescEl.textContent = t.timeDesc;
+      const timeArrowEl = document.getElementById('timeArrow');
+      if (timeArrowEl) timeArrowEl.textContent = t.visit;
+      const homeClockStatusEl = document.getElementById('homeClockStatus');
+      if (homeClockStatusEl) {
+        homeClockStatusEl.textContent = isHomeClockSynced ? t.timeSynced(homeTimeAccuracy) : t.timeSyncing;
+      }
 
       document.getElementById('duoTitle').textContent = t.duoTitle;
       document.getElementById('duoDesc').textContent = t.duoDesc;
@@ -1435,6 +1506,51 @@
 
     applyLanguage(currentLang);
     loadRecentContributions();
+
+    let homeTimeOffset = 0;
+    let homeTimeAccuracy = 35;
+    let isHomeClockSynced = false;
+
+    function updateHomeClock() {
+      const el = document.getElementById('homeClockDigits');
+      if (!el) return;
+      const now = new Date(Date.now() + homeTimeOffset);
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      el.textContent = `${h}:${m}:${s}`;
+    }
+
+    async function syncHomeTime() {
+      const statusEl = document.getElementById('homeClockStatus');
+      const t = i18n[currentLang] || i18n.zh;
+      if (statusEl && !isHomeClockSynced) {
+        statusEl.textContent = t.timeSyncing;
+      }
+      try {
+        const t0 = performance.timeOrigin + performance.now();
+        const res = await fetch('/api/time?_=' + Date.now(), { cache: 'no-store' });
+        const t1 = performance.timeOrigin + performance.now();
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data.serverTime === 'number') {
+            const rtt = t1 - t0;
+            homeTimeOffset = Math.round(data.serverTime - (t0 + t1) / 2);
+            homeTimeAccuracy = Math.max(1, Math.round(rtt / 2));
+            isHomeClockSynced = true;
+            if (statusEl) {
+              const curT = i18n[currentLang] || i18n.zh;
+              statusEl.textContent = curT.timeSynced(homeTimeAccuracy);
+            }
+            updateHomeClock();
+          }
+        }
+      } catch (_) {}
+    }
+
+    updateHomeClock();
+    setInterval(updateHomeClock, 500);
+    syncHomeTime();
   </script>
 </body>
 </html>
