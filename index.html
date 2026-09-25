@@ -745,9 +745,8 @@
       border-radius: 14px;
       padding: 10px 14px;
       display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 8px;
+      flex-direction: column;
+      gap: 4px;
     }
 
     .home-clock-digits {
@@ -761,11 +760,13 @@
     }
 
     .home-clock-status {
-      font-size: 11px;
+      font-size: 11.5px;
       font-weight: 600;
       color: #10b981;
-      line-height: 1.2;
+      line-height: 1.3;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .site-title {
@@ -1081,7 +1082,7 @@
         timeTitle: "原子授时标准时间",
         timeDesc: "高精度网络授时同步，实时毫秒校准与全球时区标准时间。",
         timeSyncing: "同步中...",
-        timeSynced: (acc) => `已与原子钟校准 (精度 ±${(acc / 1000).toFixed(3)}秒)`,
+        timeSynced: (acc) => `已与原子钟校准 (±${(acc / 1000).toFixed(3)}秒)`,
         duoTitle: "多邻国幻方求解器",
         duoDesc: "多邻国数学 3×3 幻方关卡求解器，支持唯一解快速推导与候选数校验。",
         toolsTitle: "实用工具箱",
