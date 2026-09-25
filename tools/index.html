@@ -886,6 +886,20 @@
       margin-bottom: 22px;
       flex-wrap: wrap;
       justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+    }
+
+    .clock-sync-badge:hover {
+      border-color: var(--primary);
+      transform: translateY(-1px);
+    }
+
+    .clock-sync-badge.syncing .sync-dot {
+      background: #f59e0b;
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.8);
+      animation: pulse 0.6s infinite;
     }
 
     .sync-dot {
@@ -1876,7 +1890,7 @@
       <div class="glass-card clock-hero-card" id="clockHero">
         <button class="clock-fullscreen-exit" id="btnExitFullscreen" title="退出全屏 (ESC键)">退出全屏 ✕</button>
 
-        <div class="clock-sync-badge">
+        <div class="clock-sync-badge" id="clockSyncBadge">
           <span class="sync-dot"></span>
           <span id="clockSyncStatus">时钟对时校验中...</span>
           <span class="sync-tz" id="clockTzLabel">Asia/Shanghai (UTC+8)</span>
@@ -2171,8 +2185,12 @@
         // Clock
         btnExitFullscreen: '退出全屏 ✕',
         btnExitFullscreenTip: '退出全屏 (ESC键)',
-        clockSyncing: '时钟对时校验中...',
-        clockSyncOffset: (sign, sec) => `标准时间偏差: ${sign}${sec}秒`,
+        clockSyncing: '高精度网络授时同步中...',
+        clockSyncExact: (acc) => `时间精确 (误差 < 0.05秒 · 精度 ±${acc}毫秒)`,
+        clockSyncFast: (sec, acc) => `本地快了 ${sec}秒 (精度 ±${acc}毫秒)`,
+        clockSyncSlow: (sec, acc) => `本地慢了 ${sec}秒 (精度 ±${acc}毫秒)`,
+        clockSyncTip: (rtt, offset, acc) => `网络往返: ${rtt}毫秒\n校准偏差: ${offset}毫秒\n授时精度: ±${acc}毫秒\n点击重新校准`,
+        clockSyncFailed: '网络授时失败，使用系统时间',
         clockDisplayTip: '点击切换小时制',
         btnSwitch12H: '切换 12小时制',
         btnSwitch24H: '切换 24小时制',
@@ -2336,8 +2354,12 @@
         // Clock
         btnExitFullscreen: 'Exit Fullscreen ✕',
         btnExitFullscreenTip: 'Exit Fullscreen (ESC)',
-        clockSyncing: 'Syncing NTP reference time...',
-        clockSyncOffset: (sign, sec) => `Offset: ${sign}${sec}s`,
+        clockSyncing: 'Syncing high-precision time...',
+        clockSyncExact: (acc) => `In sync (< 0.05s · ±${acc}ms)`,
+        clockSyncFast: (sec, acc) => `${sec}s fast (±${acc}ms)`,
+        clockSyncSlow: (sec, acc) => `${sec}s slow (±${acc}ms)`,
+        clockSyncTip: (rtt, offset, acc) => `Round-trip: ${rtt}ms\nOffset: ${offset}ms\nAccuracy: ±${acc}ms\nClick to re-sync`,
+        clockSyncFailed: 'Sync failed, using system time',
         clockDisplayTip: 'Click to toggle 12/24 hour format',
         btnSwitch12H: 'Switch 12H',
         btnSwitch24H: 'Switch 24H',
@@ -3340,6 +3362,16 @@
     const btnToggleFullscreen = document.getElementById('btnToggleFullscreen');
     const clockHero = document.getElementById('clockHero');
     const clockDisplay = document.getElementById('clockDisplay');
+    const clockSyncBadge = document.getElementById('clockSyncBadge');
+
+    let networkTimeOffset = 0;
+    let networkTimeAccuracy = 0;
+    let networkTimeRtt = 0;
+    let isSyncingTime = false;
+
+    function getAccurateTime() {
+      return new Date(Date.now() + networkTimeOffset);
+    }
 
     let is24Hour = localStorage.getItem('xue-clock-24h') !== 'false';
     let showMillis = localStorage.getItem('xue-clock-millis') === 'true';
@@ -3347,7 +3379,7 @@
 
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Shanghai';
     if (clockTzLabel) {
-      const now = new Date();
+      const now = getAccurateTime();
       const offsetMin = -now.getTimezoneOffset();
       const offsetHours = offsetMin / 60;
       const offsetSign = offsetHours >= 0 ? '+' : '';
@@ -3393,7 +3425,7 @@
     }
 
     function updateStandardClock() {
-      const now = new Date();
+      const now = getAccurateTime();
 
       let hours = now.getHours();
       const minutes = String(now.getMinutes()).padStart(2, '0');
@@ -3531,7 +3563,7 @@
 
     if (btnCopyTimestamp) {
       btnCopyTimestamp.addEventListener('click', () => {
-        const ts = Math.floor(Date.now() / 1000);
+        const ts = Math.floor(getAccurateTime().getTime() / 1000);
         navigator.clipboard.writeText(String(ts)).then(() => {
           const t = i18n[currentLang] || i18n.zh;
           const originalText = btnCopyTimestamp.textContent;
@@ -3580,7 +3612,26 @@
       document.addEventListener('webkitfullscreenchange', onFsChange);
     }
 
-    async function measureTimeOffset() {
+    function updateSyncUI() {
+      if (!clockSyncStatus) return;
+      const t = i18n[currentLang] || i18n.zh;
+      const absOffsetSec = (Math.abs(networkTimeOffset) / 1000).toFixed(2);
+      let text = '';
+      if (Math.abs(networkTimeOffset) < 50) {
+        text = t.clockSyncExact(networkTimeAccuracy);
+      } else if (networkTimeOffset < 0) {
+        text = t.clockSyncFast(absOffsetSec, networkTimeAccuracy);
+      } else {
+        text = t.clockSyncSlow(absOffsetSec, networkTimeAccuracy);
+      }
+      clockSyncStatus.textContent = text;
+      if (clockSyncBadge) {
+        const sign = networkTimeOffset >= 0 ? '+' : '';
+        clockSyncBadge.title = t.clockSyncTip(networkTimeRtt, `${sign}${networkTimeOffset}`, networkTimeAccuracy);
+      }
+    }
+
+    async function fallbackMeasureDateHeader() {
       try {
         const t0 = performance.now();
         const res = await fetch('/?_=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
@@ -3588,16 +3639,98 @@
         const serverDate = res.headers.get('date');
         if (serverDate) {
           const serverTime = new Date(serverDate).getTime() + (t1 - t0) / 2;
-          const offsetMs = serverTime - Date.now();
-          const offsetSec = (Math.abs(offsetMs) / 1000).toFixed(2);
-          if (clockSyncStatus) {
-            const sign = offsetMs >= 0 ? '+' : '';
-            const t = i18n[currentLang] || i18n.zh;
-            clockSyncStatus.textContent = t.clockSyncOffset(sign, offsetSec);
-          }
+          networkTimeOffset = Math.round(serverTime - Date.now());
+          networkTimeAccuracy = Math.max(500, Math.round((t1 - t0) / 2));
+          networkTimeRtt = Math.round(t1 - t0);
+          updateSyncUI();
+          updateStandardClock();
+          return;
         }
       } catch (_) {}
+      const t = i18n[currentLang] || i18n.zh;
+      if (clockSyncStatus) clockSyncStatus.textContent = t.clockSyncFailed;
     }
+
+    async function syncNetworkTime(force) {
+      if (isSyncingTime && !force) return;
+      isSyncingTime = true;
+      const t = i18n[currentLang] || i18n.zh;
+      if (clockSyncStatus) {
+        clockSyncStatus.textContent = t.clockSyncing;
+      }
+      if (clockSyncBadge) clockSyncBadge.classList.add('syncing');
+
+      const samples = [];
+      const endpoints = ['/api/time', 'https://xue.moe/api/time'];
+      let activeEndpoint = endpoints[0];
+
+      try {
+        for (let i = 0; i < 5; i++) {
+          const t0 = performance.timeOrigin + performance.now();
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 3500);
+          try {
+            const res = await fetch(`${activeEndpoint}?_=${Date.now()}_${i}`, {
+              cache: 'no-store',
+              signal: controller.signal
+            });
+            clearTimeout(timer);
+            const t3 = performance.timeOrigin + performance.now();
+            if (res.ok) {
+              const data = await res.json();
+              if (data && typeof data.serverTime === 'number') {
+                const rtt = t3 - t0;
+                const offset = data.serverTime - (t0 + t3) / 2;
+                const uncertainty = rtt / 2;
+                samples.push({ rtt, offset, uncertainty });
+              }
+            } else if (i === 0 && activeEndpoint === endpoints[0]) {
+              activeEndpoint = endpoints[1];
+            }
+          } catch (_) {
+            clearTimeout(timer);
+            if (i === 0 && activeEndpoint === endpoints[0]) {
+              activeEndpoint = endpoints[1];
+            }
+          }
+          if (i < 4) await new Promise(r => setTimeout(r, 25));
+        }
+
+        if (samples.length > 0) {
+          samples.sort((a, b) => a.rtt - b.rtt);
+          const best = samples[0];
+          networkTimeOffset = Math.round(best.offset);
+          networkTimeAccuracy = Math.max(1, Math.round(best.uncertainty));
+          networkTimeRtt = Math.round(best.rtt);
+
+          updateSyncUI();
+          updateStandardClock();
+        } else {
+          await fallbackMeasureDateHeader();
+        }
+      } catch (_) {
+        await fallbackMeasureDateHeader();
+      } finally {
+        isSyncingTime = false;
+        if (clockSyncBadge) clockSyncBadge.classList.remove('syncing');
+      }
+    }
+
+    if (clockSyncBadge) {
+      clockSyncBadge.addEventListener('click', () => {
+        syncNetworkTime(true);
+      });
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        syncNetworkTime(true);
+      }
+    });
+
+    setInterval(() => {
+      syncNetworkTime();
+    }, 10 * 60 * 1000);
 
     const textInput = document.getElementById('textInput');
     const countChars = document.getElementById('countChars');
@@ -4257,6 +4390,7 @@
 
       renderTodos();
       updateStandardClock();
+      updateSyncUI();
       analyzeText();
     }
 
@@ -4388,7 +4522,7 @@
     updateCounts();
     updateClock();
     setupClockTimer();
-    measureTimeOffset();
+    syncNetworkTime();
   </script>
 </body>
 </html>

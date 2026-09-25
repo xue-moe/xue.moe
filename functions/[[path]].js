@@ -33,6 +33,20 @@ async function fetchAsset(context, targetPath) {
 }
 
 async function handleRoute(context, url, hostname) {
+  if (url.pathname === '/api/time') {
+    return new Response(JSON.stringify({
+      serverTime: Date.now()
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  }
+
   if (url.pathname === '/api/contributions') {
     try {
       const apiRes = await fetch('https://github-contributions-api.jogruber.de/v4/xue-moe?y=last', {
