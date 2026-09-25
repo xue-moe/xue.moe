@@ -898,7 +898,7 @@
           alt="Ryosetsu's Avatar"
           onerror="this.src='https://placehold.co/96x96/a5b4fc/ffffff?text=xue'"
         />
-        <div class="status-badge" id="statusBadge" title="在线 coding 中"></div>
+        <div class="status-badge" id="statusBadge" title="在线开发中"></div>
       </div>
       <h1 class="brand-hello">xue.moe</h1>
       <p class="bio">
@@ -997,7 +997,7 @@
           <span class="site-badge badge-tools">tools.xue.moe</span>
           <span class="status-dot" title="服务在线"></span>
         </div>
-        <h3 class="site-title" id="toolsTitle">Tools 工具箱</h3>
+        <h3 class="site-title" id="toolsTitle">实用工具箱</h3>
         <p class="site-desc" id="toolsDesc">
           待办清单、多时区时钟、专注倒计时与字符排错分析。
         </p>
@@ -1009,7 +1009,7 @@
           <span class="site-badge badge-blog">blog.xue.moe</span>
           <span class="status-dot" title="服务在线"></span>
         </div>
-        <h3 class="site-title" id="blogTitle">Blog 博客随笔</h3>
+        <h3 class="site-title" id="blogTitle">博客随笔</h3>
         <p class="site-desc" id="blogDesc">
           技术笔记、架构随想与生活切片存档。
         </p>
@@ -1021,9 +1021,9 @@
           <span class="site-badge badge-dev">dev.xue.moe</span>
           <span class="status-dot" title="服务在线"></span>
         </div>
-        <h3 class="site-title" id="devTitle">Dev Lab 实验工坊</h3>
+        <h3 class="site-title" id="devTitle">实验工坊</h3>
         <p class="site-desc" id="devDesc">
-          实验性项目、组件轮子与前端原型孵化。
+          实验性项目、前端组件与交互原型孵化。
         </p>
         <span class="site-arrow" id="devArrow">访问 ↗</span>
       </a>
@@ -1052,11 +1052,11 @@
         langBtn: "EN",
         docTitle: "xue.moe - Ryosetsu 的独立数字空间 | 个人项目与实用工具门户",
         docDesc: "xue.moe 是 Ryosetsu（雪）的个人主页与项目导航空间。收录了多邻国数学幻方求解器、现代实用网页工具箱、前端实验室及技术博客，致力于打造极致优雅的纯静态 Web 体验。",
-        statusTitle: "在线 coding 中",
+        statusTitle: "在线开发中",
         typingWords: [
           "个人主页与项目索引。",
           "记录折腾日常与实验工具。",
-          "Keep things simple and focused."
+          "保持专注与极简。"
         ],
         copyTitle: "点击复制邮箱",
         copiedToast: "已复制邮箱 me@xue.moe 到剪贴板",
@@ -1084,30 +1084,30 @@
         timeSynced: (acc) => `已与原子钟校准 (精度 ±${(acc / 1000).toFixed(3)}秒)`,
         duoTitle: "多邻国幻方求解器",
         duoDesc: "多邻国数学 3×3 幻方关卡求解器，支持唯一解快速推导与候选数校验。",
-        toolsTitle: "Tools 工具箱",
+        toolsTitle: "实用工具箱",
         toolsDesc: "待办清单、多时区时钟、专注倒计时与字符排错分析。",
-        blogTitle: "Blog 博客随笔",
+        blogTitle: "博客随笔",
         blogDesc: "技术笔记、架构随想与生活切片存档。",
-        devTitle: "Dev Lab 实验工坊",
-        devDesc: "实验性项目、组件轮子与前端原型孵化。",
+        devTitle: "实验工坊",
+        devDesc: "实验性项目、前端组件与交互原型孵化。",
         visit: "访问 ↗",
-        themeDarkTip: "当前为深色模式，点击切换浅色",
-        themeLightTip: "当前为浅色模式，点击切换深色"
+        themeDarkTip: "切换为浅色模式",
+        themeLightTip: "切换为深色模式"
       },
       en: {
         langBtn: "中",
         docTitle: "xue.moe - Ryosetsu's Digital Space | Personal Projects & Tools",
         docDesc: "xue.moe is Ryosetsu's personal site and project index, featuring a Duolingo Math solver, utility toolbox, dev lab, and technical writings.",
-        statusTitle: "Coding Online",
+        statusTitle: "Online & Developing",
         typingWords: [
-          "Personal space and project index.",
-          "Daily hacking, creations & tools.",
+          "Personal homepage & project directory.",
+          "Side projects, experiments, and developer tools.",
           "Keep things simple and focused."
         ],
         copyTitle: "Click to copy email",
         copiedToast: "Copied me@xue.moe to clipboard",
         blog: "Blog",
-        calTitle: "Commit Footprint",
+        calTitle: "Contribution Calendar",
         calProfileHint: "View full GitHub profile",
         thisMonth: "This Month",
         calUnit: "commits",
@@ -1118,27 +1118,27 @@
         weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
         months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
         formatMonthRange: (startY, startM, endM) => startM === endM ? `${i18n.en.months[startM - 1]} ${startY}` : `${i18n.en.months[startM - 1]} - ${i18n.en.months[endM - 1]}`,
-        calActiveDesc: (days) => days > 0 ? `Active ${days} of last 35 days` : "No commits in last 35 days",
+        calActiveDesc: (days) => days > 0 ? `Active ${days} of the past 35 days` : "No commits in the past 35 days",
         tooltipFuture: "Upcoming",
         tooltipNoCommit: "No commits",
         tooltipCommit: (cnt) => `${cnt} commit${cnt > 1 ? 's' : ''}`,
         tooltipToday: ", Today",
-        siteIndex: "Project Index",
+        siteIndex: "Projects & Sites",
         timeTitle: "Atomic Standard Time",
         timeDesc: "High-precision network time sync with real-time millisecond calibration.",
         timeSyncing: "Syncing...",
         timeSynced: (acc) => `In sync (±${(acc / 1000).toFixed(3)}s)`,
         duoTitle: "Duolingo Math Solver",
-        duoDesc: "Duolingo Math 3×3 magic square solver with rapid deduction and candidate validation.",
+        duoDesc: "Duolingo Math 3×3 magic square solver with instant deduction and candidate validation.",
         toolsTitle: "Utility Toolbox",
-        toolsDesc: "To-do lists, world clock, pomodoro timer, and character inspector.",
+        toolsDesc: "To-do list, standard world clocks, focus timer, and character inspector.",
         blogTitle: "Blog & Notes",
         blogDesc: "Technical writings, architectural musings, and slices of life.",
         devTitle: "Dev Lab",
-        devDesc: "Experimental gadgets, modern web wheels, and interactive prototypes.",
+        devDesc: "Experimental projects, web components, and frontend prototypes.",
         visit: "Visit ↗",
-        themeDarkTip: "Dark mode active. Click for light mode",
-        themeLightTip: "Light mode active. Click for dark mode"
+        themeDarkTip: "Switch to light mode",
+        themeLightTip: "Switch to dark mode"
       }
     };
 

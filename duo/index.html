@@ -663,12 +663,12 @@ html {
         <div class="side" id="settings-section">
           <h2 class="side-title" id="sideTitle">参数配置与计算</h2>
           <div class="field">
-            <label for="targetSum" id="labelTargetSum">目标和值 (三数之和)</label>
+            <label for="targetSum" id="labelTargetSum">目标和值（各行、列与对角线之和）</label>
             <input id="targetSum" type="number" step="1" inputmode="numeric" placeholder="例如：15 (可自动计算)">
           </div>
 
           <div class="field">
-            <label for="candidateValues" id="labelCandidateValues">备选值 (多邻国给出的候选数字)</label>
+            <label for="candidateValues" id="labelCandidateValues">备选数字（题目候选选项）</label>
             <input
               id="candidateValues"
               type="text"
@@ -679,7 +679,7 @@ html {
 
           <label class="check-row" id="uniqueCheckRow">
             <input id="uniqueCandidates" type="checkbox" checked>
-            <span id="uniqueCandidatesLabel">九宫格中的数字不能重复</span>
+            <span id="uniqueCandidatesLabel">九宫格内数字不重复</span>
           </label>
 
           <div class="buttons">
@@ -774,11 +774,11 @@ html {
         gridPrevBtn: "◀ 上一组",
         gridNextBtn: "下一组 ▶",
         sideTitle: "参数配置与计算",
-        labelTargetSum: "目标和值 (三数之和)",
+        labelTargetSum: "目标和值（各行、列与对角线之和）",
         placeholderTargetSum: "例如：15 (可自动计算)",
-        labelCandidateValues: "备选值 (多邻国给出的候选数字)",
+        labelCandidateValues: "备选数字（题目候选选项）",
         placeholderCandidates: "例如：5 或 5, 10, 6",
-        uniqueCandidatesLabel: "九宫格中的数字不能重复",
+        uniqueCandidatesLabel: "九宫格内数字不重复",
         solveBtn: "计算并补全",
         clearBtn: "重置",
         statusEmpty: "九宫格为空。请输入已知数字或目标和值。",
@@ -788,11 +788,11 @@ html {
         nextBtn: "下一组 ▶",
         guideCardTitle: "幻方规则与解题技巧",
         guideH1: "中心数黄金定律",
-        guideP1: "在任意 3×3 幻方中，<strong>中心数恒等于目标和值的 1/3</strong>（即 <code>目标和值 = 3 × 中心格</code>）。只要填入中心格或目标和值，系统将自动双向推导补全。",
+        guideP1: "在任意 3×3 幻方中，<strong>中心数恒等于目标和值的三分之一</strong>（即 <code>目标和值 = 3 × 中心格</code>）。输入任意一项即可自动推导另一项。",
         guideH2: "对称互补特性",
-        guideP2: "穿过中心格的 4 条线（行、列及两条对角线）上，相对两数之和恒等于 <code>2 × 中心数</code>。借助该对称律可轻松反推未知格。",
-        guideH3: "多邻国候选值定位",
-        guideP3: "将多邻国数学题目中给出的可选数字填入「备选值」，求解器将以<strong class=\"badge-orange\">橙色高亮</strong>标识其在解法中的具体格子位置，方便一键通关。",
+        guideP2: "穿过中心格的 4 条线（行、列及两条对角线）上，相对两数之和恒等于 <code>2 × 中心数</code>。借助该对称律可快速推导未知格子。",
+        guideH3: "候选数字快速定位",
+        guideP3: "将题目中给出的候选选项填入「备选数字」，求解器将以<strong class=\"badge-orange\">橙色高亮</strong>标识其在幻方中的对应位置，方便快速解题。",
         footerTop: "回到顶部 ↑",
         footerGuide: "解题技巧",
         footerHome: "xue.moe 首页",
@@ -831,48 +831,48 @@ html {
         gridPrevBtn: "◀ Prev",
         gridNextBtn: "Next ▶",
         sideTitle: "Parameters & Solver",
-        labelTargetSum: "Target Sum (Sum of 3 numbers)",
+        labelTargetSum: "Target Sum (Row, column & diagonal sum)",
         placeholderTargetSum: "e.g. 15 (auto-deduced)",
-        labelCandidateValues: "Candidate Numbers (choices in game)",
+        labelCandidateValues: "Available Numbers (Duolingo choices)",
         placeholderCandidates: "e.g. 5 or 5, 10, 6",
-        uniqueCandidatesLabel: "No duplicate numbers in 3x3 grid",
+        uniqueCandidatesLabel: "All numbers in grid must be unique",
         solveBtn: "Solve & Fill",
-        clearBtn: "Clear",
-        statusEmpty: "Grid is empty. Enter known numbers or a target sum.",
-        hintColors: "• Colors: <span class=\"badge-blue\">Blue</span> = known, <span class=\"badge-green\">Green</span> = solved, <span class=\"badge-orange\">Orange</span> = candidate hit.<br>• Shortcuts: Arrow keys navigate; <kbd>Backspace</kbd> on empty cell steps back; <kbd>Enter</kbd> solves.",
-        resultsTitle: "All Valid Solutions",
+        clearBtn: "Reset",
+        statusEmpty: "The grid is empty. Enter known numbers or a target sum.",
+        hintColors: "• Colors: <span class=\"badge-blue\">Blue</span> = known, <span class=\"badge-green\">Green</span> = solved, <span class=\"badge-orange\">Orange</span> = candidate match.<br>• Shortcuts: Arrow keys navigate; <kbd>Backspace</kbd> on an empty cell steps back; <kbd>Enter</kbd> solves.",
+        resultsTitle: "Valid Solutions",
         prevBtn: "◀ Prev",
         nextBtn: "Next ▶",
-        guideCardTitle: "Magic Square Rules & Solving Tips",
+        guideCardTitle: "Rules & Solving Strategies",
         guideH1: "Golden Rule of the Center Cell",
-        guideP1: "In any 3×3 magic square, <strong>the center number is always 1/3 of the target sum</strong> (i.e. <code>Target Sum = 3 × Center</code>). Filling either one auto-deduces the other immediately.",
+        guideP1: "In any 3×3 magic square, <strong>the center number is always exactly one third of the target sum</strong> (<code>Target Sum = 3 × Center</code>). Entering either value immediately determines the other.",
         guideH2: "Symmetry & Complementarity",
-        guideP2: "Along all 4 lines through the center (row, column, and 2 diagonals), the sum of opposite pairs equals <code>2 × Center</code>. This allows rapid backward induction of missing numbers.",
-        guideH3: "Pinpoint Duolingo Candidates",
-        guideP3: "Enter the optional numbers provided in the game into 「Candidate Numbers」. The solver highlights their exact positions in <strong class=\"badge-orange\">Orange</strong> for an instant win.",
+        guideP2: "For every line passing through the center cell (rows, columns, and diagonals), opposite pairs sum to <code>2 × Center</code>. This symmetry allows instant deduction of unknown cells.",
+        guideH3: "Pinpoint Duolingo Choices",
+        guideP3: "Enter the number choices given by Duolingo into 「Available Numbers」. The solver highlights their exact positions in <strong class=\"badge-orange\">orange</strong> so you can solve the puzzle immediately.",
         footerTop: "Back to Top ↑",
-        footerGuide: "Tips & Guide",
+        footerGuide: "Solving Tips",
         footerHome: "xue.moe Home",
         statusReset: "Grid reset. Enter known numbers or a target sum.",
         errCellInt: (idx) => `Cell ${idx + 1} must be a positive integer.`,
         statusUpdated: "Known numbers updated.",
-        errConflictSum: (sums) => `Conflicting target sums deduced: ${sums}. Please check your inputs.`,
-        okAutoDetected: (val) => `Auto-deduced target sum: ${val}`,
-        errTargetMismatch: (det, cur) => `Deduced sum is ${det}, which contradicts target sum ${cur}.`,
-        errNeedTarget: "Please enter a target sum, or complete a full row/col/center to auto-deduce.",
+        errConflictSum: (sums) => `Conflicting target sums detected: ${sums}. Please check your inputs.`,
+        okAutoDetected: (val) => `Auto-detected target sum: ${val}`,
+        errTargetMismatch: (det, cur) => `Deduction yields sum ${det}, which conflicts with target sum ${cur}.`,
+        errNeedTarget: "Please enter a target sum, or complete a full row, column, or center cell to deduce it.",
         errTargetPosInt: "Target sum must be a positive integer.",
-        errCandidatesPosInt: "Candidate values must be positive integers separated by commas or spaces.",
-        errDupeFixed: (dupes) => `Duplicate numbers not allowed: found duplicate ${dupes} in known cells.`,
-        errDupeCandInFixed: (dupes) => `Duplicate numbers not allowed: candidate ${dupes} already exists in known cells.`,
-        errNeedInput: "Please enter at least one known number or candidate values.",
+        errCandidatesPosInt: "Available numbers must be positive integers separated by commas or spaces.",
+        errDupeFixed: (dupes) => `Numbers cannot repeat: duplicate ${dupes} found in known cells.`,
+        errDupeCandInFixed: (dupes) => `Numbers cannot repeat: candidate ${dupes} is already placed in the grid.`,
+        errNeedInput: "Please enter at least one known number or available numbers.",
         errTargetDiv3: (tgt) => `Target sum ${tgt} is not divisible by 3. No integer solution exists.`,
-        errNoSolution: "No valid magic square solution matches the given sum and candidates. Please check your inputs.",
-        okSingleSolution: "Found unique solution, auto-completed in the 3x3 grid.",
-        okMultiSolutions: (cnt) => `Found ${cnt} valid solutions. Switch to view each.`,
-        resultsCountAll: (total) => `Total ${total} solution(s), all displayed below (click to view)`,
-        resultsCountPaginated: (total, cur) => `Total ${total} solution(s), viewing #${cur}`,
-        groupLabel: (idx) => `Solution #${idx + 1}`,
-        gridNavLabel: (cur, total) => `Solution ${cur} / ${total}`
+        errNoSolution: "No valid magic square matches the given constraints. Please verify your inputs.",
+        okSingleSolution: "Unique solution found and filled into the grid.",
+        okMultiSolutions: (cnt) => `Found ${cnt} valid solutions. Use the controls to browse.`,
+        resultsCountAll: (total) => `Found ${total} solution${total === 1 ? '' : 's'}. Click a card to preview.`,
+        resultsCountPaginated: (total, cur) => `Solution ${cur} of ${total}`,
+        groupLabel: (idx) => `Solution ${idx + 1}`,
+        gridNavLabel: (cur, total) => `Solution ${cur} of ${total}`
       }
     };
 
