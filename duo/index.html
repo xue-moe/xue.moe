@@ -18,9 +18,42 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🦉</text></svg>">
   <script>
     (function() {
-      const savedLang = localStorage.getItem("xue-lang") || (navigator.language && navigator.language.startsWith("en") ? "en" : "zh");
-      document.documentElement.setAttribute("data-lang", savedLang);
-      document.documentElement.setAttribute("lang", savedLang === "en" ? "en" : "zh-CN");
+      function getCookie(name) {
+        const match = document.cookie.match(new RegExp('(?:^|;\\s*)' + name + '=([^;]*)'));
+        return match ? decodeURIComponent(match[1]) : null;
+      }
+      function setShared(name, val) {
+        try { localStorage.setItem(name, val); } catch (_) {}
+        const isXue = location.hostname === 'xue.moe' || location.hostname.endsWith('.xue.moe');
+        const d = isXue ? '; domain=.xue.moe' : '';
+        document.cookie = `${name}=${encodeURIComponent(val)}; path=/; max-age=31536000; SameSite=Lax${d}`;
+      }
+
+      const params = new URLSearchParams(location.search);
+      const qTheme = params.get('theme');
+      const qLang = params.get('lang');
+
+      const theme = (qTheme === 'dark' || qTheme === 'light') ? qTheme
+        : (localStorage.getItem('xue-theme') || getCookie('xue-theme'));
+      if (theme === 'dark' || theme === 'light') {
+        document.documentElement.setAttribute('data-theme', theme);
+        setShared('xue-theme', theme);
+      }
+
+      const rawLang = qLang ? qLang.toLowerCase() : null;
+      const lang = (rawLang === 'zh' || rawLang === 'en') ? rawLang
+        : (localStorage.getItem('xue-lang') || getCookie('xue-lang') || (navigator.language && navigator.language.startsWith('en') ? 'en' : 'zh'));
+      document.documentElement.setAttribute('data-lang', lang);
+      document.documentElement.setAttribute('lang', lang === 'en' ? 'en' : 'zh-CN');
+      setShared('xue-lang', lang);
+
+      if (qTheme || qLang) {
+        params.delete('theme');
+        params.delete('lang');
+        const cleanSearch = params.toString();
+        const cleanUrl = location.pathname + (cleanSearch ? '?' + cleanSearch : '') + location.hash;
+        try { history.replaceState(null, '', cleanUrl); } catch (_) {}
+      }
     })();
   </script>
   <style>
@@ -876,7 +909,42 @@ html {
       }
     };
 
-    let currentLang = document.documentElement.getAttribute('data-lang') || 'zh';
+    let currentLang = document.documentElement.getAttribute('data-lang') || localStorage.getItem('xue-lang') || (navigator.language && navigator.language.startsWith('en') ? 'en' : 'zh');
+
+    function setSharedPref(name, val) {
+      try { localStorage.setItem(name, val); } catch (_) {}
+      const isXue = location.hostname === 'xue.moe' || location.hostname.endsWith('.xue.moe');
+      const d = isXue ? '; domain=.xue.moe' : '';
+      document.cookie = `${name}=${encodeURIComponent(val)}; path=/; max-age=31536000; SameSite=Lax${d}`;
+    }
+
+    function attachCrossDomainPrefs(link) {
+      if (!link || !link.href) return;
+      try {
+        const url = new URL(link.href, location.origin);
+        if (url.hostname === 'xue.moe' || url.hostname.endsWith('.xue.moe')) {
+          const curLang = document.documentElement.getAttribute('data-lang') || 'zh';
+          const curTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('xue-theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          url.searchParams.set('lang', curLang);
+          if (curTheme) url.searchParams.set('theme', curTheme);
+          link.href = url.toString();
+        }
+      } catch (_) {}
+    }
+
+    function updateCrossDomainLinks() {
+      document.querySelectorAll('a[href]').forEach(attachCrossDomainPrefs);
+    }
+
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a');
+      if (link) attachCrossDomainPrefs(link);
+    }, true);
+
+    document.addEventListener('pointerdown', (e) => {
+      const link = e.target.closest('a');
+      if (link) attachCrossDomainPrefs(link);
+    }, true);
 
     const gridEl = document.getElementById('grid');
     const targetSumEl = document.getElementById('targetSum');
@@ -1502,7 +1570,7 @@ html {
       currentLang = lang;
       document.documentElement.setAttribute('data-lang', lang);
       document.documentElement.setAttribute('lang', lang === 'en' ? 'en' : 'zh-CN');
-      localStorage.setItem('xue-lang', lang);
+      setSharedPref('xue-lang', lang);
 
       const t = i18n[lang];
       document.title = t.docTitle;
@@ -1553,6 +1621,7 @@ html {
       } else {
         setStatus(t.statusEmpty);
       }
+      updateCrossDomainLinks();
     }
 
     langToggleBtn.addEventListener('click', () => {
