@@ -697,7 +697,7 @@ html {
           <h2 class="side-title" id="sideTitle">参数配置与计算</h2>
           <div class="field">
             <label for="targetSum" id="labelTargetSum">目标和值（各行、列与对角线之和）</label>
-            <input id="targetSum" type="number" step="1" inputmode="numeric" placeholder="例如：15 (可自动计算)">
+            <input id="targetSum" type="number" step="1" inputmode="numeric" autocomplete="off" data-1p-ignore data-bwignore placeholder="例如：15 (可自动计算)">
           </div>
 
           <div class="field">
@@ -706,6 +706,9 @@ html {
               id="candidateValues"
               type="text"
               inputmode="decimal"
+              autocomplete="off"
+              data-1p-ignore
+              data-bwignore
               placeholder="例如：5 或 5, 10, 6"
             >
           </div>
@@ -988,6 +991,9 @@ html {
       input.step = '1';
       input.min = '1';
       input.inputMode = 'numeric';
+      input.autocomplete = 'off';
+      input.setAttribute('data-1p-ignore', '');
+      input.setAttribute('data-bwignore', '');
       input.dataset.index = i;
       input.dataset.source = '';
 

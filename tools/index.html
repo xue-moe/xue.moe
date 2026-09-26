@@ -1923,6 +1923,8 @@
               class="todo-input"
               placeholder="新建待办事项..."
               autocomplete="off"
+              data-1p-ignore
+              data-bwignore
             />
             <button class="btn btn-ghost" id="toggleExpandBtn">备注 / 截止</button>
             <button class="btn btn-primary" id="addTodoBtn">添加</button>
@@ -1935,11 +1937,14 @@
               id="todoNoteInput"
               class="sub-input"
               placeholder="备注（选填）"
+              autocomplete="off"
+              data-1p-ignore
+              data-bwignore
             />
             <div class="deadline-picker-row">
               <div style="display:flex; align-items:center; gap:8px;">
                 <label for="todoDeadlineInput" id="todoDeadlineLabel">截止：</label>
-                <input type="datetime-local" id="todoDeadlineInput" class="deadline-input" />
+                <input type="datetime-local" id="todoDeadlineInput" class="deadline-input" data-1p-ignore data-bwignore />
               </div>
               <button class="btn-subtle" id="closeExpandBtn">收起</button>
             </div>
@@ -2125,7 +2130,7 @@
           字数统计、易混淆字符比对、中文拼音、日文罗马音
         </p>
 
-        <textarea id="textInput" class="textarea-box" placeholder="输入或粘贴文本..."></textarea>
+        <textarea id="textInput" class="textarea-box" placeholder="输入或粘贴文本..." autocomplete="off" data-1p-ignore data-bwignore></textarea>
 
         <div class="char-inspector" id="charInspector">
           <div class="inspector-header">
