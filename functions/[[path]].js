@@ -48,7 +48,7 @@ async function handleRoute(context, url, hostname) {
   }
 
   if (url.pathname === '/api/visit') {
-    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date());
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date(Date.now() - 4 * 60 * 60 * 1000));
     const cookieHeader = context.request.headers.get('Cookie') || '';
     const visitedToday = cookieHeader.includes(`xue_v_${today}=1`);
 
