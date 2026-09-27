@@ -1269,6 +1269,20 @@
     let homeTimeOffset = 0;
     let homeTimeAccuracy = 35;
     let isHomeClockSynced = false;
+    let visitorStats = null;
+
+    function renderVisitorBadge(stats) {
+      if (!stats) return;
+      visitorStats = stats;
+      const badge = document.getElementById('visitorBadge');
+      const textEl = document.getElementById('visitorCountText');
+      const t = i18n[currentLang] || i18n.zh;
+      if (badge && textEl) {
+        textEl.innerHTML = t.visitorText(stats.todayCount);
+        badge.title = t.visitorTip(stats.todayCount, stats.totalCount);
+        badge.style.display = 'inline-flex';
+      }
+    }
 
     function setSharedPref(name, val) {
       try { localStorage.setItem(name, val); } catch (_) {}
@@ -1671,21 +1685,6 @@
     updateHomeClock();
     setInterval(updateHomeClock, 500);
     syncHomeTime();
-
-    let visitorStats = null;
-
-    function renderVisitorBadge(stats) {
-      if (!stats) return;
-      visitorStats = stats;
-      const badge = document.getElementById('visitorBadge');
-      const textEl = document.getElementById('visitorCountText');
-      const t = i18n[currentLang] || i18n.zh;
-      if (badge && textEl) {
-        textEl.innerHTML = t.visitorText(stats.todayCount);
-        badge.title = t.visitorTip(stats.todayCount, stats.totalCount);
-        badge.style.display = 'inline-flex';
-      }
-    }
 
     async function fetchVisitorStats() {
       try {
