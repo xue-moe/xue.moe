@@ -1,0 +1,7 @@
+name = "xue-moe"
+pages_build_output_dir = ""
+compatibility_date = "2026-09-24"
+
+kv_namespaces = [
+  { binding = "KV", id = "ebaffbc55bc148eeafae4879068c32d4", preview_id = "b2fbf7fb4bf248618ab8d3a1c61ffa66" }
+]

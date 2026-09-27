@@ -867,6 +867,41 @@
       opacity: 0.35;
     }
 
+    .visitor-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 12px;
+      background: var(--card-inner);
+      border: 1px solid var(--card-border);
+      border-radius: 999px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      transition: border-color 0.2s ease;
+      cursor: default;
+      user-select: none;
+    }
+
+    .visitor-badge:hover {
+      border-color: var(--primary);
+    }
+
+    .visitor-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .visitor-badge strong {
+      color: var(--primary);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 700;
+    }
+
     @keyframes fadeInDown {
       from { opacity: 0; transform: translateY(-16px); }
       to { opacity: 1; transform: translateY(0); }
@@ -1061,6 +1096,12 @@
   </main>
 
   <footer>
+    <div style="margin-bottom: 4px;">
+      <div class="visitor-badge" id="visitorBadge" style="display: none;">
+        <span class="visitor-dot"></span>
+        <span id="visitorCountText">今天你是第 <strong id="visitorCountNum">--</strong> 个访问的人</span>
+      </div>
+    </div>
     <div>
       <span>Designed by Ryosetsu</span>
       <span class="sep">|</span>
@@ -1076,6 +1117,12 @@
   <script>
     const curYear = new Date().getFullYear();
     document.getElementById('year').textContent = curYear > 2026 ? `2026 - ${curYear}` : '2026';
+
+    function getOrdinal(n) {
+      const s = ['th', 'st', 'nd', 'rd'];
+      const v = n % 100;
+      return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
 
     const i18n = {
       zh: {
@@ -1122,7 +1169,9 @@
         devDesc: "实验性项目、前端组件与交互原型孵化。",
         visit: "访问 ↗",
         themeDarkTip: "切换为浅色模式",
-        themeLightTip: "切换为深色模式"
+        themeLightTip: "切换为深色模式",
+        visitorText: (n) => `今天你是第 <strong id="visitorCountNum">${n}</strong> 个访问的人`,
+        visitorTip: (today, total) => `今日访客：${today} · 累计访问：${total}`
       },
       en: {
         langBtn: "中",
@@ -1168,7 +1217,9 @@
         devDesc: "Experimental projects, web components, and frontend prototypes.",
         visit: "Visit ↗",
         themeDarkTip: "Switch to light mode",
-        themeLightTip: "Switch to dark mode"
+        themeLightTip: "Switch to dark mode",
+        visitorText: (n) => `You are the <strong id="visitorCountNum">${getOrdinal(n)}</strong> visitor today`,
+        visitorTip: (today, total) => `Today: ${today} · Total: ${total}`
       }
     };
 
@@ -1314,6 +1365,7 @@
 
       resetTyping();
       renderCalendar(rawContribData);
+      renderVisitorBadge(visitorStats);
       updateCrossDomainLinks();
     }
 
@@ -1619,6 +1671,35 @@
     updateHomeClock();
     setInterval(updateHomeClock, 500);
     syncHomeTime();
+
+    let visitorStats = null;
+
+    function renderVisitorBadge(stats) {
+      if (!stats) return;
+      visitorStats = stats;
+      const badge = document.getElementById('visitorBadge');
+      const textEl = document.getElementById('visitorCountText');
+      const t = i18n[currentLang] || i18n.zh;
+      if (badge && textEl) {
+        textEl.innerHTML = t.visitorText(stats.todayCount);
+        badge.title = t.visitorTip(stats.todayCount, stats.totalCount);
+        badge.style.display = 'inline-flex';
+      }
+    }
+
+    async function fetchVisitorStats() {
+      try {
+        const res = await fetch('/api/visit');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data.todayCount === 'number') {
+            renderVisitorBadge(data);
+          }
+        }
+      } catch (_) {}
+    }
+
+    fetchVisitorStats();
   </script>
 </body>
 </html>

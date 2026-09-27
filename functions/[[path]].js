@@ -47,6 +47,59 @@ async function handleRoute(context, url, hostname) {
     });
   }
 
+  if (url.pathname === '/api/visit') {
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date());
+    const cookieHeader = context.request.headers.get('Cookie') || '';
+    const visitedToday = cookieHeader.includes(`xue_v_${today}=1`);
+
+    let todayCount = 1;
+    let totalCount = 1;
+
+    try {
+      if (context.env && context.env.KV) {
+        const todayKey = `v_day_${today}`;
+        const totalKey = 'v_total';
+
+        if (!visitedToday) {
+          const curDayStr = await context.env.KV.get(todayKey);
+          todayCount = curDayStr ? parseInt(curDayStr, 10) + 1 : 1;
+          await context.env.KV.put(todayKey, String(todayCount), { expirationTtl: 86400 * 7 });
+
+          const curTotalStr = await context.env.KV.get(totalKey);
+          totalCount = curTotalStr ? parseInt(curTotalStr, 10) + 1 : 1;
+          await context.env.KV.put(totalKey, String(totalCount));
+        } else {
+          const curDayStr = await context.env.KV.get(todayKey);
+          todayCount = curDayStr ? parseInt(curDayStr, 10) : 1;
+
+          const curTotalStr = await context.env.KV.get(totalKey);
+          totalCount = curTotalStr ? parseInt(curTotalStr, 10) : 1;
+        }
+      }
+    } catch (_) {}
+
+    const headers = new Headers({
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      'Pragma': 'no-cache',
+      'Access-Control-Allow-Origin': '*'
+    });
+
+    if (!visitedToday) {
+      headers.set('Set-Cookie', `xue_v_${today}=1; Path=/; Max-Age=86400; SameSite=Lax`);
+    }
+
+    return new Response(JSON.stringify({
+      todayCount,
+      totalCount,
+      today,
+      isNewVisit: !visitedToday
+    }), {
+      status: 200,
+      headers
+    });
+  }
+
   if (url.pathname === '/api/contributions') {
     try {
       const apiRes = await fetch('https://github-contributions-api.jogruber.de/v4/xue-moe?y=last', {
