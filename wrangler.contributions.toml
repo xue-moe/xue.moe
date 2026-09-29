@@ -1,0 +1,23 @@
+name = "xue-moe-contributions-cache"
+main = "contributions-cache.js"
+compatibility_date = "2026-09-29"
+workers_dev = false
+
+[[kv_namespaces]]
+binding = "KV"
+id = "ebaffbc55bc148eeafae4879068c32d4"
+preview_id = "b2fbf7fb4bf248618ab8d3a1c61ffa66"
+
+[triggers]
+crons = ["0 * * * *"]
+
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+
+[observability.traces]
+enabled = true
+head_sampling_rate = 0.01

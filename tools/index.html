@@ -1837,11 +1837,42 @@
     }
 
     @media (max-width: 640px) {
-      .nav-wrap { padding: 10px 14px; gap: 8px; }
+      .nav-wrap {
+        padding: calc(10px + env(safe-area-inset-top)) 14px 10px;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .nav-segmented {
+        order: 1;
+        flex: 1 0 100%;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        overflow-x: auto;
+        justify-content: flex-start;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .nav-segmented::-webkit-scrollbar { display: none; }
+      .seg-btn {
+        flex: 0 0 auto;
+        min-height: 40px;
+        padding: 8px 12px;
+        white-space: nowrap;
+      }
+      .nav-right { gap: 8px; margin-left: auto; }
+      .theme-toggle-btn { width: 40px; height: 40px; flex: 0 0 40px; }
+      .clock-btn, .timer-mode-btn { min-height: 40px; }
       .brand-hello { font-size: 22px; }
       .brand-sub { font-size: 12px; }
       .nav-link { display: none; }
-      .timer-clock { font-size: 60px; }
+      .timer-clock {
+        max-width: 100%;
+        font-size: clamp(42px, 16vw, 60px);
+        line-height: 1.05;
+        letter-spacing: -1.5px;
+      }
+      .timer-btn-row { flex-wrap: wrap; }
       .glass-card { padding: 20px 16px; border-radius: 20px; }
       .item-actions { opacity: 1; }
     }
@@ -3933,8 +3964,7 @@
       if (clockSyncBadge) clockSyncBadge.classList.add('syncing');
 
       const samples = [];
-      const endpoints = ['/api/time', 'https://xue.moe/api/time'];
-      let activeEndpoint = endpoints[0];
+      const endpoint = '/api/time';
 
       try {
         for (let i = 0; i < 5; i++) {
@@ -3942,7 +3972,7 @@
           const controller = new AbortController();
           const timer = setTimeout(() => controller.abort(), 3500);
           try {
-            const res = await fetch(`${activeEndpoint}?_=${Date.now()}_${i}`, {
+            const res = await fetch(`${endpoint}?_=${Date.now()}_${i}`, {
               cache: 'no-store',
               signal: controller.signal
             });
@@ -3956,14 +3986,9 @@
                 const uncertainty = rtt / 2;
                 samples.push({ rtt, offset, uncertainty });
               }
-            } else if (i === 0 && activeEndpoint === endpoints[0]) {
-              activeEndpoint = endpoints[1];
             }
           } catch (_) {
             clearTimeout(timer);
-            if (i === 0 && activeEndpoint === endpoints[0]) {
-              activeEndpoint = endpoints[1];
-            }
           }
           if (i < 4) await new Promise(r => setTimeout(r, 25));
         }

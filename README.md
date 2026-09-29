@@ -52,9 +52,15 @@
 ├── dev/
 │   └── index.html        # 实验工坊引导页 (dev.xue.moe)
 ├── fonts/                # 本地字体资源 (Borel.woff2 等)
+├── _headers              # 静态资源安全响应头
+├── _routes.json          # 将静态资源排除出 Pages Function 路由
+├── robots.txt
+├── sitemap.xml
 ├── functions/
 │   └── [[path]].js       # Cloudflare Pages 边缘子域路由函数
-├── GEMINI.md             # AI 配对编程规则与设计规范
+├── contributions-cache.js       # 定时更新 GitHub 贡献缓存
+├── wrangler.toml                # Pages 绑定配置
+├── wrangler.contributions.toml  # 缓存 Worker 与 Cron 配置
 ├── LICENSE               # WTFPL 开源协议
 └── README.md             # 项目说明文档
 ```
@@ -77,6 +83,8 @@ npx serve .
 
 浏览器访问 `http://localhost:8000` 即可浏览主站，访问 `http://localhost:8000/tools/` 即可调试工具集。
 
+上述静态服务器只预览页面文件，不会运行 Pages Functions 的 API 和子域名路由。需要调试这些边缘功能时，使用 `npx wrangler pages dev .`。
+
 ### 2. 部署到 Cloudflare Pages
 
 1. 将本仓库推送到 GitHub / GitLab。
@@ -90,6 +98,18 @@ npx serve .
    - `tools.xue.moe`
    - `duo.xue.moe`
    - `dev.xue.moe`
+
+### 附加：部署贡献日历缓存任务
+
+主页贡献日历由单独的 Cron Worker 每小时抓取一次，并写入 Pages 已使用的 KV 命名空间。访客请求 `/api/contributions` 时读取 KV 缓存；只有缓存为空时才会请求上游 API 来初始化数据。
+
+首次部署 Pages 后，单独部署缓存 Worker 并启用定时触发器：
+
+```bash
+npx wrangler deploy --config wrangler.contributions.toml
+```
+
+Cron 按 UTC 整点运行。部署后可在 Cloudflare Dashboard 的 Worker 日志中查看 `contributions_cache_refreshed` 和 `contributions_cache_refresh_failed` 事件。请保持 Pages 与缓存 Worker 使用同一个 KV 命名空间。
 
 ---
 

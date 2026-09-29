@@ -222,6 +222,15 @@
       margin: 0 7px;
       opacity: 0.35;
     }
+
+    @media (max-width: 480px) {
+      body { padding: max(16px, env(safe-area-inset-top)) 16px; }
+      .card { padding: 34px 20px; border-radius: 22px; }
+      .brand-hello { font-size: clamp(40px, 13vw, 48px); }
+      .btn-group { flex-direction: column; }
+      .btn { justify-content: center; min-height: 44px; }
+      footer { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+    }
   </style>
 </head>
 <body>

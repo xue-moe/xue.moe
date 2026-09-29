@@ -1,3 +1,44 @@
+const CONTRIBUTIONS_CACHE_KEY = 'github-contributions:last-year:v1';
+const CONTRIBUTIONS_CACHE_TTL_SECONDS = 7 * 24 * 60 * 60;
+const CONTRIBUTIONS_COLD_RETRY_TTL_SECONDS = 15 * 60;
+const CONTRIBUTIONS_UPSTREAM_URL = 'https://github-contributions-api.jogruber.de/v4/xue-moe?y=last';
+
+function contributionsResponse(data, cacheControl = 'public, max-age=300, s-maxage=300') {
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': cacheControl,
+      'Access-Control-Allow-Origin': '*'
+    }
+  });
+}
+
+function contributionsUnavailable(status = 503) {
+  return new Response(JSON.stringify({ error: 'Contributions are temporarily unavailable.' }), {
+    status,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'Access-Control-Allow-Origin': '*'
+    }
+  });
+}
+
+function getUtcPlusFourVisitorDay(now = Date.now()) {
+  const utcPlusFourNow = new Date(now + 4 * 60 * 60 * 1000);
+  // Visitor days reset at 00:00 UTC+04:00 (04:00 in Shanghai, UTC+08:00).
+  const nextResetUtc = Date.UTC(
+    utcPlusFourNow.getUTCFullYear(),
+    utcPlusFourNow.getUTCMonth(),
+    utcPlusFourNow.getUTCDate() + 1
+  ) - 4 * 60 * 60 * 1000;
+  return {
+    day: utcPlusFourNow.toISOString().slice(0, 10),
+    secondsUntilReset: Math.max(1, Math.ceil((nextResetUtc - now) / 1000))
+  };
+}
+
 // 安全响应头注入函数
 function applySecurityHeaders(res) {
   const headers = new Headers(res.headers);
@@ -7,7 +48,7 @@ function applySecurityHeaders(res) {
   headers.set('X-XSS-Protection', '1; mode=block');
   headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), browsing-topics=()');
-  headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://github-contributions-api.jogruber.de https://api.github.com https://cloudflareinsights.com; frame-ancestors 'self';");
+  headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://cloudflareinsights.com; frame-ancestors 'self';");
 
   return new Response(res.body, {
     status: res.status,
@@ -48,75 +89,178 @@ async function handleRoute(context, url, hostname) {
   }
 
   if (url.pathname === '/api/visit') {
-    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date(Date.now() - 4 * 60 * 60 * 1000));
+    const { day: today, secondsUntilReset } = getUtcPlusFourVisitorDay();
     const cookieHeader = context.request.headers.get('Cookie') || '';
-    const visitedToday = cookieHeader.includes(`xue_v_${today}=1`);
-
-    let todayCount = 1;
-    let totalCount = 1;
-
-    try {
-      if (context.env && context.env.KV) {
-        const todayKey = `v_day_${today}`;
-        const totalKey = 'v_total';
-
-        if (!visitedToday) {
-          const curDayStr = await context.env.KV.get(todayKey);
-          todayCount = curDayStr ? parseInt(curDayStr, 10) + 1 : 1;
-          await context.env.KV.put(todayKey, String(todayCount), { expirationTtl: 86400 * 7 });
-
-          const curTotalStr = await context.env.KV.get(totalKey);
-          totalCount = curTotalStr ? parseInt(curTotalStr, 10) + 1 : 1;
-          await context.env.KV.put(totalKey, String(totalCount));
-        } else {
-          const curDayStr = await context.env.KV.get(todayKey);
-          todayCount = curDayStr ? parseInt(curDayStr, 10) : 1;
-
-          const curTotalStr = await context.env.KV.get(totalKey);
-          totalCount = curTotalStr ? parseInt(curTotalStr, 10) : 1;
-        }
-      }
-    } catch (_) {}
-
-    const headers = new Headers({
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-      'Pragma': 'no-cache',
-      'Access-Control-Allow-Origin': '*'
+    const visitedToday = cookieHeader.split(';').some((cookie) => {
+      const [name, ...valueParts] = cookie.trim().split('=');
+      return name === `xue_v_${today}` && valueParts.join('=') === '1';
     });
 
-    if (!visitedToday) {
-      headers.set('Set-Cookie', `xue_v_${today}=1; Path=/; Max-Age=86400; SameSite=Lax`);
+    if (!context.env || !context.env.KV) {
+      console.error(JSON.stringify({ event: 'visitor_stats_kv_binding_missing' }));
+      return new Response(JSON.stringify({ error: 'Visitor counts are temporarily unavailable.' }), {
+        status: 503,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Cache-Control': 'no-store',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
     }
 
-    return new Response(JSON.stringify({
-      todayCount,
-      totalCount,
-      today,
-      isNewVisit: !visitedToday
-    }), {
-      status: 200,
-      headers
-    });
+    try {
+      const todayKey = `v_day_${today}`;
+      const totalKey = 'v_total';
+      const parseCount = (value) => {
+        const count = Number.parseInt(value || '0', 10);
+        return Number.isSafeInteger(count) && count >= 0 ? count : 0;
+      };
+
+      let todayCount;
+      let totalCount;
+      if (!visitedToday) {
+        todayCount = parseCount(await context.env.KV.get(todayKey)) + 1;
+        await context.env.KV.put(todayKey, String(todayCount), { expirationTtl: 86400 * 7 });
+
+        totalCount = parseCount(await context.env.KV.get(totalKey)) + 1;
+        await context.env.KV.put(totalKey, String(totalCount));
+      } else {
+        todayCount = parseCount(await context.env.KV.get(todayKey));
+        totalCount = parseCount(await context.env.KV.get(totalKey));
+      }
+
+      const headers = new Headers({
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Access-Control-Allow-Origin': '*'
+      });
+
+      if (!visitedToday) {
+        headers.set('Set-Cookie', `xue_v_${today}=1; Path=/; Max-Age=${secondsUntilReset}; SameSite=Lax; Secure; HttpOnly`);
+      }
+
+      return new Response(JSON.stringify({
+        todayCount,
+        totalCount,
+        today,
+        isNewVisit: !visitedToday
+      }), { status: 200, headers });
+    } catch (error) {
+      console.error(JSON.stringify({
+        event: 'visitor_stats_kv_error',
+        message: error instanceof Error ? error.message : String(error)
+      }));
+      return new Response(JSON.stringify({ error: 'Visitor counts are temporarily unavailable.' }), {
+        status: 503,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Cache-Control': 'no-store',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
   }
 
   if (url.pathname === '/api/contributions') {
-    try {
-      const apiRes = await fetch('https://github-contributions-api.jogruber.de/v4/xue-moe?y=last', {
-        headers: { 'Accept': 'application/json', 'User-Agent': 'xue-moe-portal' }
+    if (context.request.method !== 'GET') {
+      return new Response('Method Not Allowed', {
+        status: 405,
+        headers: { 'Allow': 'GET', 'Cache-Control': 'no-store' }
       });
-      if (apiRes.ok) {
-        const data = await apiRes.text();
-        return new Response(data, {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json; charset=utf-8',
-            'Cache-Control': 'public, max-age=1800, s-maxage=3600',
-            'Access-Control-Allow-Origin': '*'
+    }
+
+    if (!context.env || !context.env.KV) {
+      console.error(JSON.stringify({ event: 'contributions_cache_binding_missing' }));
+      return contributionsUnavailable();
+    }
+
+    let cachedRecord;
+    try {
+      cachedRecord = await context.env.KV.get(CONTRIBUTIONS_CACHE_KEY, 'json');
+    } catch (error) {
+      console.error(JSON.stringify({
+        event: 'contributions_cache_read_error',
+        message: error instanceof Error ? error.message : String(error)
+      }));
+      return contributionsUnavailable();
+    }
+
+    if (cachedRecord && cachedRecord.data && Array.isArray(cachedRecord.data.contributions)) {
+      return contributionsResponse(cachedRecord.data);
+    }
+
+    try {
+      const retryCooldown = await context.env.KV.get(`${CONTRIBUTIONS_CACHE_KEY}:retry`);
+      if (retryCooldown) return contributionsUnavailable();
+    } catch (error) {
+      console.error(JSON.stringify({
+        event: 'contributions_retry_marker_read_error',
+        message: error instanceof Error ? error.message : String(error)
+      }));
+      return contributionsUnavailable();
+    }
+
+    // Only a cold KV miss falls back to the upstream API. The scheduled Worker
+    // refreshes this value in the background.
+    const timeout = new AbortController();
+    const timeoutId = setTimeout(() => timeout.abort(), 5000);
+    let upstreamStatus = null;
+    try {
+      const apiRes = await fetch(CONTRIBUTIONS_UPSTREAM_URL, {
+        headers: { 'Accept': 'application/json', 'User-Agent': 'xue-moe-portal' },
+        signal: timeout.signal,
+        cf: {
+          cacheEverything: true,
+          cacheTtlByStatus: {
+            '200-299': 1800,
+            '400-599': 0
           }
-        });
+        }
+      });
+
+      upstreamStatus = apiRes.status;
+      if (!apiRes.ok) throw new Error(`Upstream returned ${apiRes.status}`);
+
+      const data = await apiRes.json();
+      if (!data || !Array.isArray(data.contributions)) {
+        throw new Error('Upstream returned an invalid contributions payload');
       }
-    } catch (_) {}
+
+      try {
+        await context.env.KV.put(CONTRIBUTIONS_CACHE_KEY, JSON.stringify({
+          fetchedAt: new Date().toISOString(),
+          data
+        }), { expirationTtl: CONTRIBUTIONS_CACHE_TTL_SECONDS });
+        await context.env.KV.delete(`${CONTRIBUTIONS_CACHE_KEY}:retry`);
+      } catch (error) {
+        console.error(JSON.stringify({
+          event: 'contributions_cache_write_error',
+          message: error instanceof Error ? error.message : String(error)
+        }));
+      }
+
+      return contributionsResponse(data);
+    } catch (error) {
+      try {
+        await context.env.KV.put(`${CONTRIBUTIONS_CACHE_KEY}:retry`, '1', {
+          expirationTtl: CONTRIBUTIONS_COLD_RETRY_TTL_SECONDS
+        });
+      } catch (cacheError) {
+        console.error(JSON.stringify({
+          event: 'contributions_retry_marker_write_error',
+          message: cacheError instanceof Error ? cacheError.message : String(cacheError)
+        }));
+      }
+      console.error(JSON.stringify({
+        event: 'contributions_upstream_error',
+        status: upstreamStatus,
+        message: error instanceof Error ? error.message : String(error)
+      }));
+      return contributionsUnavailable(502);
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   if (url.pathname === '/robots.txt' || url.pathname === '/sitemap.xml') {
