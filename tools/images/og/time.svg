@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f3f8ff"/><stop offset="1" stop-color="#e6f2ff"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#5f83ef"/><stop offset="1" stop-color="#4267d9"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#45638e" flood-opacity=".14"/></filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#background)"/><circle cx="1105" cy="28" r="250" fill="#d7e9ff" opacity=".8"/>
+  <rect x="58" y="54" width="1084" height="522" rx="34" fill="#fff" opacity=".92" filter="url(#shadow)"/>
+  <rect x="90" y="88" width="48" height="48" rx="16" fill="url(#accent)"/><circle cx="114" cy="112" r="13" fill="none" stroke="#fff" stroke-width="2.3"/><path d="M114 103v9l7 4" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round"/>
+  <text x="153" y="119" fill="#17213a" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="26" font-weight="700">time.xue.moe</text>
+  <text x="92" y="218" fill="#4d70d5" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="19" font-weight="700" letter-spacing="3">TIME &amp; WORLD CLOCKS</text>
+  <text x="88" y="298" fill="#111827" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="53" font-weight="750">标准时间与世界时钟</text>
+  <text x="92" y="352" fill="#64748b" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="22">查看主要城市时间，估算本地设备时钟偏差</text>
+  <rect x="92" y="402" width="191" height="45" rx="22" fill="#edf3ff"/><text x="187" y="431" text-anchor="middle" fill="#4d70d5" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" font-weight="700">网络偏差估算</text>
+  <rect x="296" y="402" width="166" height="45" rx="22" fill="#e9f8f3"/><text x="379" y="431" text-anchor="middle" fill="#198467" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" font-weight="700">全球时区</text>
+  <text x="92" y="536" fill="#94a3b8" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="18">time.xue.moe</text>
+  <rect x="692" y="94" width="410" height="440" rx="28" fill="#f8fbff" stroke="#e6edf7" stroke-width="2"/>
+  <circle cx="897" cy="278" r="133" fill="#edf3ff"/>
+  <circle cx="897" cy="278" r="101" fill="#fff" stroke="#dce6f5" stroke-width="3"/>
+  <g stroke="#9badc6" stroke-width="3" stroke-linecap="round"><path d="M897 190v10M897 356v10M809 278h10M975 278h10M835 216l7 7M952 333l7 7M959 216l-7 7M842 333l-7 7"/></g>
+  <path d="M897 278v-59M897 278l45 27" stroke="#506ee5" stroke-width="8" stroke-linecap="round"/><circle cx="897" cy="278" r="9" fill="#506ee5"/>
+  <rect x="750" y="426" width="135" height="57" rx="16" fill="#fff" stroke="#e5ebf5"/><text x="818" y="451" text-anchor="middle" fill="#64748b" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13">上海</text><text x="818" y="472" text-anchor="middle" fill="#29364d" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="17" font-weight="700">UTC+8</text>
+  <rect x="909" y="426" width="135" height="57" rx="16" fill="#fff" stroke="#e5ebf5"/><text x="976" y="451" text-anchor="middle" fill="#64748b" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13">伦敦</text><text x="976" y="472" text-anchor="middle" fill="#29364d" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="17" font-weight="700">UTC+0</text>
+  <text x="897" y="518" text-anchor="middle" fill="#94a3b8" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13">时区时间随夏令时自动变化</text>
+</svg>

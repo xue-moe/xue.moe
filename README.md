@@ -17,9 +17,10 @@
 | 子域名 / 路径 | 部署页面 | 功能简介 |
 | :--- | :--- | :--- |
 | **[xue.moe](https://xue.moe)** | `/index.html` | **个人门户主页**：毛玻璃个人名片、实时 GitHub 活跃日历与项目矩阵导航 |
-| **[tools.xue.moe](https://tools.xue.moe)** | `/tools/index.html` | **效率工具箱**：待办清单、精准时钟、专注计时与字符排错工坊 |
+| **[tools.xue.moe](https://tools.xue.moe)** | `/tools/index.html` | **效率工具箱**：待办清单、标准时间与世界时钟、专注计时与字符排错工坊 |
+| **[time.xue.moe](https://time.xue.moe)** | `/tools/index.html` | **标准时间与世界时钟**：多次网络测量估算设备与服务器的时间差 |
 | **[duo.xue.moe](https://duo.xue.moe)** | `/duo/index.html` | **多邻国数学求解器**：3x3 幻方九宫格实时辅助求解计算器 |
-| **[dev.xue.moe](https://dev.xue.moe)** | `/dev/index.html` | **实验工坊**：原型功能试验与灵感孵化空间 |
+| **[dev.xue.moe](https://dev.xue.moe)** | `/dev/index.html` | **实验工坊**：原型功能试验与灵感孵化空间（目前设为 noindex，待有实质内容后再开放收录） |
 
 ---
 
@@ -30,13 +31,15 @@
 - **边缘子域路由（Cloudflare Pages Functions）**：
   利用 `functions/[[path]].js` 在边缘节点实现高性能路由转发：
   - `www.xue.moe` 301 永久重定向至 `xue.moe`
-  - `tools.xue.moe/*`、`duo.xue.moe/*`、`dev.xue.moe/*` 自动反向映射至对应子目录单页并保持浏览器地址栏整洁。
+  - `xue-moe.pages.dev` 301 永久重定向至 `xue.moe`；Cloudflare Pages 预览部署默认带有 `X-Robots-Tag: noindex`。
+  - `tools.xue.moe/*`、`time.xue.moe/*`、`duo.xue.moe/*`、`dev.xue.moe/*` 映射至对应单页并保持浏览器地址栏整洁。
+  - `/robots.txt` 和 `/sitemap.xml` 按请求主机生成；每份 sitemap 只包含该主机的规范 URL。
 - **原生现代美学**：
   - 优雅的毛玻璃拟态质感（Frosty Glassmorphism），支持浅色与深色模式（自动感知系统偏好并支持手动切换）。
   - 本地托管开源手写字体（Borel WOFF2），杜绝外部字体源阻塞。
   - 纯 SVG 矢量图标与 Mascot 形象，轻量、锐利且无需额外网络请求。
 - **隐私优先 & 本地持久化**：
-  待办事项、计时偏好、主题状态均存储于本地 `localStorage`，无追踪、无后端数据库依赖。
+  待办事项、计时偏好、主题状态均存储于本地 `localStorage`，不依赖后端数据库。
 
 ---
 
@@ -53,9 +56,9 @@
 │   └── index.html        # 实验工坊引导页 (dev.xue.moe)
 ├── fonts/                # 本地字体资源 (Borel.woff2 等)
 ├── _headers              # 静态资源安全响应头
-├── _routes.json          # 将静态资源排除出 Pages Function 路由
-├── robots.txt
-├── sitemap.xml
+├── _routes.json          # 控制 Pages Function 的路由范围
+├── robots.txt            # 主域名 robots.txt 静态回退文件
+├── sitemap.xml           # 主域名 sitemap 静态回退文件
 ├── functions/
 │   └── [[path]].js       # Cloudflare Pages 边缘子域路由函数
 ├── contributions-cache.js       # 定时更新 GitHub 贡献缓存
@@ -96,6 +99,7 @@ npx serve .
    - `xue.moe`
    - `www.xue.moe`
    - `tools.xue.moe`
+   - `time.xue.moe`
    - `duo.xue.moe`
    - `dev.xue.moe`
 

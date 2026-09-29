@@ -2,6 +2,48 @@ const CONTRIBUTIONS_CACHE_KEY = 'github-contributions:last-year:v1';
 const CONTRIBUTIONS_CACHE_TTL_SECONDS = 7 * 24 * 60 * 60;
 const CONTRIBUTIONS_COLD_RETRY_TTL_SECONDS = 15 * 60;
 const CONTRIBUTIONS_UPSTREAM_URL = 'https://github-contributions-api.jogruber.de/v4/xue-moe?y=last';
+const SITEMAP_LAST_MODIFIED = '2026-09-29';
+const INDEXABLE_SITE_URLS = {
+  'xue.moe': ['https://xue.moe/'],
+  'duo.xue.moe': ['https://duo.xue.moe/'],
+  'tools.xue.moe': ['https://tools.xue.moe/'],
+  'time.xue.moe': ['https://time.xue.moe/']
+};
+
+function seoFileResponse(hostname, pathname) {
+  const siteUrls = INDEXABLE_SITE_URLS[hostname] || [];
+
+  if (pathname === '/robots.txt') {
+    const sitemapLine = siteUrls.length
+      ? `\nSitemap: https://${hostname}/sitemap.xml`
+      : '';
+    return new Response(`User-agent: *\nAllow: /${sitemapLine}\n`, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'public, max-age=3600, s-maxage=86400'
+      }
+    });
+  }
+
+  if (!siteUrls.length) {
+    return new Response('Not Found', {
+      status: 404,
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'public, max-age=300'
+      }
+    });
+  }
+
+  const entries = siteUrls.map((siteUrl) => `  <url>\n    <loc>${siteUrl}</loc>\n    <lastmod>${SITEMAP_LAST_MODIFIED}</lastmod>\n  </url>`).join('\n');
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`;
+  return new Response(xml, {
+    headers: {
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600, s-maxage=86400'
+    }
+  });
+}
 
 function contributionsResponse(data, cacheControl = 'public, max-age=300, s-maxage=300') {
   return new Response(JSON.stringify(data), {
@@ -264,7 +306,7 @@ async function handleRoute(context, url, hostname) {
   }
 
   if (url.pathname === '/robots.txt' || url.pathname === '/sitemap.xml') {
-    return fetchAsset(context, url.pathname);
+    return seoFileResponse(hostname, url.pathname);
   }
 
   // 1. duo.xue.moe 映射到 /duo/
@@ -351,11 +393,11 @@ async function handleRoute(context, url, hostname) {
             "@type": "WebSite",
             "name": "time.xue.moe",
             "url": "https://time.xue.moe/",
-            "description": "高精度原子对时与任何时区的精确时间校准服务，毫秒级网络时延估算，纯净无广告。"
+            "description": "通过多次网络请求估算本地设备与服务器的时间差，并提供世界主要时区时钟。"
           },
           {
             "@type": "WebApplication",
-            "name": "time.xue.moe 高精度原子时钟",
+            "name": "time.xue.moe 标准时间与世界时钟",
             "url": "https://time.xue.moe/",
             "applicationCategory": "UtilitiesApplication",
             "operatingSystem": "All",
@@ -364,35 +406,6 @@ async function handleRoute(context, url, hostname) {
               "price": "0",
               "priceCurrency": "USD"
             }
-          },
-          {
-            "@type": "FAQPage",
-            "mainEntity": [
-              {
-                "@type": "Question",
-                "name": "如何通过网络高精度校准本地时钟？",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "time.xue.moe 采用高精度克里斯蒂安网络授时算法，向边缘服务器连续发起探针以精确测算双向往返网络时延，剔除抖动并计算单程传播偏差，实现与原子钟毫秒级精准对齐。"
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "为什么 time.xue.moe 的授时精度比传统对时网站更高？",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "因为授时服务直接运行在全球边缘计算节点上，网络往返时延极低（通常仅 8 至 70 毫秒），授时误差上限可收敛至 ±0.035秒以内，且全站无任何广告干扰。"
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "如何查询世界主要城市与当前时间的时差？",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "页面提供世界主要时区实时对照，自动计算夏令时与本地时差，分钟级精确对齐。"
-                }
-              }
-            ]
           }
         ]
       });
@@ -400,12 +413,12 @@ async function handleRoute(context, url, hostname) {
       return new HTMLRewriter()
         .on('title', {
           element(el) {
-            el.setInnerContent('标准时间 - 任何时区的精确时间 · 高精度原子对时 · time.xue.moe');
+            el.setInnerContent('标准时间与世界时钟 · 网络时间偏差估算 · time.xue.moe');
           }
         })
         .on('meta[name="description"]', {
           element(el) {
-            el.setAttribute('content', 'time.xue.moe 专注于提供毫秒级高精度标准时间与任何时区的精确时间校准服务，实时估算网络往返延迟，支持世界主要时区对比、全屏时钟与专注倒计时，纯净无广告。');
+            el.setAttribute('content', '查看世界主要城市的当前时间与时区。time.xue.moe 通过多次网络请求估算本地设备与服务器的时间差，并显示测量的往返延迟。');
           }
         })
         .on('link[rel="canonical"]', {
@@ -413,17 +426,58 @@ async function handleRoute(context, url, hostname) {
             el.setAttribute('href', 'https://time.xue.moe/');
           }
         })
+        .on('meta[property="og:title"]', {
+          element(el) {
+            el.setAttribute('content', '标准时间与世界时钟 · 网络时间偏差估算 · time.xue.moe');
+          }
+        })
+        .on('meta[property="og:description"]', {
+          element(el) {
+            el.setAttribute('content', '查看世界主要城市的当前时间与时区。通过多次网络请求估算本地设备与服务器的时间差，并显示测量的往返延迟。');
+          }
+        })
+        .on('meta[property="og:url"]', {
+          element(el) {
+            el.setAttribute('content', 'https://time.xue.moe/');
+          }
+        })
+        .on('meta[property="og:site_name"]', {
+          element(el) {
+            el.setAttribute('content', 'time.xue.moe');
+          }
+        })
+        .on('meta[property="og:image"]', {
+          element(el) {
+            el.setAttribute('content', 'https://time.xue.moe/images/og/time.png');
+          }
+        })
+        .on('meta[property="og:image:alt"]', {
+          element(el) {
+            el.setAttribute('content', '标准时间与世界时钟及主要城市时区');
+          }
+        })
+        .on('meta[name="twitter:image"]', {
+          element(el) {
+            el.setAttribute('content', 'https://time.xue.moe/images/og/time.png');
+          }
+        })
+        .on('meta[name="twitter:image:alt"]', {
+          element(el) {
+            el.setAttribute('content', '标准时间与世界时钟及主要城市时区');
+          }
+        })
+        .on('meta[name="twitter:title"]', {
+          element(el) {
+            el.setAttribute('content', '标准时间与世界时钟 · 网络时间偏差估算 · time.xue.moe');
+          }
+        })
+        .on('meta[name="twitter:description"]', {
+          element(el) {
+            el.setAttribute('content', '查看世界主要城市的当前时间与时区。通过多次网络请求估算本地设备与服务器的时间差。');
+          }
+        })
         .on('head', {
           element(el) {
-            el.append('<meta name="keywords" content="标准时间,当前时间,精确时间,时间校准,原子时钟,现在几点,对时,世界时钟,世界时区,exact time,atomic clock,time.is,world clock,current time">', { html: true });
-            el.append('<meta property="og:title" content="标准时间 - 任何时区的精确时间 · 高精度原子对时 · time.xue.moe">', { html: true });
-            el.append('<meta property="og:description" content="毫秒级高精度标准时间与任何时区的精确时间校准，实时估算网络往返延迟，纯净无广告。">', { html: true });
-            el.append('<meta property="og:url" content="https://time.xue.moe/">', { html: true });
-            el.append('<meta property="og:type" content="website">', { html: true });
-            el.append('<meta property="og:site_name" content="time.xue.moe">', { html: true });
-            el.append('<meta name="twitter:card" content="summary">', { html: true });
-            el.append('<meta name="twitter:title" content="标准时间 - 任何时区的精确时间 · 高精度原子对时 · time.xue.moe">', { html: true });
-            el.append('<meta name="twitter:description" content="毫秒级高精度标准时间与任何时区的精确时间校准，实时估算网络往返延迟，纯净无广告。">', { html: true });
             el.append(`<script type="application/ld+json">${seoStructuredData}</script>`, { html: true });
           }
         })
@@ -476,6 +530,10 @@ export async function onRequest(context) {
   if (hostname.startsWith('www.')) {
     url.hostname = hostname.replace(/^www\./, '');
     return Response.redirect(url.toString(), 301);
+  }
+
+  if (hostname === 'xue-moe.pages.dev') {
+    return Response.redirect(`https://xue.moe${url.pathname}${url.search}`, 301);
   }
 
   const res = await handleRoute(context, url, hostname);

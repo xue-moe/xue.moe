@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f7f8ff"/><stop offset="1" stop-color="#eceeff"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7c8cff"/><stop offset="1" stop-color="#596de9"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#455a9c" flood-opacity=".13"/></filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#background)"/><circle cx="1105" cy="32" r="245" fill="#dfe4ff" opacity=".8"/>
+  <rect x="58" y="54" width="1084" height="522" rx="34" fill="#fff" opacity=".91" filter="url(#shadow)"/>
+  <rect x="90" y="88" width="48" height="48" rx="16" fill="url(#accent)"/><path d="M103 100h22v28h-22zM108 106h12M108 113h12M108 120h8" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+  <text x="153" y="119" fill="#17213a" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="26" font-weight="700">tools.xue.moe</text>
+  <text x="92" y="218" fill="#596de0" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="19" font-weight="700" letter-spacing="3">EVERYDAY WEB TOOLS</text>
+  <text x="88" y="300" fill="#111827" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="55" font-weight="750">网页效率工具箱</text>
+  <text x="92" y="354" fill="#64748b" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="22">轻松安排任务、专注工作，也能快速检查文本</text>
+  <rect x="92" y="405" width="126" height="45" rx="22" fill="#eef2ff"/><text x="155" y="434" text-anchor="middle" fill="#596de0" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" font-weight="700">待办清单</text>
+  <rect x="230" y="405" width="126" height="45" rx="22" fill="#e9f8f2"/><text x="293" y="434" text-anchor="middle" fill="#198467" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" font-weight="700">世界时钟</text>
+  <rect x="368" y="405" width="126" height="45" rx="22" fill="#fff3e8"/><text x="431" y="434" text-anchor="middle" fill="#c9853c" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" font-weight="700">专注计时</text>
+  <rect x="92" y="466" width="164" height="45" rx="22" fill="#f3edff"/><text x="174" y="495" text-anchor="middle" fill="#8264bd" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="16" font-weight="700">文本字符分析</text>
+  <text x="92" y="544" fill="#94a3b8" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="18">tools.xue.moe</text>
+  <rect x="678" y="94" width="424" height="440" rx="28" fill="#f8faff" stroke="#e8edfa" stroke-width="2"/>
+  <text x="714" y="145" fill="#26324b" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="21" font-weight="700">小工具，一站打开</text>
+  <g font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <rect x="710" y="178" width="360" height="77" rx="17" fill="#fff" stroke="#e8edfa"/><circle cx="744" cy="216" r="13" fill="#e9f8f2"/><path d="m738 216 4 4 8-9" fill="none" stroke="#21a27f" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M773 207h124M773 222h200" stroke="#cbd5e1" stroke-width="7" stroke-linecap="round"/><text x="1008" y="221" fill="#8ba092" font-size="13">完成</text>
+    <rect x="710" y="272" width="168" height="105" rx="17" fill="#fff" stroke="#e8edfa"/><circle cx="748" cy="321" r="22" fill="none" stroke="#687cf0" stroke-width="3"/><path d="M748 306v16l11 7" fill="none" stroke="#687cf0" stroke-width="3" stroke-linecap="round"/><text x="783" y="314" fill="#26324b" font-size="16" font-weight="700">世界时钟</text><text x="783" y="338" fill="#94a3b8" font-size="13">UTC · 时区</text>
+    <rect x="896" y="272" width="174" height="105" rx="17" fill="#fff" stroke="#e8edfa"/><circle cx="934" cy="321" r="22" fill="#fff3e8"/><path d="M934 308v14l10 6" fill="none" stroke="#e59a4d" stroke-width="3" stroke-linecap="round"/><text x="969" y="314" fill="#26324b" font-size="16" font-weight="700">专注计时</text><text x="969" y="338" fill="#94a3b8" font-size="13">工作与休息</text>
+    <rect x="710" y="394" width="360" height="105" rx="17" fill="#fff" stroke="#e8edfa"/><rect x="728" y="413" width="40" height="40" rx="12" fill="#f3edff"/><path d="M739 424h18M739 431h14M739 438h17" stroke="#8264bd" stroke-width="2.4" stroke-linecap="round"/><text x="785" y="431" fill="#26324b" font-size="16" font-weight="700">文本与字符分析</text><text x="785" y="455" fill="#94a3b8" font-size="13">字数统计 · 字符辨析 · 拼音</text>
+  </g>
+</svg>
