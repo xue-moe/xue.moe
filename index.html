@@ -1073,7 +1073,7 @@
         weekdays: ["日", "一", "二", "三", "四", "五", "六"],
         months: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
         formatMonthRange: (startY, startM, endM) => startM === endM ? `${startY} 年 ${startM} 月` : `${startM} 月 - ${endM} 月`,
-        calActiveDesc: (days) => days > 0 ? `近 35 天活跃 ${days} 天` : "近 35 天无提交记录",
+        calActiveDesc: (days, total) => days > 0 ? `近 ${total} 天活跃 ${days} 天` : `近 ${total} 天无提交记录`,
         tooltipFuture: "未到日期",
         tooltipNoCommit: "暂无提交记录",
         tooltipCommit: (cnt) => `${cnt} 次代码提交`,
@@ -1121,7 +1121,7 @@
         weekdays: ["S", "M", "T", "W", "T", "F", "S"],
         months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
         formatMonthRange: (startY, startM, endM) => startM === endM ? `${i18n.en.months[startM - 1]} ${startY}` : `${i18n.en.months[startM - 1]} - ${i18n.en.months[endM - 1]}`,
-        calActiveDesc: (days) => days > 0 ? `Active ${days} of the past 35 days` : "No commits in the past 35 days",
+        calActiveDesc: (days, total) => days > 0 ? `Active ${days} of the past ${total} days` : `No commits in the past ${total} days`,
         tooltipFuture: "Upcoming",
         tooltipNoCommit: "No commits",
         tooltipCommit: (cnt) => `${cnt} commit${cnt > 1 ? 's' : ''}`,
@@ -1437,6 +1437,7 @@
 
       let totalCommits = 0;
       let activeDays = 0;
+      const pastDays = Object.keys(dayCellsMap).length;
 
       Object.keys(dayCellsMap).forEach(dateStr => {
         const count = countsMap[dateStr] || 0;
@@ -1454,7 +1455,7 @@
       });
 
       countEl.textContent = totalCommits;
-      descEl.textContent = t.calActiveDesc(activeDays);
+      descEl.textContent = t.calActiveDesc(activeDays, pastDays);
     }
 
     async function loadRecentContributions() {
