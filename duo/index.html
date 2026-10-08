@@ -851,6 +851,7 @@ html {
         errTargetDiv3: (tgt) => `目标和值 ${tgt} 不能被 3 整除，九宫格无整数解。`,
         errNoSolution: "没有找到符合该和值与备选条件的九宫格解，请核对输入。",
         okSingleSolution: "找到唯一解，已自动补全在九宫格中。",
+        okSameNumbersMultiSolutions: (cnt) => `解的数值已确定（共 ${cnt} 组不同位置解法），已自动补全。`,
         okMultiSolutions: (cnt) => `找到 ${cnt} 组符合条件的解，可切换查看。`,
         resultsCountAll: (total) => `共 ${total} 组，已全部展示（可点击卡片切换）`,
         resultsCountPaginated: (total, cur) => `共 ${total} 组，当前第 ${cur} 组`,
@@ -908,6 +909,7 @@ html {
         errTargetDiv3: (tgt) => `Target sum ${tgt} is not divisible by 3. No integer solution exists.`,
         errNoSolution: "No valid magic square matches the given constraints. Please verify your inputs.",
         okSingleSolution: "Unique solution found and filled into the grid.",
+        okSameNumbersMultiSolutions: (cnt) => `Values uniquely determined (${cnt} position variations). Auto-filled into grid.`,
         okMultiSolutions: (cnt) => `Found ${cnt} valid solutions. Use the controls to browse.`,
         resultsCountAll: (total) => `Found ${total} solution${total === 1 ? '' : 's'}. Click a card to preview.`,
         resultsCountPaginated: (total, cur) => `Solution ${cur} of ${total}`,
@@ -1001,6 +1003,12 @@ html {
       input.dataset.index = i;
       input.dataset.source = '';
 
+      input.addEventListener('focus', () => {
+        if (input.dataset.source === 'solved') {
+          input.select();
+        }
+      });
+
       input.addEventListener('input', () => {
         if (internalUpdate) return;
         const val = input.value.trim();
@@ -1017,6 +1025,7 @@ html {
         clearSolvedCells(input);
         clearResults();
         autoDetectTarget();
+        tryAutoSolve();
       });
 
       input.addEventListener('keydown', event => {
@@ -1563,7 +1572,13 @@ html {
         showSolutionInMainGrid(allSolutions[0], 0);
         setStatus(t.okSingleSolution, 'ok');
       } else {
-        setStatus(t.okMultiSolutions(allSolutions.length), 'ok');
+        const base = [...allSolutions[0]].sort((a, b) => a - b).join(',');
+        const sameVals = allSolutions.every(s => [...s].sort((a, b) => a - b).join(',') === base);
+        if (sameVals) {
+          setStatus(t.okSameNumbersMultiSolutions(allSolutions.length), 'ok');
+        } else {
+          setStatus(t.okMultiSolutions(allSolutions.length), 'ok');
+        }
       }
     }
 
@@ -1574,6 +1589,60 @@ html {
         clearResults();
         setStatus(err.message, 'error');
       }
+    }
+
+    function tryAutoSolve() {
+      try {
+        const uniqueOnly = uniqueCandidatesEl.checked;
+        if (uniqueOnly) {
+          const seenFixed = new Set();
+          for (const cell of cells) {
+            if (cell.dataset.source === 'manual' && cell.value.trim() !== '') {
+              const v = Number(cell.value);
+              if (Number.isInteger(v) && v > 0) {
+                if (seenFixed.has(v)) return;
+                seenFixed.add(v);
+              }
+            }
+          }
+          const candidates = readCandidates();
+          if (candidates.some(c => seenFixed.has(c))) return;
+        }
+
+        const fixed = readManualValues();
+        const candidates = readCandidates();
+
+        if (fixed.every(v => v === null) && candidates.length === 0) return;
+        if (targetSumEl.value.trim() === '') return;
+
+        const target = readTarget();
+        if (target % 3 !== 0) return;
+
+        const solutions = enumerateSolutions(target, fixed, candidates, uniqueOnly);
+        if (!solutions || solutions.length === 0) return;
+
+        let shouldAutoApply = false;
+        if (solutions.length === 1) {
+          shouldAutoApply = true;
+        } else {
+          const base = [...solutions[0]].sort((a, b) => a - b).join(',');
+          shouldAutoApply = solutions.every(s => [...s].sort((a, b) => a - b).join(',') === base);
+        }
+
+        if (!shouldAutoApply) return;
+
+        lastFixed = fixed.slice();
+        lastCandidates = candidates.slice();
+        allSolutions = solutions;
+        renderResults();
+
+        const t = i18n[currentLang];
+        if (allSolutions.length === 1) {
+          setStatus(t.okSingleSolution, 'ok');
+        } else {
+          setStatus(t.okSameNumbersMultiSolutions(allSolutions.length), 'ok');
+        }
+      } catch (_) {}
     }
 
     function applyLanguage(lang) {
@@ -1628,6 +1697,15 @@ html {
 
       if (allSolutions.length > 0) {
         renderResults();
+        const base = [...allSolutions[0]].sort((a, b) => a - b).join(',');
+        const sameVals = allSolutions.every(s => [...s].sort((a, b) => a - b).join(',') === base);
+        if (allSolutions.length === 1) {
+          setStatus(t.okSingleSolution, 'ok');
+        } else if (sameVals) {
+          setStatus(t.okSameNumbersMultiSolutions(allSolutions.length), 'ok');
+        } else {
+          setStatus(t.okMultiSolutions(allSolutions.length), 'ok');
+        }
       } else {
         setStatus(t.statusEmpty);
       }
@@ -1649,6 +1727,7 @@ html {
       } else {
         setStatus(currentLang === 'zh' ? '和值已更改。按 Enter 键可立即计算。' : 'Target sum changed. Press Enter to calculate.');
       }
+      tryAutoSolve();
     });
 
     targetSumEl.addEventListener('keydown', e => {
@@ -1662,6 +1741,7 @@ html {
       clearSolvedCells();
       clearResults();
       setStatus(currentLang === 'zh' ? '备选值已更新。按 Enter 键可立即计算。' : 'Candidates updated. Press Enter to calculate.');
+      tryAutoSolve();
     });
 
     candidateValuesEl.addEventListener('keydown', e => {
@@ -1675,6 +1755,7 @@ html {
       clearSolvedCells();
       clearResults();
       setStatus(currentLang === 'zh' ? '重复数字规则已更新。' : 'Duplicate rule updated.');
+      tryAutoSolve();
     });
 
     solveBtn.addEventListener('click', runSolve);
