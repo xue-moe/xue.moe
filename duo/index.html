@@ -248,24 +248,6 @@
       border-color: var(--duo-blue);
     }
 
-    .check-row {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      color: #4b4b4b;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .check-row input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      accent-color: var(--duo-green);
-      cursor: pointer;
-    }
-
     .buttons {
       display: grid;
       grid-template-columns: 1.2fr 0.8fr;
@@ -717,11 +699,6 @@ html {
             >
           </div>
 
-          <label class="check-row" id="uniqueCheckRow">
-            <input id="uniqueCandidates" type="checkbox" checked>
-            <span id="uniqueCandidatesLabel">九宫格内数字不重复</span>
-          </label>
-
           <div class="buttons">
             <button class="primary" id="solveBtn">计算并补全</button>
             <button class="ghost" id="clearBtn">重置</button>
@@ -818,7 +795,6 @@ html {
         placeholderTargetSum: "例如：15 (可自动计算)",
         labelCandidateValues: "备选数字（题目候选选项）",
         placeholderCandidates: "例如：5 或 5, 10, 6",
-        uniqueCandidatesLabel: "九宫格内数字不重复",
         solveBtn: "计算并补全",
         clearBtn: "重置",
         statusEmpty: "九宫格为空。请输入已知数字或目标和值。",
@@ -876,7 +852,6 @@ html {
         placeholderTargetSum: "e.g. 15 (auto-deduced)",
         labelCandidateValues: "Available Numbers (Duolingo choices)",
         placeholderCandidates: "e.g. 5 or 5, 10, 6",
-        uniqueCandidatesLabel: "All numbers in grid must be unique",
         solveBtn: "Solve & Fill",
         clearBtn: "Reset",
         statusEmpty: "The grid is empty. Enter known numbers or a target sum.",
@@ -958,7 +933,6 @@ html {
     const gridEl = document.getElementById('grid');
     const targetSumEl = document.getElementById('targetSum');
     const candidateValuesEl = document.getElementById('candidateValues');
-    const uniqueCandidatesEl = document.getElementById('uniqueCandidates');
 
     const solveBtn = document.getElementById('solveBtn');
     const clearBtn = document.getElementById('clearBtn');
@@ -1107,7 +1081,6 @@ html {
       });
       targetSumEl.value = '';
       candidateValuesEl.value = '';
-      uniqueCandidatesEl.checked = true;
       targetWasAuto = false;
       internalUpdate = false;
 
@@ -1521,7 +1494,7 @@ html {
       const target = readTarget();
       const fixed = readManualValues();
       const candidates = readCandidates();
-      const uniqueOnly = uniqueCandidatesEl.checked;
+      const uniqueOnly = true;
 
       if (uniqueOnly) {
         const knownVals = fixed.filter(v => v !== null);
@@ -1593,7 +1566,7 @@ html {
 
     function tryAutoSolve() {
       try {
-        const uniqueOnly = uniqueCandidatesEl.checked;
+        const uniqueOnly = true;
         if (uniqueOnly) {
           const seenFixed = new Set();
           for (const cell of cells) {
@@ -1673,7 +1646,6 @@ html {
       targetSumEl.placeholder = t.placeholderTargetSum;
       document.getElementById('labelCandidateValues').textContent = t.labelCandidateValues;
       candidateValuesEl.placeholder = t.placeholderCandidates;
-      document.getElementById('uniqueCandidatesLabel').textContent = t.uniqueCandidatesLabel;
 
       solveBtn.textContent = t.solveBtn;
       clearBtn.textContent = t.clearBtn;
@@ -1749,13 +1721,6 @@ html {
         e.preventDefault();
         runSolve();
       }
-    });
-
-    uniqueCandidatesEl.addEventListener('change', () => {
-      clearSolvedCells();
-      clearResults();
-      setStatus(currentLang === 'zh' ? '重复数字规则已更新。' : 'Duplicate rule updated.');
-      tryAutoSolve();
     });
 
     solveBtn.addEventListener('click', runSolve);
