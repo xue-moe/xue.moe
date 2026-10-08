@@ -17,7 +17,7 @@ function seoFileResponse(hostname, pathname) {
     const sitemapLine = siteUrls.length
       ? `\nSitemap: https://${hostname}/sitemap.xml`
       : '';
-    return new Response(`User-agent: *\nAllow: /${sitemapLine}\n`, {
+    return new Response(`User-agent: *\nAllow: /\nDisallow: /api/${sitemapLine}\n`, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Cache-Control': 'public, max-age=3600, s-maxage=86400'
@@ -51,7 +51,8 @@ function contributionsResponse(data, cacheControl = 'public, max-age=300, s-maxa
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
       'Cache-Control': cacheControl,
-      'Access-Control-Allow-Origin': '*'
+      'Access-Control-Allow-Origin': '*',
+      'X-Robots-Tag': 'noindex, nofollow'
     }
   });
 }
@@ -62,7 +63,8 @@ function contributionsUnavailable(status = 503) {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
       'Cache-Control': 'no-store',
-      'Access-Control-Allow-Origin': '*'
+      'Access-Control-Allow-Origin': '*',
+      'X-Robots-Tag': 'noindex, nofollow'
     }
   });
 }
@@ -125,7 +127,8 @@ async function handleRoute(context, url, hostname) {
         'Content-Type': 'application/json; charset=utf-8',
         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
         'Pragma': 'no-cache',
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control-Allow-Origin': '*',
+        'X-Robots-Tag': 'noindex, nofollow'
       }
     });
   }
@@ -145,7 +148,8 @@ async function handleRoute(context, url, hostname) {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           'Cache-Control': 'no-store',
-          'Access-Control-Allow-Origin': '*'
+          'Access-Control-Allow-Origin': '*',
+          'X-Robots-Tag': 'noindex, nofollow'
         }
       });
     }
@@ -175,7 +179,8 @@ async function handleRoute(context, url, hostname) {
         'Content-Type': 'application/json; charset=utf-8',
         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
         'Pragma': 'no-cache',
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control-Allow-Origin': '*',
+        'X-Robots-Tag': 'noindex, nofollow'
       });
 
       if (!visitedToday) {
@@ -198,7 +203,8 @@ async function handleRoute(context, url, hostname) {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           'Cache-Control': 'no-store',
-          'Access-Control-Allow-Origin': '*'
+          'Access-Control-Allow-Origin': '*',
+          'X-Robots-Tag': 'noindex, nofollow'
         }
       });
     }
@@ -208,7 +214,7 @@ async function handleRoute(context, url, hostname) {
     if (context.request.method !== 'GET') {
       return new Response('Method Not Allowed', {
         status: 405,
-        headers: { 'Allow': 'GET', 'Cache-Control': 'no-store' }
+        headers: { 'Allow': 'GET', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex, nofollow' }
       });
     }
 
@@ -243,8 +249,6 @@ async function handleRoute(context, url, hostname) {
       return contributionsUnavailable();
     }
 
-    // Only a cold KV miss falls back to the upstream API. The scheduled Worker
-    // refreshes this value in the background.
     const timeout = new AbortController();
     const timeoutId = setTimeout(() => timeout.abort(), 5000);
     let upstreamStatus = null;

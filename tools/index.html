@@ -3953,7 +3953,7 @@
     async function fallbackMeasureDateHeader() {
       try {
         const t0 = performance.now();
-        const res = await fetch('/?_=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+        const res = await fetch('/', { method: 'HEAD', cache: 'no-store' });
         const t1 = performance.now();
         const serverDate = res.headers.get('date');
         if (serverDate) {
@@ -3988,7 +3988,7 @@
           const controller = new AbortController();
           const timer = setTimeout(() => controller.abort(), 3500);
           try {
-            const res = await fetch(`${endpoint}?_=${Date.now()}_${i}`, {
+            const res = await fetch(endpoint, {
               cache: 'no-store',
               signal: controller.signal
             });

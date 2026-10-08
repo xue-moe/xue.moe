@@ -1605,7 +1605,7 @@
       }
       try {
         const t0 = performance.timeOrigin + performance.now();
-        const res = await fetch('/api/time?_=' + Date.now(), { cache: 'no-store' });
+        const res = await fetch('/api/time', { cache: 'no-store' });
         const t1 = performance.timeOrigin + performance.now();
         if (res.ok) {
           const data = await res.json();
