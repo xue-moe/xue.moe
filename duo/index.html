@@ -207,6 +207,19 @@
       color: #2b6d00;
     }
 
+    .deduction-reveal {
+      animation: deduction-reveal 240ms ease-out both;
+    }
+
+    @keyframes deduction-reveal {
+      from { opacity: 0; transform: scale(0.94); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .deduction-reveal { animation: none; }
+    }
+
     .grid input.candidate {
       background: var(--duo-orange-bg);
       border-color: var(--duo-orange);
@@ -816,6 +829,7 @@ html {
         errCellInt: (idx) => `第 ${idx + 1} 格必须输入正整数。`,
         statusUpdated: "已更新已知数字。",
         errConflictSum: (sums) => `推导出的目标和值产生冲突：${sums}。请检查输入是否有误。`,
+        okPartialSolution: (count) => `已推算 ${count} 个确定格子，其余格子还需更多已知数或备选值。`,
         okAutoDetected: (val) => `已自动推算目标和值：${val}`,
         errTargetMismatch: (det, cur) => `根据已知数推算和值为 ${det}，与当前目标和值 ${cur} 矛盾。`,
         errNeedTarget: "请先输入目标和值，或填入中心格、对称数对及足够的已知数，让程序自动推导。",
@@ -874,6 +888,7 @@ html {
         errCellInt: (idx) => `Cell ${idx + 1} must be a positive integer.`,
         statusUpdated: "Known numbers updated.",
         errConflictSum: (sums) => `Conflicting target sums detected: ${sums}. Please check your inputs.`,
+        okPartialSolution: (count) => `Filled ${count} determined cells. Add known numbers or available numbers to determine the remaining cells.`,
         okAutoDetected: (val) => `Auto-detected target sum: ${val}`,
         errTargetMismatch: (det, cur) => `Deduction yields sum ${det}, which conflicts with target sum ${cur}.`,
         errNeedTarget: "Enter a target sum, a center value, an opposite pair, or enough known cells to deduce it.",
@@ -956,6 +971,7 @@ html {
     const cells = [];
     let internalUpdate = false;
     let targetWasAuto = false;
+    let deductionStep = 0;
     let allSolutions = [];
     let currentResultIndex = 0;
     let lastFixed = [];
@@ -1051,6 +1067,9 @@ html {
     }
 
     function clearSolvedCells(exceptCell = null) {
+      deductionStep = 0;
+      targetSumEl.classList.remove('deduction-reveal');
+      cells.forEach(cell => cell.classList.remove('deduction-reveal'));
       internalUpdate = true;
       cells.forEach(cell => {
         if (cell !== exceptCell && cell.dataset.source === 'solved') {
@@ -1074,6 +1093,7 @@ html {
     }
 
     function clearAll() {
+      clearSolvedCells();
       internalUpdate = true;
       cells.forEach(cell => {
         cell.value = '';
@@ -1156,13 +1176,41 @@ html {
       targetWasAuto = false;
     }
 
-    function fillInferredCenter(center) {
-      if (cells[4].dataset.source === 'manual') return;
+    function revealDeduction(element) {
+      element.classList.remove('deduction-reveal');
+      element.style.animationDelay = `${deductionStep++ * 100}ms`;
+      void element.offsetWidth;
+      element.classList.add('deduction-reveal');
+    }
+
+    function fillInferredCell(index, value, candidates = []) {
+      const cell = cells[index];
+      if (cell.dataset.source === 'manual') return;
+      const changed = cell.value === '' || Number(cell.value) !== value;
       internalUpdate = true;
-      cells[4].value = center;
-      cells[4].dataset.source = 'solved';
-      cells[4].classList.add('solved');
+      cell.value = value;
+      cell.dataset.source = 'solved';
+      cell.classList.remove('solved', 'candidate');
+      cell.classList.add(candidates.includes(value) ? 'candidate' : 'solved');
+      if (changed) revealDeduction(cell);
       internalUpdate = false;
+    }
+
+    function fillInferredCenter(center) {
+      fillInferredCell(4, center);
+    }
+
+    function fillCertainCells(solutions, fixed, candidates) {
+      // Show the center first, then complements of known cells, then any other
+      // cells that agree in every valid solution. Never choose an arbitrary grid.
+      const order = [...new Set([4, ...fixed.flatMap((value, i) => value === null ? [] : [8 - i]),
+        0, 1, 2, 3, 5, 6, 7, 8])];
+      for (const i of order) {
+        const value = solutions[0][i];
+        if (solutions.every(solution => solution[i] === value)) {
+          fillInferredCell(i, value, candidates);
+        }
+      }
     }
 
     function autoDetectTarget() {
@@ -1200,7 +1248,9 @@ html {
 
       if (targetSumEl.value.trim() === '' || targetWasAuto) {
         internalUpdate = true;
+        const changed = targetSumEl.value !== String(detected);
         targetSumEl.value = detected;
+        if (changed) revealDeduction(targetSumEl);
         internalUpdate = false;
         targetWasAuto = true;
         fillInferredCenter(center);
@@ -1469,15 +1519,7 @@ html {
       for (let i = 0; i < 9; i++) {
         const cell = cells[i];
         if (cell.dataset.source !== 'manual') {
-          cell.value = solution[i];
-          cell.dataset.source = 'solved';
-          cell.classList.remove('known', 'candidate', 'solved');
-
-          if (lastCandidates.includes(solution[i])) {
-            cell.classList.add('candidate');
-          } else {
-            cell.classList.add('solved');
-          }
+          fillInferredCell(i, solution[i], lastCandidates);
         }
       }
       internalUpdate = false;
@@ -1494,6 +1536,7 @@ html {
 
     function goToSolution(index) {
       if (index < 0 || index >= allSolutions.length) return;
+      deductionStep = 0;
       currentResultIndex = index;
       showSolutionInMainGrid(allSolutions[index], index);
 
@@ -1662,7 +1705,12 @@ html {
           shouldAutoApply = solutions.every(s => [...s].sort((a, b) => a - b).join(',') === base);
         }
 
-        if (!shouldAutoApply) return;
+        fillCertainCells(solutions, fixed, candidates);
+        if (!shouldAutoApply) {
+          const filled = cells.filter(cell => cell.dataset.source === 'solved').length;
+          setStatus(i18n[currentLang].okPartialSolution(filled), 'ok');
+          return;
+        }
 
         lastFixed = fixed.slice();
         lastCandidates = candidates.slice();

@@ -7,12 +7,12 @@ const html = readFileSync(require('node:path').join(__dirname, '../duo/index.htm
 function harness() {
   const cells = Array.from({ length: 9 }, () => ({
     value: '', dataset: { source: '' },
-    classList: { add() {}, remove() {} }
+    style: {}, classList: { add() {}, remove() {} }
   }));
   let targetValue = '';
-  const targetSumEl = { get value() { return targetValue; }, set value(v) { targetValue = String(v); } };
+  const targetSumEl = { style: {}, classList: { add() {}, remove() {} }, get value() { return targetValue; }, set value(v) { targetValue = String(v); } };
   const state = { cells, targetSumEl, candidateValuesEl: { value: '' },
-    currentLang: 'zh', internalUpdate: false, targetWasAuto: false,
+    currentLang: 'zh', internalUpdate: false, targetWasAuto: false, deductionStep: 0,
     allSolutions: [], lastFixed: [], lastCandidates: [], rendered: 0,
     i18n: { zh: new Proxy({}, { get: (_, key) => (...args) => `${key}:${args.join(',')}` }) },
     setStatus(message, type) { state.status = { message, type }; }
@@ -60,6 +60,26 @@ test('multiple number sets leave only the inferred center visible', () => {
   h.autoDetectTarget();
   assert.equal(h.targetSumEl.value, '66');
   assert.equal(Number(h.cells[4].value), 22);
+});
+
+test('center plus one known cell fills its opposite while multiple number sets remain', () => {
+  for (const [known, opposite, value] of [[0, 8, 26], [1, 7, 12], [2, 6, 24], [3, 5, 16]]) {
+    const h = harness();
+    const fixed = Array(9).fill(null); fixed[4] = 20; fixed[known] = value;
+    h.input(fixed); h.autoDetectTarget(); h.tryAutoSolve();
+    assert.equal(h.targetSumEl.value, '60');
+    assert.equal(Number(h.cells[opposite].value), 40 - value);
+    assert.equal(h.cells[opposite].dataset.source, 'solved');
+    assert.equal(h.rendered, 0);
+    assert.match(h.status.message, /okPartialSolution/);
+    for (let i = 0; i < 9; i++) {
+      if (![known, 4, opposite].includes(i)) assert.equal(h.cells[i].value, '');
+    }
+    assert.ok(h.cells[opposite].style.animationDelay);
+    h.input(Array(9).fill(null)); h.autoDetectTarget();
+    assert.equal(h.targetSumEl.value, '');
+    assert.equal(h.cells[opposite].value, '');
+  }
 });
 
 test('rotations, reflections and scaled/translated magic squares infer consistent sums', () => {
