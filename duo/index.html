@@ -741,11 +741,11 @@ html {
         </div>
         <div class="guide-item">
           <h3 id="guideH2">对称互补特性</h3>
-          <p id="guideP2">穿过中心格的 4 条线（行、列及两条对角线）上，相对两数之和恒等于 <code>2 × 中心数</code>。借助该对称律可轻松反推未知格。</p>
+          <p id="guideP2">穿过中心格的相对两数之和恒等于 <code>2 × 中心数</code>。按从左到右、从上到下的 1–9 号位，输入 <code>19 / 28 / 37 / 46</code> 任一对即可推导中心数与目标和值。</p>
         </div>
         <div class="guide-item">
-          <h3 id="guideH3">多邻国候选值定位</h3>
-          <p id="guideP3">将多邻国数学题目中给出的可选数字填入「备选值」，求解器将以<strong class="badge-orange">橙色高亮</strong>标识其在解法中的具体格子位置，方便一键通关。</p>
+          <h3 id="guideH3">三数推导中心</h3>
+          <p id="guideP3">按 1–9 号位，<code>中心 = (2 × 1号位 + 2号位 + 4号位) / 4</code>，也有 <code>中心 = (2 × 1号位 + 2号位 − 6号位) / 2</code>。输入 <code>124 / 126</code> 或旋转、镜像后的组合即可自动推导。多邻国备选值会以橙色标出。</p>
         </div>
       </div>
     </div>
@@ -806,9 +806,9 @@ html {
         guideH1: "中心数黄金定律",
         guideP1: "在任意 3×3 幻方中，<strong>中心数恒等于目标和值的三分之一</strong>（即 <code>目标和值 = 3 × 中心格</code>）。输入任意一项即可自动推导另一项。",
         guideH2: "对称互补特性",
-        guideP2: "穿过中心格的 4 条线（行、列及两条对角线）上，相对两数之和恒等于 <code>2 × 中心数</code>。借助该对称律可快速推导未知格子。",
-        guideH3: "候选数字快速定位",
-        guideP3: "将题目中给出的候选选项填入「备选数字」，求解器将以<strong class=\"badge-orange\">橙色高亮</strong>标识其在幻方中的对应位置，方便快速解题。",
+        guideP2: "穿过中心格的相对两数之和恒等于 <code>2 × 中心数</code>。按从左到右、从上到下的 1–9 号位，输入 <code>19 / 28 / 37 / 46</code> 任一对即可推导中心数与目标和值。",
+        guideH3: "三数推导中心",
+        guideP3: "按 1–9 号位，<code>中心 = (2 × 1号位 + 2号位 + 4号位) / 4</code>，也有 <code>中心 = (2 × 1号位 + 2号位 − 6号位) / 2</code>。输入 <code>124 / 126</code> 或旋转、镜像后的组合即可自动推导。多邻国备选值会以橙色标出。",
         footerTop: "回到顶部 ↑",
         footerGuide: "解题技巧",
         footerHome: "xue.moe 首页",
@@ -818,7 +818,8 @@ html {
         errConflictSum: (sums) => `推导出的目标和值产生冲突：${sums}。请检查输入是否有误。`,
         okAutoDetected: (val) => `已自动推算目标和值：${val}`,
         errTargetMismatch: (det, cur) => `根据已知数推算和值为 ${det}，与当前目标和值 ${cur} 矛盾。`,
-        errNeedTarget: "请先输入目标和值，或填入完整行/列/中心格让程序自动推导。",
+        errNeedTarget: "请先输入目标和值，或填入中心格、对称数对及足够的已知数，让程序自动推导。",
+        errInferredCenter: (center) => `推导出的中心数 ${center} 不是正整数，九宫格无正整数解。`,
         errTargetPosInt: "目标和值必须是正整数。",
         errCandidatesPosInt: "备选值只能输入正整数，多个请用逗号或空格分隔。",
         errDupeFixed: (dupes) => `数字不能重复：已知数字中存在重复数字 ${dupes}。`,
@@ -863,9 +864,9 @@ html {
         guideH1: "Golden Rule of the Center Cell",
         guideP1: "In any 3×3 magic square, <strong>the center number is always exactly one third of the target sum</strong> (<code>Target Sum = 3 × Center</code>). Entering either value immediately determines the other.",
         guideH2: "Symmetry & Complementarity",
-        guideP2: "For every line passing through the center cell (rows, columns, and diagonals), opposite pairs sum to <code>2 × Center</code>. This symmetry allows instant deduction of unknown cells.",
-        guideH3: "Pinpoint Duolingo Choices",
-        guideP3: "Enter the number choices given by Duolingo into 「Available Numbers」. The solver highlights their exact positions in <strong class=\"badge-orange\">orange</strong> so you can solve the puzzle immediately.",
+        guideP2: "Opposite pairs sum to <code>2 × Center</code>. Numbering cells 1–9 from left to right, top to bottom, enter any pair <code>19 / 28 / 37 / 46</code> to infer the center and target sum.",
+        guideH3: "Infer from Three Cells",
+        guideP3: "With cells numbered 1–9, <code>Center = (2 × Cell 1 + Cell 2 + Cell 4) / 4</code> and <code>Center = (2 × Cell 1 + Cell 2 − Cell 6) / 2</code>. Enter <code>124 / 126</code> or rotated/reflected combinations to infer the center and target sum. Available numbers are highlighted in orange.",
         footerTop: "Back to Top ↑",
         footerGuide: "Solving Tips",
         footerHome: "xue.moe Home",
@@ -875,7 +876,8 @@ html {
         errConflictSum: (sums) => `Conflicting target sums detected: ${sums}. Please check your inputs.`,
         okAutoDetected: (val) => `Auto-detected target sum: ${val}`,
         errTargetMismatch: (det, cur) => `Deduction yields sum ${det}, which conflicts with target sum ${cur}.`,
-        errNeedTarget: "Please enter a target sum, or complete a full row, column, or center cell to deduce it.",
+        errNeedTarget: "Enter a target sum, a center value, an opposite pair, or enough known cells to deduce it.",
+        errInferredCenter: (center) => `The inferred center ${center} is not a positive integer. No positive integer solution exists.`,
         errTargetPosInt: "Target sum must be a positive integer.",
         errCandidatesPosInt: "Available numbers must be positive integers separated by commas or spaces.",
         errDupeFixed: (dupes) => `Numbers cannot repeat: duplicate ${dupes} found in known cells.`,
@@ -998,8 +1000,7 @@ html {
 
         clearSolvedCells(input);
         clearResults();
-        autoDetectTarget();
-        tryAutoSolve();
+        if (autoDetectTarget() !== false) tryAutoSolve();
       });
 
       input.addEventListener('keydown', event => {
@@ -1100,6 +1101,70 @@ html {
       });
     }
 
+    // Every 3×3 magic square has three parameters: center e and offsets p, q.
+    // These integer coefficients describe twice each cell: 2e + bp + cq.
+    const cellCoefficients = [
+      [2, 1, 1], [2, -2, 0], [2, 1, -1],
+      [2, 0, -2], [2, 0, 0], [2, 0, 2],
+      [2, -1, 1], [2, 2, 0], [2, -1, -1]
+    ];
+
+    function determinant3([a, b, c]) {
+      return a[0] * (b[1] * c[2] - b[2] * c[1])
+        - a[1] * (b[0] * c[2] - b[2] * c[0])
+        + a[2] * (b[0] * c[1] - b[1] * c[0]);
+    }
+
+    function inferTargetSums(values) {
+      const sums = [];
+      if (values[4] !== null) sums.push(3 * values[4]);
+      for (const [a, b] of [[0, 8], [1, 7], [2, 6], [3, 5]]) {
+        if (values[a] !== null && values[b] !== null) {
+          sums.push(3 * (values[a] + values[b]) / 2);
+        }
+      }
+      for (const line of lines) {
+        if (line.every(i => values[i] !== null)) {
+          sums.push(line.reduce((sum, i) => sum + values[i], 0));
+        }
+      }
+
+      // Independent triples also determine e, including 124 and 126 and all
+      // rotations/reflections. Singular triples are covered by the rules above.
+      const known = values.map((value, i) => value === null ? null : i)
+        .filter(i => i !== null);
+      for (let a = 0; a < known.length; a++) {
+        for (let b = a + 1; b < known.length; b++) {
+          for (let c = b + 1; c < known.length; c++) {
+            const indices = [known[a], known[b], known[c]];
+            const rows = indices.map(i => cellCoefficients[i]);
+            const det = determinant3(rows);
+            if (det === 0) continue;
+            const centerRows = indices.map(i => [2 * values[i], ...cellCoefficients[i].slice(1)]);
+            sums.push(3 * determinant3(centerRows) / det);
+          }
+        }
+      }
+      return sums;
+    }
+
+    function clearAutoTarget() {
+      if (!targetWasAuto) return;
+      internalUpdate = true;
+      targetSumEl.value = '';
+      internalUpdate = false;
+      targetWasAuto = false;
+    }
+
+    function fillInferredCenter(center) {
+      if (cells[4].dataset.source === 'manual') return;
+      internalUpdate = true;
+      cells[4].value = center;
+      cells[4].dataset.source = 'solved';
+      cells[4].classList.add('solved');
+      internalUpdate = false;
+    }
+
     function autoDetectTarget() {
       const values = cells.map(cell => {
         if (cell.dataset.source !== 'manual' || cell.value.trim() === '') return null;
@@ -1107,46 +1172,38 @@ html {
         return Number.isInteger(n) && n > 0 ? n : null;
       });
 
-      const sums = [];
-      for (const line of lines) {
-        const v = line.map(i => values[i]);
-        if (v.every(x => x !== null)) {
-          sums.push(v[0] + v[1] + v[2]);
-        }
-      }
-
-      const centerVal = values[4];
-      if (centerVal !== null) {
-        sums.push(centerVal * 3);
-      }
+      const sums = inferTargetSums(values);
 
       if (sums.length === 0) {
-        if (targetWasAuto) {
-          internalUpdate = true;
-          targetSumEl.value = '';
-          internalUpdate = false;
-          targetWasAuto = false;
-        }
+        clearAutoTarget();
         setStatus(i18n[currentLang].statusUpdated);
         return;
       }
 
       const uniqueSums = [...new Set(sums)];
       if (uniqueSums.length > 1) {
+        clearAutoTarget();
         setStatus(
           i18n[currentLang].errConflictSum(uniqueSums.join(currentLang === 'zh' ? '、' : ', ')),
           'error'
         );
-        return;
+        return false;
       }
 
       const detected = uniqueSums[0];
+      const center = detected / 3;
+      if (!Number.isInteger(center) || center <= 0) {
+        clearAutoTarget();
+        setStatus(i18n[currentLang].errInferredCenter(center), 'error');
+        return false;
+      }
 
       if (targetSumEl.value.trim() === '' || targetWasAuto) {
         internalUpdate = true;
         targetSumEl.value = detected;
         internalUpdate = false;
         targetWasAuto = true;
+        fillInferredCenter(center);
         setStatus(i18n[currentLang].okAutoDetected(detected), 'ok');
         return;
       }
@@ -1157,7 +1214,9 @@ html {
           i18n[currentLang].errTargetMismatch(detected, current),
           'error'
         );
+        return false;
       } else {
+        fillInferredCenter(center);
         setStatus(i18n[currentLang].statusUpdated);
       }
     }
@@ -1491,6 +1550,7 @@ html {
       clearResults();
 
       const t = i18n[currentLang];
+      if (autoDetectTarget() === false) return;
       const target = readTarget();
       const fixed = readManualValues();
       const candidates = readCandidates();
@@ -1694,12 +1754,7 @@ html {
       targetWasAuto = false;
       clearSolvedCells();
       clearResults();
-      if (targetSumEl.value.trim() === '') {
-        autoDetectTarget();
-      } else {
-        setStatus(currentLang === 'zh' ? '和值已更改。按 Enter 键可立即计算。' : 'Target sum changed. Press Enter to calculate.');
-      }
-      tryAutoSolve();
+      if (autoDetectTarget() !== false) tryAutoSolve();
     });
 
     targetSumEl.addEventListener('keydown', e => {
@@ -1712,8 +1767,7 @@ html {
     candidateValuesEl.addEventListener('input', () => {
       clearSolvedCells();
       clearResults();
-      setStatus(currentLang === 'zh' ? '备选值已更新。按 Enter 键可立即计算。' : 'Candidates updated. Press Enter to calculate.');
-      tryAutoSolve();
+      if (autoDetectTarget() !== false) tryAutoSolve();
     });
 
     candidateValuesEl.addEventListener('keydown', e => {
