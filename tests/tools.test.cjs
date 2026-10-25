@@ -228,3 +228,33 @@ test('custom duration validates minutes before resetting a running timer and per
   const restored = timerHarness(h.store.get('xue-focus-timer-v1')); restored.run('restoreTimer()');
   assert.equal(restored.run('timerDuration'), 2520); assert.equal(restored.run('timerMode'), 'custom');
 });
+
+function todoFilterHarness() {
+  const state = {Date}; vm.createContext(state);
+  vm.runInContext(html.slice(html.indexOf('    function filterTodoItems('), html.indexOf('    function renderTodos()')), state);
+  return state.filterTodoItems;
+}
+
+test('today and overdue use local calendar boundaries and exclude completed or undated tasks', () => {
+  const filter = todoFilterHarness();
+  const now = new Date(2026, 9, 25, 12);
+  const task = (id, day, hour = 0, completed = false) => ({id, title:'Task', deadline: new Date(2026,9,day,hour).toISOString(), hasDeadline: true, completed});
+  const items = [task(1,24,23), task(2,25,0), task(3,25,23), task(4,26,0), task(5,25,8,true), {id:6,title:'Undated'}, {id:7,title:'Invalid',hasDeadline:true,deadline:'bad'}];
+  const ids = list => Array.from(list, t => t.id);
+  assert.deepEqual(ids(filter(items, [], 'today', '', now)), [2,3]);
+  assert.deepEqual(ids(filter(items, [], 'overdue', '', now)), [1,2]);
+  assert.equal(filter(items, [], 'completed', '', now).length, 1);
+  assert.deepEqual(ids(filter(items, [], 'today', '', new Date(2026,9,26,0))), [4]);
+});
+
+test('search matches normalized titles and notes within the selected view without mutating the source', () => {
+  const filter = todoFilterHarness();
+  const items = [{id:1,title:'ＡＢＣ',note:'Meeting notes',completed:false},{id:2,title:'Other',note:'ABC',completed:true}];
+  const trash = [{id:3,title:'Deleted ABC',removed:true}];
+  assert.equal(filter(items, trash, 'ongoing', ' abc ').length, 1);
+  assert.equal(filter(items, trash, 'all', 'meeting')[0].id, 1);
+  assert.equal(filter(items, trash, 'trash', 'ABC')[0].id, 3);
+  assert.equal(filter(items, trash, 'all', 'missing').length, 0);
+  const result = filter(items, trash, 'all'); result.reverse();
+  assert.equal(items[0].id, 1);
+});
