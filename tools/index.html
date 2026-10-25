@@ -1582,6 +1582,10 @@
     }
 
     .char-tile {
+      color: var(--text-main);
+      text-align: center;
+      min-width: 44px;
+      min-height: 44px;
       display: inline-flex;
       flex-direction: column;
       align-items: center;
@@ -1875,6 +1879,7 @@
     .dialog-form input, .dialog-form textarea { width: 100%; min-width: 0; min-height: 44px; font-size: 16px; margin: 0; }
     .dialog-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
     .dialog-actions button { min-height: 44px; }
+    button:disabled { opacity: 0.5; cursor: default; }
     .dialog-error { color: var(--danger); font-size: 14px; }
 
     :where(button, a, input, textarea, select):focus-visible {
@@ -2249,6 +2254,28 @@
 
         <textarea id="textInput" class="textarea-box" placeholder="输入或粘贴文本..." autocomplete="off" data-1p-ignore data-bwignore></textarea>
 
+        <div class="tool-btn-row">
+          <button class="btn btn-ghost" data-transform="upper" id="btnTransformUpper">转为大写</button>
+          <button class="btn btn-ghost" data-transform="lower" id="btnTransformLower">转为小写</button>
+          <button class="btn btn-ghost" data-transform="camel" id="btnTransformCamel">驼峰命名</button>
+          <button class="btn btn-ghost" data-transform="kebab" id="btnTransformKebab">短横线连接</button>
+          <button class="btn btn-ghost" data-transform="fullwidth" id="btnTransformFullwidth">全角转半角</button>
+          <button class="btn btn-ghost" data-transform="phonetic" id="btnTransformPhonetic">拼音与罗马音注音</button>
+          <button class="btn btn-ghost" data-transform="clear" id="btnTransformClear" style="margin-left:auto; color:var(--danger);">清空</button>
+          <button class="btn btn-ghost" id="btnCopyText">复制输入</button>
+          <button class="btn btn-ghost" id="btnUndoText" disabled>撤销修改</button>
+        </div>
+
+        <p id="textActionStatus" role="status" style="min-height:1.5em; margin-bottom:12px;"></p>
+        <div id="textResultBox" hidden>
+          <label for="textResult" id="textResultLabel">转换结果预览</label>
+          <textarea id="textResult" class="textarea-box" readonly></textarea>
+          <div class="tool-btn-row">
+            <button id="btnCopyResult" class="btn btn-ghost">复制结果</button>
+            <button id="btnApplyResult" class="btn btn-primary">应用到输入</button>
+          </div>
+        </div>
+
         <div class="char-inspector" id="charInspector">
           <div class="inspector-header">
             <div class="inspector-title">
@@ -2325,16 +2352,6 @@
           </div>
         </div>
 
-        <div class="tool-btn-row">
-          <button class="btn btn-ghost" data-transform="upper" id="btnTransformUpper">转为大写</button>
-          <button class="btn btn-ghost" data-transform="lower" id="btnTransformLower">转为小写</button>
-          <button class="btn btn-ghost" data-transform="camel" id="btnTransformCamel">驼峰命名</button>
-          <button class="btn btn-ghost" data-transform="kebab" id="btnTransformKebab">短横线连接</button>
-          <button class="btn btn-ghost" data-transform="fullwidth" id="btnTransformFullwidth">全角转半角</button>
-          <button class="btn btn-ghost" data-transform="phonetic" id="btnTransformPhonetic">拼音与罗马音注音</button>
-          <button class="btn btn-ghost" data-transform="clear" id="btnTransformClear" style="margin-left:auto; color:var(--danger);">清空</button>
-        </div>
-
         <div id="phoneticBox" class="phonetic-box" style="display:none;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <span id="phoneticTitle" style="font-size:12.5px; font-weight:700; color:var(--text-main);">拼音与罗马音注音结果</span>
@@ -2349,6 +2366,20 @@
       </div>
     </section>
   </main>
+
+  <dialog id="charDetailDialog" class="tool-dialog" aria-labelledby="charDetailHeading">
+    <div class="dialog-form">
+      <h2 id="charDetailHeading">字符详情</h2>
+      <p id="charDetailGlyph" style="font-size:36px; white-space:pre-wrap;"></p>
+      <p id="charDetailDescription"></p>
+      <code id="charDetailUnicode" style="white-space:normal; overflow-wrap:anywhere;"></code>
+      <p id="charCopyStatus" role="status"></p>
+      <div class="dialog-actions">
+        <button id="btnCopyChar" class="btn btn-primary" type="button">复制字符</button>
+        <button id="btnCloseChar" class="btn btn-ghost" type="button">关闭</button>
+      </div>
+    </div>
+  </dialog>
 
   <dialog id="todoEditDialog" class="tool-dialog" aria-labelledby="todoEditHeading">
     <form id="todoEditForm" class="dialog-form">
@@ -2578,6 +2609,10 @@
         charEmpty: '输入或粘贴文本即可解析字符结构',
         charTruncatedText: (limit, total) => `已展示前 ${limit} 个字符（共 ${total} 个）。`,
         btnShowAllChars: '展示全部',
+        copyInput: '复制输入', copyResult: '复制结果', applyResult: '应用到输入', undoText: '撤销修改',
+        resultLabel: '转换结果预览', copySuccess: '已复制', copyFailed: '复制失败，请长按文本手动复制。',
+        charDetailTitle: '字符详情', copyChar: '复制字符', closeDetail: '关闭',
+        invisibleNotice: '检测到不换行空格、零宽字符或方向控制字符，请在字符详情中核对。',
         statChars: '可见字符数',
         statNonSpace: '非空白字符',
         statChinese: '中文字数',
@@ -2760,6 +2795,10 @@
         charEmpty: 'Type or paste text above to inspect characters',
         charTruncatedText: (limit, total) => `Showing first ${limit} of ${total} characters.`,
         btnShowAllChars: 'Show all',
+        copyInput: 'Copy input', copyResult: 'Copy result', applyResult: 'Apply to input', undoText: 'Undo change',
+        resultLabel: 'Conversion preview', copySuccess: 'Copied', copyFailed: 'Copy failed. Select the text and copy it manually.',
+        charDetailTitle: 'Character details', copyChar: 'Copy character', closeDetail: 'Close',
+        invisibleNotice: 'Non-breaking spaces, zero-width or directional control characters detected. Inspect character details.',
         statChars: 'Graphemes',
         statNonSpace: 'Non-whitespace',
         statChinese: 'Chinese (CJK)',
@@ -4370,6 +4409,14 @@
     function classifyChar(ch, textContext) {
       const isEn = currentLang === 'en';
       const isJpCtx = textContext === 'ja';
+      const invisibleNames = {
+        '\u00a0': 'NBSP', '\u200b': 'ZWSP', '\u200c': 'ZWNJ', '\u200d': 'ZWJ',
+        '\u2060': 'WJ', '\ufeff': 'BOM', '\u00ad': 'SHY'
+      };
+      if (invisibleNames[ch] || /^[\u202a-\u202e\u2066-\u2069]$/u.test(ch)) {
+        return { glyph: '◌', label: invisibleNames[ch] || 'BIDI', cls: 'whitespace',
+          note: (isEn ? 'Invisible / control character: ' : '不可见 / 控制字符：') + (invisibleNames[ch] || 'BIDI') };
+      }
 
       if (ch === '0') return { glyph: '0', label: '0', cls: 'ambiguous digit', note: isEn ? 'Digit 0 · Confusable with O/o' : '数字 0 · 与 O/o 形似' };
       if (ch === 'O') return { glyph: 'O', label: 'O', cls: 'ambiguous upper', note: isEn ? 'Upper O · Confusable with 0' : '大写字母 O · 与 0 形似' };
@@ -4534,11 +4581,12 @@
         const info = classifyChar(ch, textContext);
         const hex = unicodeSequence(ch);
 
-        const tile = document.createElement('div');
+        const tile = document.createElement('button');
+        tile.type = 'button';
         tile.className = `char-tile ${info.cls}`;
         tile.title = isEn
-          ? `Char: ${ch === '\n' ? '\\n' : ch === '\t' ? '\\t' : ch}\nIndex: #${idx + 1}\nUnicode: ${hex}\nType: ${info.note}\nClick to copy character`
-          : `字符: ${ch === '\n' ? '\\n' : ch === '\t' ? '\\t' : ch}\n序号: #${idx + 1}\n编码: ${hex}\n说明: ${info.note}\n点击复制字符`;
+          ? `Char: ${ch === '\n' ? '\\n' : ch === '\t' ? '\\t' : ch}\nIndex: #${idx + 1}\nUnicode: ${hex}\nType: ${info.note}\nOpen character details`
+          : `字符: ${ch === '\n' ? '\\n' : ch === '\t' ? '\\t' : ch}\n序号: #${idx + 1}\n编码: ${hex}\n说明: ${info.note}\n点击查看字符详情`;
 
         const idxSpan = document.createElement('span');
         idxSpan.className = 'char-idx';
@@ -4556,12 +4604,8 @@
         tile.appendChild(glyphSpan);
         tile.appendChild(subSpan);
 
-        tile.addEventListener('click', () => {
-          navigator.clipboard.writeText(ch).then(() => {
-            tile.classList.add('copied');
-            setTimeout(() => tile.classList.remove('copied'), 900);
-          }).catch(() => {});
-        });
+        tile.setAttribute('aria-label', `#${idx + 1}: ${info.note}; ${hex}`);
+        tile.addEventListener('click', () => showCharDetails(ch, info, idx));
 
         fragment.appendChild(tile);
       });
@@ -4581,6 +4625,7 @@
       countLines.textContent = metrics.lines;
 
       const notices = [];
+      if (/[\u00a0\u200b\u200c\u2060\ufeff\u202a-\u202e\u2066-\u2069]/u.test(val)) notices.push(t.invisibleNotice);
 
       // 0 and O/o
       const hasZero = val.includes('0');
@@ -4641,6 +4686,10 @@
     }
 
     textInput.addEventListener('input', () => {
+      previousText = null;
+      btnUndoText.disabled = true;
+      textResultBox.hidden = true;
+      textActionStatus.textContent = '';
       showAllTiles = false;
       analyzeText();
       if (phoneticBox && phoneticBox.style.display !== 'none') {
@@ -4717,35 +4766,80 @@
       });
     }
 
+    const textResultBox = document.getElementById('textResultBox');
+    const textResult = document.getElementById('textResult');
+    const textActionStatus = document.getElementById('textActionStatus');
+    const btnUndoText = document.getElementById('btnUndoText');
+    let previousText = null;
+    let selectedChar = '';
+    const charDetailDialog = document.getElementById('charDetailDialog');
+
+    async function copyText(text, status = textActionStatus) {
+      const t = i18n[currentLang] || i18n.zh;
+      try {
+        await navigator.clipboard.writeText(text);
+        status.textContent = t.copySuccess;
+      } catch (_) { status.textContent = t.copyFailed; }
+    }
+
+    function showCharDetails(ch, info, index) {
+      const t = i18n[currentLang] || i18n.zh;
+      selectedChar = ch;
+      document.getElementById('charDetailHeading').textContent = t.charDetailTitle;
+      document.getElementById('charDetailGlyph').textContent = info.glyph;
+      document.getElementById('charDetailDescription').textContent = `#${index + 1} · ${info.note}`;
+      document.getElementById('charDetailUnicode').textContent = unicodeSequence(ch);
+      document.getElementById('charCopyStatus').textContent = '';
+      document.getElementById('btnCopyChar').textContent = t.copyChar;
+      document.getElementById('btnCloseChar').textContent = t.closeDetail;
+      charDetailDialog.showModal();
+    }
+    document.getElementById('btnCloseChar').addEventListener('click', () => charDetailDialog.close());
+    document.getElementById('btnCopyChar').addEventListener('click', () => copyText(selectedChar, document.getElementById('charCopyStatus')));
+    document.getElementById('btnCopyText').addEventListener('click', () => copyText(textInput.value));
+    document.getElementById('btnCopyResult').addEventListener('click', () => copyText(textResult.value));
+
+    function replaceText(value) {
+      previousText = textInput.value;
+      textInput.value = value;
+      btnUndoText.disabled = false;
+      refreshText();
+    }
+    function refreshText() {
+      showAllTiles = false;
+      textResultBox.hidden = true;
+      textActionStatus.textContent = '';
+      analyzeText();
+      triggerPhoneticConversionIfVisible();
+    }
+    function triggerPhoneticConversionIfVisible() {
+      if (phoneticBox.style.display !== 'none') triggerPhoneticConversion();
+    }
+    document.getElementById('btnApplyResult').addEventListener('click', () => replaceText(textResult.value));
+    btnUndoText.addEventListener('click', () => {
+      if (previousText === null) return;
+      textInput.value = previousText;
+      previousText = null;
+      btnUndoText.disabled = true;
+      refreshText();
+    });
+
+    function transformText(type, value) {
+      if (type === 'upper') return value.toUpperCase();
+      if (type === 'lower') return value.toLowerCase();
+      if (type === 'camel') return value.replace(/[-_\s]+(.)?/g, (_, c) => c ? c.toUpperCase() : '').replace(/^(.)/, c => c.toLowerCase());
+      if (type === 'kebab') return value.replace(/([a-z])([A-Z])/g, '$1-$2').replace(/[\s_]+/g, '-').toLowerCase();
+      if (type === 'fullwidth') return toHalfwidth(value);
+      return value;
+    }
     document.querySelectorAll('[data-transform]').forEach(btn => {
       btn.addEventListener('click', () => {
         const type = btn.dataset.transform;
-        const val = textInput.value;
-
-        if (type === 'upper') {
-          textInput.value = val.toUpperCase();
-        } else if (type === 'lower') {
-          textInput.value = val.toLowerCase();
-        } else if (type === 'camel') {
-          textInput.value = val
-            .replace(/[-_\s]+(.)?/g, (_, c) => c ? c.toUpperCase() : '')
-            .replace(/^(.)/, c => c.toLowerCase());
-        } else if (type === 'kebab') {
-          textInput.value = val
-            .replace(/([a-z])([A-Z])/g, '$1-$2')
-            .replace(/[\s_]+/g, '-')
-            .toLowerCase();
-        } else if (type === 'fullwidth') {
-          textInput.value = toHalfwidth(val);
-        } else if (type === 'phonetic') {
-          triggerPhoneticConversion();
-          return;
-        } else if (type === 'clear') {
-          textInput.value = '';
-          showAllTiles = false;
-          if (phoneticBox) phoneticBox.style.display = 'none';
-        }
-        analyzeText();
+        if (type === 'phonetic') { triggerPhoneticConversion(); return; }
+        if (type === 'clear') { replaceText(''); return; }
+        textResult.value = transformText(type, textInput.value);
+        textResultBox.hidden = false;
+        textActionStatus.textContent = '';
       });
     });
 
@@ -4916,6 +5010,9 @@
       const timerReset = document.getElementById('timerReset');
       if (timerReset) timerReset.textContent = t.timerReset;
 
+      for (const [id, key] of Object.entries({ btnCopyText: 'copyInput', btnCopyResult: 'copyResult', btnApplyResult: 'applyResult', btnUndoText: 'undoText', textResultLabel: 'resultLabel' })) {
+        document.getElementById(id).textContent = t[key];
+      }
       // Text Lab panel
       const textLabTitle = document.getElementById('textLabTitle');
       if (textLabTitle) textLabTitle.textContent = t.textLabTitle;

@@ -176,3 +176,35 @@ test('editing task details preserves identity and state, supports clearing deadl
   assert.throws(() => state.withTodoDetails(original, ' ', '', ''));
   assert.throws(() => state.withTodoDetails(original, 'Valid', '', 'invalid'));
 });
+
+function textControllerHarness() {
+  const elements = new Map();
+  const element = () => ({ value: '', hidden: true, disabled: false, style: {display: 'none'}, addEventListener(name, fn) { this[name] = fn; } });
+  const controls = ['upper', 'fullwidth', 'clear'].map(type => ({dataset: {transform: type}, addEventListener(name, fn) {this[name] = fn;}}));
+  const state = {
+    textInput: {value: 'ＡbC'}, phoneticBox: {style:{display:'none'}}, showAllTiles: false,
+    document: { getElementById(id) {if (!elements.has(id)) elements.set(id, element()); return elements.get(id);}, querySelectorAll: () => controls },
+    navigator: {clipboard: {writeText: async () => {throw new Error('denied');}}},
+    analyzeText() {}, triggerPhoneticConversion() {}, currentLang:'zh', i18n:{zh:{copyFailed:'failed'}}, toHalfwidth: value => value.replace('Ａ','A')
+  };
+  vm.createContext(state);
+  vm.runInContext(html.slice(html.indexOf('    const textResultBox ='), html.indexOf('    function applyLanguage(lang)')), state);
+  return {state, elements, controls};
+}
+
+test('conversion preview keeps the input intact; applying and clearing can be undone', () => {
+  const h = textControllerHarness();
+  h.controls[1].click();
+  assert.equal(h.state.textInput.value, 'ＡbC');
+  assert.equal(h.elements.get('textResult').value, 'AbC');
+  assert.equal(h.elements.get('textResultBox').hidden, false);
+  h.elements.get('btnApplyResult').click(); assert.equal(h.state.textInput.value, 'AbC');
+  h.elements.get('btnUndoText').click(); assert.equal(h.state.textInput.value, 'ＡbC');
+  h.controls[2].click(); assert.equal(h.state.textInput.value, '');
+  h.elements.get('btnUndoText').click(); assert.equal(h.state.textInput.value, 'ＡbC');
+});
+
+test('clipboard denial reports a visible failure', async () => {
+  const h = textControllerHarness(); await h.state.copyText('text');
+  assert.equal(h.elements.get('textActionStatus').textContent, 'failed');
+});
