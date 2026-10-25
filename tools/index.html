@@ -2161,6 +2161,7 @@
         </div>
 
         <div class="timer-clock" id="timerClock">25:00</div>
+        <p id="timerStatus" role="status" style="min-height:1.5em; margin-bottom:16px;"></p>
 
         <div class="timer-btn-row">
           <button class="btn btn-primary" id="timerToggle" style="min-width:120px; padding:12px 24px;">开始</button>
@@ -3516,6 +3517,9 @@
     let timerRemaining = timerDuration;
     let timerRunning = false;
     let timerInterval = null;
+    let timerEndAt = null;
+    let timerMode = '25';
+    const TIMER_STORAGE_KEY = 'xue-focus-timer-v1';
 
     const timerClock = document.getElementById('timerClock');
     const timerToggle = document.getElementById('timerToggle');
@@ -3529,10 +3533,13 @@
       timerClock.textContent = str;
 
       const t = i18n[currentLang] || i18n.zh;
-      if (timerRunning) {
-        document.title = t.timerFocusingTitle(str);
-      } else {
-        updateDocumentTitle('timer');
+      timerToggle.textContent = timerRunning ? t.timerPause : t.timerStart;
+      timerToggle.classList.toggle('btn-primary', !timerRunning);
+      timerToggle.classList.toggle('btn-ghost', timerRunning);
+      document.getElementById('timerStatus').textContent = timerRemaining === 0 ? t.timerTimeUp : '';
+      if (document.querySelector('.seg-btn.active')?.dataset.tab === 'timer') {
+        if (timerRunning) document.title = t.timerFocusingTitle(str);
+        else updateDocumentTitle('timer');
       }
     }
 
@@ -3553,64 +3560,101 @@
       } catch (_) {}
     }
 
+    function persistTimer() {
+      try {
+        localStorage.setItem(TIMER_STORAGE_KEY, JSON.stringify({
+          duration: timerDuration, remaining: timerRemaining, endAt: timerEndAt, mode: timerMode
+        }));
+      } catch (_) {}
+    }
+
+    function tickTimer() {
+      if (!timerRunning) return;
+      timerRemaining = Math.max(0, Math.ceil((timerEndAt - Date.now()) / 1000));
+      if (timerRemaining === 0) {
+        timerRunning = false;
+        timerEndAt = null;
+        clearInterval(timerInterval);
+        persistTimer();
+        playBeep();
+      }
+      updateClock();
+    }
+
     function startTimer() {
       if (timerRunning) return;
-      const t = i18n[currentLang] || i18n.zh;
+      if (timerRemaining === 0) timerRemaining = timerDuration;
+      timerEndAt = Date.now() + timerRemaining * 1000;
       timerRunning = true;
-      timerToggle.textContent = t.timerPause;
-      timerToggle.classList.remove('btn-primary');
-      timerToggle.classList.add('btn-ghost');
-
-      timerInterval = setInterval(() => {
-        if (timerRemaining > 0) {
-          timerRemaining--;
-          updateClock();
-        } else {
-          pauseTimer();
-          playBeep();
-          alert(t.timerTimeUp);
-        }
-      }, 1000);
+      persistTimer();
+      clearInterval(timerInterval);
+      timerInterval = setInterval(tickTimer, 250);
+      updateClock();
     }
 
     function pauseTimer() {
-      const t = i18n[currentLang] || i18n.zh;
+      if (timerRunning) tickTimer();
       timerRunning = false;
+      timerEndAt = null;
       clearInterval(timerInterval);
-      timerToggle.textContent = t.timerStart;
-      timerToggle.classList.add('btn-primary');
-      timerToggle.classList.remove('btn-ghost');
+      persistTimer();
       updateClock();
     }
 
     function resetTimer() {
-      pauseTimer();
+      timerRunning = false;
+      timerEndAt = null;
+      clearInterval(timerInterval);
       timerRemaining = timerDuration;
+      persistTimer();
       updateClock();
     }
 
+    function restoreTimer() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(TIMER_STORAGE_KEY));
+        if (saved && Number.isInteger(saved.duration) && saved.duration > 0 && saved.duration <= 21600
+            && Number.isInteger(saved.remaining) && saved.remaining >= 0 && saved.remaining <= saved.duration
+            && ['25', '5', '15', 'custom'].includes(saved.mode)
+            && (saved.endAt === null || (Number.isFinite(saved.endAt) && saved.endAt > 0))) {
+          timerDuration = saved.duration;
+          timerRemaining = saved.remaining;
+          timerMode = saved.mode;
+          if (saved.endAt !== null) {
+            timerEndAt = saved.endAt;
+            timerRunning = true;
+            timerInterval = setInterval(tickTimer, 250);
+            tickTimer();
+          }
+        }
+      } catch (_) {}
+      timerModeBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.minutes === timerMode));
+      updateClock();
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') tickTimer();
+    });
     timerToggle.addEventListener('click', () => {
       if (timerRunning) pauseTimer();
       else startTimer();
     });
-
     timerReset.addEventListener('click', resetTimer);
 
     timerModeBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const t = i18n[currentLang] || i18n.zh;
-        timerModeBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
         const val = btn.dataset.minutes;
+        let minutes = Number(val);
         if (val === 'custom') {
-          const custom = prompt(t.timerPromptCustom, '30');
-          const n = parseInt(custom, 10);
-          if (n > 0 && n <= 360) timerDuration = n * 60;
-          else return;
-        } else {
-          timerDuration = parseInt(val, 10) * 60;
+          const custom = prompt(t.timerPromptCustom, String(timerDuration / 60));
+          if (custom === null || !/^\d+$/.test(custom.trim())) return;
+          minutes = Number(custom);
+          if (minutes < 1 || minutes > 360) return;
         }
+        timerDuration = minutes * 60;
+        timerMode = val;
+        timerModeBtns.forEach(b => b.classList.toggle('active', b === btn));
         resetTimer();
       });
     });
@@ -4871,7 +4915,7 @@
     loadData();
     applyLanguage(currentLang);
     updateCounts();
-    updateClock();
+    restoreTimer();
     setupClockTimer();
     syncNetworkTime();
   </script>
