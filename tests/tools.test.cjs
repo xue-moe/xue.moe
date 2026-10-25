@@ -275,3 +275,38 @@ test('failed task storage writes preserve both task lists and expose an error; a
   assert.equal(state.todos.length,0); assert.equal(state.recycleBin.length,0);
   assert.equal(status.hidden,true); assert.equal(writes,1);
 });
+
+function trashUndoHarness() {
+  const elements = new Map(); let fail = false;
+  const state = { todos:[{id:1,title:'First',note:'notes',customOrder:4,completed:true},{id:2,title:'Second',completed:false}], recycleBin:[{id:3,title:'Old trash',removed:true}], STORAGE_KEY:'tasks',
+    document:{getElementById(id){if(!elements.has(id)) elements.set(id,{hidden:true}); return elements.get(id);}},
+    i18n:{zh:{importErrSave:'failed',todoTrashMoved:n=>`trashed ${n}`}},currentLang:'zh',
+    localStorage:{setItem(){if(fail) throw new Error('quota');}},renderTodos(){},updateCounts(){}
+  };
+  vm.createContext(state);
+  vm.runInContext(html.slice(html.indexOf('    function commitTodoState('), html.indexOf('    const todoTitleInput')),state);
+  return {state,elements,setFail(value){fail=value;}};
+}
+
+test('trash undo restores the latest batch with metadata and preserves subsequent changes', () => {
+  const h = trashUndoHarness(); const s = h.state;
+  s.trashTodoItems([1,2]); assert.equal(s.todos.length,0);
+  assert.equal(h.elements.get('todoUndoBar').hidden,false);
+  s.commitTodoState([{id:4,title:'New task'}], s.recycleBin);
+  s.undoTrash();
+  assert.deepEqual(Array.from(s.todos,t=>t.id).sort(),[1,2,4]);
+  const restored = s.todos.find(t=>t.id===1);
+  assert.equal(restored.note,'notes'); assert.equal(restored.completed,true); assert.equal(restored.customOrder,4); assert.equal(restored.removed,false);
+  assert.deepEqual(Array.from(s.recycleBin,t=>t.id),[3]);
+  assert.equal(h.elements.get('todoUndoBar').hidden,true);
+  s.undoTrash(); assert.equal(s.todos.length,3);
+});
+
+test('trash undo stays available on write failure and expires for records manually restored or purged', () => {
+  const h = trashUndoHarness(); const s = h.state;
+  s.trashTodoItems([1]); h.setFail(true); s.undoTrash();
+  assert.equal(s.todos.length,1); assert.equal(h.elements.get('todoUndoBar').hidden,false);
+  h.setFail(false); s.commitTodoState(s.todos,s.recycleBin.filter(t=>t.id!==1));
+  assert.equal(h.elements.get('todoUndoBar').hidden,true);
+  s.undoTrash(); assert.equal(s.todos.length,1);
+});
