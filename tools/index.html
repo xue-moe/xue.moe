@@ -2056,6 +2056,7 @@
       
       <div class="glass-card">
         
+        <p id="todoStorageStatus" class="dialog-error" role="alert" hidden></p>
         <div class="create-box">
           <div class="create-main-row">
             <input
@@ -3358,10 +3359,21 @@
       }
     }
 
-    function saveData() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([...todos, ...recycleBin]));
+    function commitTodoState(nextTodos, nextTrash) {
+      const status = document.getElementById('todoStorageStatus');
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify([...nextTodos, ...nextTrash]));
+      } catch (_) {
+        status.textContent = (i18n[currentLang] || i18n.zh).importErrSave;
+        status.hidden = false;
+        return false;
+      }
+      todos = nextTodos;
+      recycleBin = nextTrash;
+      status.hidden = true;
       renderTodos();
       updateCounts();
+      return true;
     }
 
     const todoTitleInput = document.getElementById('todoTitleInput');
@@ -3390,7 +3402,7 @@
 
       const maxOrder = todos.reduce((max, t) => Math.max(max, t.customOrder || 0), 0);
       const newTodo = {
-        id: Date.now(),
+        id: [...todos, ...recycleBin].reduce((next, item) => Math.max(next, item.id + 1), Date.now()),
         title,
         note: todoNoteInput.value.trim(),
         completed: false,
@@ -3401,12 +3413,11 @@
         customOrder: maxOrder + 1
       };
 
-      todos.unshift(newTodo);
+      if (!commitTodoState([newTodo, ...todos], recycleBin)) return;
       todoTitleInput.value = '';
       todoNoteInput.value = '';
       todoDeadlineInput.value = '';
       createExpand.classList.remove('show');
-      saveData();
       todoTitleInput.focus();
     }
 
@@ -3562,31 +3573,14 @@
           const act = actEl.dataset.action;
 
           if (act === 'toggle') {
-            item.completed = !item.completed;
-            saveData();
+            commitTodoState(todos.map(todo => todo.id === id ? { ...todo, completed: !todo.completed } : todo), recycleBin);
           } else if (act === 'delete') {
-            const idx = todos.indexOf(item);
-            if (idx !== -1) {
-              todos.splice(idx, 1);
-              item.removed = true;
-              recycleBin.unshift(item);
-              saveData();
-            }
+            commitTodoState(todos.filter(todo => todo.id !== id), [{ ...item, removed: true }, ...recycleBin]);
           } else if (act === 'restore') {
-            const idx = recycleBin.indexOf(item);
-            if (idx !== -1) {
-              recycleBin.splice(idx, 1);
-              item.removed = false;
-              todos.unshift(item);
-              saveData();
-            }
+            commitTodoState([{ ...item, removed: false }, ...todos], recycleBin.filter(todo => todo.id !== id));
           } else if (act === 'perm-delete') {
             if (confirm(t.confirmPermDelete)) {
-              const idx = recycleBin.indexOf(item);
-              if (idx !== -1) {
-                recycleBin.splice(idx, 1);
-                saveData();
-              }
+              commitTodoState(todos, recycleBin.filter(todo => todo.id !== id));
             }
           } else if (act === 'edit') {
             inlineEdit(item);
@@ -3659,16 +3653,11 @@
       if (!item) { todoEditDialog.close(); return; }
       const updated = withTodoDetails(item, todoEditTitle.value, todoEditNote.value, todoEditDeadline.value);
       const next = todos.map(todo => todo.id === editingTodoId ? updated : todo);
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify([...next, ...recycleBin]));
-      } catch (_) {
+      if (!commitTodoState(next, recycleBin)) {
         todoEditError.textContent = t.importErrSave;
         todoEditError.hidden = false;
         return;
       }
-      todos = next;
-      renderTodos();
-      updateCounts();
       todoEditDialog.close();
     });
 
@@ -3722,8 +3711,7 @@
       const t = i18n[currentLang] || i18n.zh;
       if (todos.length === 0) return;
       if (confirm(t.confirmMarkAll)) {
-        todos.forEach(item => item.completed = true);
-        saveData();
+        commitTodoState(todos.map(item => ({ ...item, completed: true })), recycleBin);
       }
     });
 
@@ -3735,15 +3723,8 @@
         return;
       }
       if (confirm(t.confirmClearCompleted)) {
-        todos = todos.filter(item => {
-          if (item.completed) {
-            item.removed = true;
-            recycleBin.unshift(item);
-            return false;
-          }
-          return true;
-        });
-        saveData();
+        const cleared = todos.filter(item => item.completed).map(item => ({ ...item, removed: true }));
+        commitTodoState(todos.filter(item => !item.completed), [...cleared, ...recycleBin]);
       }
     });
 
@@ -3751,8 +3732,7 @@
       const t = i18n[currentLang] || i18n.zh;
       if (recycleBin.length === 0) return;
       if (confirm(t.confirmEmptyTrash(recycleBin.length))) {
-        recycleBin = [];
-        saveData();
+        commitTodoState(todos, []);
       }
     });
 
@@ -3816,13 +3796,7 @@
         const trashCount = added.filter(item => item.removed).length;
         if (!confirm(t.importPreview(added.length - trashCount, trashCount, skipped))) return;
         const next = [...todos, ...recycleBin, ...added];
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        } catch (_) { alert(t.importErrSave); return; }
-        todos = next.filter(item => !item.removed);
-        recycleBin = next.filter(item => item.removed);
-        renderTodos();
-        updateCounts();
+        if (!commitTodoState(next.filter(item => !item.removed), next.filter(item => item.removed))) return;
         alert(t.importSuccess(added.length));
       };
       reader.readAsText(file);

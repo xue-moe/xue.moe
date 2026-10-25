@@ -258,3 +258,20 @@ test('search matches normalized titles and notes within the selected view withou
   const result = filter(items, trash, 'all'); result.reverse();
   assert.equal(items[0].id, 1);
 });
+
+test('failed task storage writes preserve both task lists and expose an error; a retry commits once', () => {
+  const status = {hidden:true}; let fail = true; let writes = 0;
+  const state = { todos:[{id:1,title:'Keep'}], recycleBin:[{id:2,title:'Trash'}], STORAGE_KEY:'tasks',
+    document:{getElementById:()=>status}, i18n:{zh:{importErrSave:'save failed'}},currentLang:'zh',
+    localStorage:{setItem(){if(fail) throw new Error('quota'); writes++;}}, renderTodos(){},updateCounts(){}
+  };
+  vm.createContext(state);
+  vm.runInContext(html.slice(html.indexOf('    function commitTodoState('), html.indexOf('    const todoTitleInput')), state);
+  assert.equal(state.commitTodoState([], []), false);
+  assert.equal(state.todos.length,1); assert.equal(state.recycleBin.length,1);
+  assert.equal(status.hidden,false); assert.equal(status.textContent,'save failed');
+  fail = false;
+  assert.equal(state.commitTodoState([], []), true);
+  assert.equal(state.todos.length,0); assert.equal(state.recycleBin.length,0);
+  assert.equal(status.hidden,true); assert.equal(writes,1);
+});
