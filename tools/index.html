@@ -2508,6 +2508,7 @@
         btnCopyPhonetic: '复制注音',
         copiedPhonetic: '已复制！',
         loadingPhonetic: '正在加载拼音发音库...',
+        phoneticLoadFailed: '注音库加载失败，请检查网络后再次点击注音按钮重试。',
         charNoticeDefault: '检测项：相似字形比对 (0/O, 1/l/I) · 日文假名易混淆比对 · 中文注拼音 · 日文注罗马音 · 全半角标点混用',
         charNoticePrefix: '<b>检测提示：</b><br>• ',
         ambiguousZeroO: '检测到数字 <code>0</code> 与字母 <code>O/o</code> 混用',
@@ -2670,7 +2671,7 @@
         charEmpty: 'Type or paste text above to inspect characters',
         charTruncatedText: (limit, total) => `Showing first ${limit} of ${total} characters.`,
         btnShowAllChars: 'Show all',
-        statChars: 'Total Characters',
+        statChars: 'Graphemes',
         statNonSpace: 'Non-whitespace',
         statChinese: 'Chinese (CJK)',
         statWords: 'Words',
@@ -2686,6 +2687,7 @@
         btnCopyPhonetic: 'Copy Phonetics',
         copiedPhonetic: 'Copied!',
         loadingPhonetic: 'Loading phonetic dictionary...',
+        phoneticLoadFailed: 'Could not load the dictionary. Check your connection and select phonetic conversion to retry.',
         charNoticeDefault: 'Checks: Confusable glyphs (0/O, 1/l/I) · Japanese Kana lookalikes (シ/ツ/ン/ソ) · Chinese Pinyin · Romaji · Mixed punctuation',
         charNoticePrefix: '<b>Detected issues:</b><br>• ',
         ambiguousZeroO: 'Both numeral <code>0</code> and letter <code>O/o</code> were detected',
@@ -2837,35 +2839,33 @@
       '腺': { reading: 'sen', meaning: '腺体' },
     };
 
-    let pinyinProLoading = false;
-    function ensurePinyinPro(callback) {
-      if (window.pinyinPro && window.pinyinPro.pinyin) {
-        if (callback) callback();
-        return;
+    let pinyinProPromise = null;
+    function ensurePinyinPro(callback, onError = () => {}) {
+      if (window.pinyinPro?.pinyin) {
+        return Promise.resolve().then(() => callback?.());
       }
-      if (pinyinProLoading) {
-        if (callback) {
-          const wait = setInterval(() => {
-            if (window.pinyinPro && window.pinyinPro.pinyin) {
-              clearInterval(wait);
-              callback();
-            }
-          }, 50);
-        }
-        return;
+      if (!pinyinProPromise) {
+        pinyinProPromise = new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          const fail = () => {
+            clearTimeout(timeout);
+            script.remove();
+            reject(new Error('Phonetic dictionary unavailable'));
+          };
+          const timeout = setTimeout(fail, 10000);
+          script.src = 'https://cdn.jsdelivr.net/npm/pinyin-pro@3.24.2/dist/index.min.js';
+          script.async = true;
+          script.onload = () => {
+            if (!window.pinyinPro?.pinyin) { fail(); return; }
+            clearTimeout(timeout);
+            resolve();
+          };
+          script.onerror = fail;
+          document.head.appendChild(script);
+        });
+        pinyinProPromise.catch(() => { pinyinProPromise = null; });
       }
-      pinyinProLoading = true;
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/pinyin-pro@3.24.2/dist/index.min.js';
-      s.async = true;
-      s.onload = () => {
-        pinyinProLoading = false;
-        if (callback) callback();
-      };
-      s.onerror = () => {
-        pinyinProLoading = false;
-      };
-      document.head.appendChild(s);
+      return pinyinProPromise.then(() => callback?.()).catch(onError);
     }
 
     const themeToggleBtn = document.getElementById('themeToggleBtn');
@@ -4523,7 +4523,9 @@
       return res.replace(/\s+([，。！？,.!?;:）】])/g, '$1').trim();
     }
 
+    let phoneticRequestId = 0;
     function triggerPhoneticConversion() {
+      const requestId = ++phoneticRequestId;
       const val = textInput.value;
       const t = i18n[currentLang] || i18n.zh;
       if (!val) {
@@ -4533,7 +4535,13 @@
       phoneticBox.style.display = 'block';
       phoneticOutput.textContent = t.loadingPhonetic;
       ensurePinyinPro(() => {
-        phoneticOutput.textContent = toPhonetic(val);
+        if (requestId === phoneticRequestId && textInput.value === val) {
+          phoneticOutput.textContent = toPhonetic(val);
+        }
+      }, () => {
+        if (requestId === phoneticRequestId && textInput.value === val) {
+          phoneticOutput.textContent = (i18n[currentLang] || i18n.zh).phoneticLoadFailed;
+        }
       });
     }
 

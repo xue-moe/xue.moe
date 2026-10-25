@@ -130,3 +130,36 @@ test('text metrics agree with grapheme tiles and Unicode details include every c
   assert.equal(h.unicodeSequence('\0'), 'U+0000');
   assert.equal(h.unicodeSequence('👨‍👩‍👧‍👦').split(' ').length, 7);
 });
+
+function pinyinHarness() {
+  const scripts = []; const timers = new Map(); let nextId = 0;
+  const state = {
+    window: {}, Promise, Error,
+    document: { createElement: () => ({ remove() { this.removed = true; } }), head: { appendChild: script => scripts.push(script) } },
+    setTimeout(fn) { timers.set(++nextId, fn); return nextId; }, clearTimeout(id) { timers.delete(id); }
+  };
+  vm.createContext(state);
+  vm.runInContext(html.slice(html.indexOf('    let pinyinProPromise ='), html.indexOf('    const themeToggleBtn')), state);
+  return { state, scripts, timers };
+}
+
+test('dictionary loading shares a request, reports failure and allows retry', async () => {
+  const h = pinyinHarness(); let errors = 0; let loaded = 0;
+  const first = h.state.ensurePinyinPro(() => loaded++, () => errors++);
+  const second = h.state.ensurePinyinPro(() => loaded++, () => errors++);
+  assert.equal(h.scripts.length, 1);
+  h.scripts[0].onerror(); await Promise.all([first, second]);
+  assert.equal(errors, 2); assert.equal(loaded, 0); assert.equal(h.timers.size, 0);
+  const retry = h.state.ensurePinyinPro(() => loaded++);
+  assert.equal(h.scripts.length, 2);
+  h.state.window.pinyinPro = {pinyin() {}};
+  h.scripts[1].onload(); await retry;
+  assert.equal(loaded, 1); assert.equal(h.timers.size, 0);
+});
+
+test('dictionary loading times out instead of polling forever', async () => {
+  const h = pinyinHarness(); let errors = 0;
+  const pending = h.state.ensurePinyinPro(() => assert.fail('must not load'), () => errors++);
+  [...h.timers.values()][0](); await pending;
+  assert.equal(errors, 1); assert.equal(h.scripts[0].removed, true);
+});
