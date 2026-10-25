@@ -351,3 +351,42 @@ test('resetting while audio activation is pending cancels the obsolete sound', a
   const h = audioHarness(); const sound = h.state.playBeep(); h.state.stopTimerSound(); await sound;
   assert.equal(h.stats.tones,0);
 });
+
+function fullscreenHarness(native = 'missing') {
+  const classes = () => {const values=new Set();return {add:key=>values.add(key),remove:key=>values.delete(key),has:key=>values.has(key)};};
+  const elements = new Map(); const events={};
+  const element = () => ({classList:classes(),attributes:{},focus(){this.focused=true;},setAttribute(key,value){this.attributes[key]=value;},addEventListener(name,fn){this[name]=fn;}});
+  const hero=element(); hero.parent='panel'; hero.before=()=>{};
+  const button=element(); const dialog=element(); dialog.open=false;
+  dialog.appendChild=()=>{hero.parent='dialog';};
+  dialog.showModal=()=>{dialog.open=true;}; dialog.close=()=>{dialog.open=false;dialog.closeEvent();};
+  dialog.addEventListener=(name,fn)=>{dialog[name+'Event']=fn;};
+  elements.set('clockFullscreenDialog',dialog); elements.set('btnExitFullscreen',element());
+  const document={body:{classList:classes()},getElementById:id=>elements.get(id),createComment:()=>({replaceWith(){hero.parent='panel';}}),addEventListener:(name,fn)=>{events[name]=fn;}};
+  if(native==='supported') {
+    hero.requestFullscreen=async()=>{document.fullscreenElement=hero;events.fullscreenchange();};
+    document.exitFullscreen=async()=>{document.fullscreenElement=null;events.fullscreenchange();};
+  }
+  if(native==='rejected') hero.requestFullscreen=async()=>{throw new Error('not allowed');};
+  const state={document,clockHero:hero,btnToggleFullscreen:button,currentLang:'zh',i18n:{zh:{btnExitFsShort:'exit',btnFullscreen:'enter'}}};
+  vm.createContext(state);
+  vm.runInContext(html.slice(html.indexOf("    const btnExitFullscreen = document.getElementById('btnExitFullscreen');"),html.indexOf('    function updateSyncUI()')),state);
+  return {state,hero,dialog,button,document,events};
+}
+
+test('clock falls back to page fullscreen when the native API is absent or rejects and restores its position on exit', async () => {
+  for(const native of ['missing','rejected']) {
+    const h=fullscreenHarness(native); await h.state.toggleClockFullscreen();
+    assert.equal(h.dialog.open,true); assert.equal(h.hero.parent,'dialog');
+    assert.equal(h.hero.classList.has('is-page-fullscreen'),true); assert.equal(h.button.attributes['aria-pressed'],'true');
+    h.events.keydown({key:'Escape',preventDefault(){}});
+    assert.equal(h.dialog.open,false); assert.equal(h.hero.parent,'panel');
+    assert.equal(h.hero.classList.has('is-page-fullscreen'),false); assert.equal(h.button.focused,true);
+  }
+});
+
+test('clock uses native fullscreen when supported and synchronizes the exit button state', async () => {
+  const h=fullscreenHarness('supported'); await h.state.toggleClockFullscreen();
+  assert.equal(h.document.fullscreenElement,h.hero); assert.equal(h.dialog.open,false); assert.equal(h.button.textContent,'exit');
+  await h.state.exitClockFullscreen(); assert.equal(h.document.fullscreenElement,null); assert.equal(h.button.textContent,'enter');
+});

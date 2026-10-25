@@ -1258,17 +1258,14 @@
     }
 
     
-    #clockHero:fullscreen,
-    #clockHero:-webkit-full-screen,
-    .clock-hero-card:fullscreen,
-    .clock-hero-card:-webkit-full-screen {
+    #clockHero:is(:fullscreen, :-webkit-full-screen, .is-page-fullscreen) {
       position: fixed;
       inset: 0;
       width: 100vw;
-      height: 100vh;
-      min-height: 100vh;
+      height: 100dvh;
+      min-height: 100dvh;
       margin: 0;
-      padding: 0;
+      padding: calc(72px + env(safe-area-inset-top)) 12px calc(24px + env(safe-area-inset-bottom));
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -1283,10 +1280,7 @@
     }
 
     
-    #clockHero:fullscreen::before,
-    #clockHero:-webkit-full-screen::before,
-    .clock-hero-card:fullscreen::before,
-    .clock-hero-card:-webkit-full-screen::before {
+    #clockHero:is(:fullscreen, :-webkit-full-screen, .is-page-fullscreen)::before {
       content: '';
       position: absolute;
       top: 50%;
@@ -1300,51 +1294,33 @@
     }
 
     
-    #clockHero:fullscreen .clock-sync-badge,
-    #clockHero:-webkit-full-screen .clock-sync-badge,
-    .clock-hero-card:fullscreen .clock-sync-badge,
-    .clock-hero-card:-webkit-full-screen .clock-sync-badge,
-    #clockHero:fullscreen .clock-toolbar,
-    #clockHero:-webkit-full-screen .clock-toolbar,
-    .clock-hero-card:fullscreen .clock-toolbar,
-    .clock-hero-card:-webkit-full-screen .clock-toolbar,
-    #clockHero:fullscreen .time-progress-grid,
-    #clockHero:-webkit-full-screen .time-progress-grid,
-    .clock-hero-card:fullscreen .time-progress-grid,
-    .clock-hero-card:-webkit-full-screen .time-progress-grid {
+    #clockHero:is(:fullscreen, :-webkit-full-screen, .is-page-fullscreen) .clock-sync-badge,
+    #clockHero:is(:fullscreen, :-webkit-full-screen, .is-page-fullscreen) .clock-toolbar,
+    #clockHero:is(:fullscreen, :-webkit-full-screen, .is-page-fullscreen) .time-progress-grid {
       display: none !important;
     }
 
     
-    #clockHero:fullscreen .clock-time-display,
-    #clockHero:-webkit-full-screen .clock-time-display,
-    .clock-hero-card:fullscreen .clock-time-display,
-    .clock-hero-card:-webkit-full-screen .clock-time-display {
-      font-size: clamp(76px, 18vw, 190px);
+    #clockHero:is(:fullscreen, :-webkit-full-screen, .is-page-fullscreen) .clock-time-display {
+      font-size: clamp(34px, min(12vw, 24vh), 160px);
+      max-width: 100%;
+      flex-wrap: wrap;
       letter-spacing: -2px;
       margin-bottom: 16px;
       z-index: 1;
       position: relative;
     }
 
-    #clockHero:fullscreen .clock-millis,
-    #clockHero:-webkit-full-screen .clock-millis,
-    .clock-hero-card:fullscreen .clock-millis,
-    .clock-hero-card:-webkit-full-screen .clock-millis {
-      font-size: clamp(24px, 5vw, 54px);
+    #clockHero:is(:fullscreen, :-webkit-full-screen, .is-page-fullscreen) .clock-millis {
+      font-size: 0.34em;
+      min-width: 0;
     }
 
-    #clockHero:fullscreen .clock-ampm,
-    #clockHero:-webkit-full-screen .clock-ampm,
-    .clock-hero-card:fullscreen .clock-ampm,
-    .clock-hero-card:-webkit-full-screen .clock-ampm {
-      font-size: clamp(20px, 4.5vw, 44px);
+    #clockHero:is(:fullscreen, :-webkit-full-screen, .is-page-fullscreen) .clock-ampm {
+      font-size: 0.28em;
     }
 
-    #clockHero:fullscreen .clock-date-line,
-    #clockHero:-webkit-full-screen .clock-date-line,
-    .clock-hero-card:fullscreen .clock-date-line,
-    .clock-hero-card:-webkit-full-screen .clock-date-line {
+    #clockHero:is(:fullscreen, :-webkit-full-screen, .is-page-fullscreen) .clock-date-line {
       font-size: clamp(15px, 2.6vw, 24px);
       color: var(--text-muted);
       margin-bottom: 0;
@@ -1356,8 +1332,9 @@
     .clock-fullscreen-exit {
       display: none;
       position: absolute;
-      top: 24px;
-      right: 28px;
+      top: calc(12px + env(safe-area-inset-top));
+      right: calc(12px + env(safe-area-inset-right));
+      min-height: 44px;
       z-index: 10;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -1380,16 +1357,24 @@
       transform: scale(1.04);
     }
 
-    #clockHero:fullscreen .clock-fullscreen-exit,
-    #clockHero:-webkit-full-screen .clock-fullscreen-exit,
-    .clock-hero-card:fullscreen .clock-fullscreen-exit,
-    .clock-hero-card:-webkit-full-screen .clock-fullscreen-exit {
+    #clockHero:is(:fullscreen, :-webkit-full-screen, .is-page-fullscreen) .clock-fullscreen-exit {
       display: inline-flex;
       align-items: center;
       gap: 6px;
     }
 
     
+    .clock-fullscreen-dialog {
+      padding: 0; border: 0; margin: 0; max-width: none; max-height: none;
+      width: 100vw; height: 100dvh; background: var(--bg-ambient);
+    }
+    body.clock-page-fullscreen { overflow: hidden; }
+    .clock-fullscreen-hint { display: none; }
+    #clockHero.is-page-fullscreen .clock-fullscreen-hint {
+      display: block; position: absolute; bottom: calc(12px + env(safe-area-inset-bottom));
+      left: 12px; right: 12px; font-size: 12px; color: var(--text-muted);
+    }
+
     .textarea-box {
       width: 100%;
       min-height: 170px;
@@ -2171,6 +2156,7 @@
       <div class="glass-card clock-hero-card" id="clockHero">
         <button class="clock-fullscreen-exit" id="btnExitFullscreen" title="退出全屏 (ESC键)">退出全屏</button>
 
+        <p class="clock-fullscreen-hint" id="clockFullscreenHint">页面全屏 · 浏览器顶栏由系统控制</p>
         <div class="clock-sync-badge" id="clockSyncBadge">
           <span class="sync-dot"></span>
           <span id="clockSyncStatus">时钟对时校验中...</span>
@@ -2424,6 +2410,8 @@
     </section>
   </main>
 
+  <dialog id="clockFullscreenDialog" class="clock-fullscreen-dialog" aria-label="Clock"></dialog>
+
   <div id="todoUndoBar" class="todo-undo" hidden>
     <span id="todoUndoMessage" role="status"></span>
     <button type="button" id="todoUndoBtn" class="btn btn-primary">撤销</button>
@@ -2617,6 +2605,7 @@
         btnCopyTimestamp: '复制时间戳',
         btnCopiedTimestamp: (ts) => `已复制时间戳: ${ts}`,
         btnFullscreen: '全屏',
+        clockPageFullscreen: '页面全屏 · 浏览器顶栏由系统控制',
         btnExitFsShort: '退出全屏',
         dayProgressLabel: '今日进度',
         yearProgressLabel: '年度进度',
@@ -2814,6 +2803,7 @@
         btnCopyTimestamp: 'Copy Timestamp',
         btnCopiedTimestamp: (ts) => `Copied timestamp: ${ts}`,
         btnFullscreen: 'Fullscreen',
+        clockPageFullscreen: 'Page fullscreen · Browser controls are managed by your device',
         btnExitFsShort: 'Exit Fullscreen',
         dayProgressLabel: 'Today',
         yearProgressLabel: 'This Year',
@@ -4382,43 +4372,64 @@
     }
 
     const btnExitFullscreen = document.getElementById('btnExitFullscreen');
-    if (btnExitFullscreen) {
-      btnExitFullscreen.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (document.exitFullscreen) {
-          document.exitFullscreen().catch(() => {});
-        } else if (document.webkitExitFullscreen) {
-          document.webkitExitFullscreen();
-        }
-      });
-    }
+    const clockFullscreenDialog = document.getElementById('clockFullscreenDialog');
+    let clockFullscreenPlaceholder = null;
 
-    if (btnToggleFullscreen && clockHero) {
-      btnToggleFullscreen.addEventListener('click', () => {
-        const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
-        if (!isFs) {
-          if (clockHero.requestFullscreen) {
-            clockHero.requestFullscreen().catch(() => {});
-          } else if (clockHero.webkitRequestFullscreen) {
-            clockHero.webkitRequestFullscreen();
-          }
-        } else {
-          if (document.exitFullscreen) {
-            document.exitFullscreen().catch(() => {});
-          } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-          }
-        }
-      });
-
-      const onFsChange = () => {
-        const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
-        const t = i18n[currentLang] || i18n.zh;
-        btnToggleFullscreen.textContent = isFs ? t.btnExitFsShort : t.btnFullscreen;
-      };
-      document.addEventListener('fullscreenchange', onFsChange);
-      document.addEventListener('webkitfullscreenchange', onFsChange);
+    function isClockFullscreen() {
+      return clockFullscreenDialog.open || (document.fullscreenElement || document.webkitFullscreenElement) === clockHero;
     }
+    function syncClockFullscreen() {
+      const active = isClockFullscreen();
+      const t = i18n[currentLang] || i18n.zh;
+      btnToggleFullscreen.textContent = active ? t.btnExitFsShort : t.btnFullscreen;
+      btnToggleFullscreen.setAttribute('aria-pressed', String(active));
+    }
+    function restorePageClock() {
+      if (clockFullscreenPlaceholder) {
+        clockFullscreenPlaceholder.replaceWith(clockHero);
+        clockFullscreenPlaceholder = null;
+      }
+      clockHero.classList.remove('is-page-fullscreen');
+      document.body.classList.remove('clock-page-fullscreen');
+      syncClockFullscreen();
+      btnToggleFullscreen.focus();
+    }
+    function enterPageClockFullscreen() {
+      if (clockFullscreenDialog.open) return;
+      clockFullscreenPlaceholder = document.createComment('clock position');
+      clockHero.before(clockFullscreenPlaceholder);
+      clockFullscreenDialog.appendChild(clockHero);
+      clockHero.classList.add('is-page-fullscreen');
+      document.body.classList.add('clock-page-fullscreen');
+      clockFullscreenDialog.showModal();
+      syncClockFullscreen();
+      btnExitFullscreen.focus();
+    }
+    async function exitClockFullscreen() {
+      if (clockFullscreenDialog.open) { clockFullscreenDialog.close(); return; }
+      try {
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
+      } catch (_) {}
+      syncClockFullscreen();
+    }
+    async function toggleClockFullscreen() {
+      if (isClockFullscreen()) { await exitClockFullscreen(); return; }
+      try {
+        if (clockHero.requestFullscreen) await clockHero.requestFullscreen();
+        else if (clockHero.webkitRequestFullscreen) await clockHero.webkitRequestFullscreen();
+        else { enterPageClockFullscreen(); return; }
+        syncClockFullscreen();
+      } catch (_) { enterPageClockFullscreen(); }
+    }
+    clockFullscreenDialog.addEventListener('close', restorePageClock);
+    btnExitFullscreen.addEventListener('click', e => { e.stopPropagation(); void exitClockFullscreen(); });
+    btnToggleFullscreen.addEventListener('click', () => { void toggleClockFullscreen(); });
+    document.addEventListener('fullscreenchange', syncClockFullscreen);
+    document.addEventListener('webkitfullscreenchange', syncClockFullscreen);
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && isClockFullscreen()) { e.preventDefault(); void exitClockFullscreen(); }
+    });
 
     function updateSyncUI() {
       if (!clockSyncStatus) return;
@@ -5179,9 +5190,10 @@
       if (btnTogMillis) btnTogMillis.textContent = showMillis ? t.btnHideMillis : t.btnShowMillis;
       const btnCopyTs = document.getElementById('btnCopyTimestamp');
       if (btnCopyTs) btnCopyTs.textContent = t.btnCopyTimestamp;
+      document.getElementById('clockFullscreenHint').textContent = t.clockPageFullscreen;
       const btnTogFs = document.getElementById('btnToggleFullscreen');
       if (btnTogFs) {
-        const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        const isFs = isClockFullscreen();
         btnTogFs.textContent = isFs ? t.btnExitFsShort : t.btnFullscreen;
       }
       const dayProgLabel = document.getElementById('dayProgressLabel');
