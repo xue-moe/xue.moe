@@ -105,3 +105,28 @@ test('invalid backups fail before mutation and missing IDs remain unique', () =>
   const result = prepare([], [{title: 'First'}, {title: 'Second'}]);
   assert.equal(new Set(result.added.map(t => t.id)).size, 2);
 });
+
+function textHarness() {
+  const state = { Intl, Array, String };
+  vm.createContext(state);
+  vm.runInContext(html.slice(html.indexOf('    const graphemeSegmenter ='), html.indexOf('    function detectTextContext(')), state);
+  return state;
+}
+
+test('halfwidth conversion handles letters, numbers, spaces and punctuation without damaging other scripts', () => {
+  const h = textHarness();
+  assert.equal(h.toHalfwidth('ＡＢＣａｂｃ１２３　，。！？【】“”'), 'ABCabc123 ,.!?[]""');
+  assert.equal(h.toHalfwidth('中文 カタカナ 😀 é ①'), '中文 カタカナ 😀 é ①');
+});
+
+test('text metrics agree with grapheme tiles and Unicode details include every code point', () => {
+  const h = textHarness();
+  assert.equal(h.textMetrics('👨‍👩‍👧‍👦').chars, 1);
+  assert.equal(h.textMetrics('e\u0301').chars, 1);
+  assert.equal(h.textMetrics('中文𠀀').chinese, 3);
+  assert.equal(h.textMetrics('a\r\nb').lines, 2);
+  assert.equal(h.textMetrics('a \t👨‍👩‍👧‍👦').nonSpace, 2);
+  assert.equal(h.unicodeSequence('e\u0301'), 'U+0065 U+0301');
+  assert.equal(h.unicodeSequence('\0'), 'U+0000');
+  assert.equal(h.unicodeSequence('👨‍👩‍👧‍👦').split(' ').length, 7);
+});

@@ -2236,7 +2236,7 @@
         <div class="stats-row">
           <div class="stat-pill">
             <div class="stat-value" id="countChars">0</div>
-            <div class="stat-name" id="statChars">字符总数</div>
+            <div class="stat-name" id="statChars" title="按字素簇计数；组合 emoji 与组合重音计为一个字符">可见字符数</div>
           </div>
           <div class="stat-pill">
             <div class="stat-value" id="countNonSpace">0</div>
@@ -2492,7 +2492,7 @@
         charEmpty: '输入或粘贴文本即可解析字符结构',
         charTruncatedText: (limit, total) => `已展示前 ${limit} 个字符（共 ${total} 个）。`,
         btnShowAllChars: '展示全部',
-        statChars: '字符总数',
+        statChars: '可见字符数',
         statNonSpace: '非空白字符',
         statChinese: '中文字数',
         statWords: '单词数',
@@ -4179,6 +4179,29 @@
       return Array.from(text);
     }
 
+    function toHalfwidth(text) {
+      const punctuation = { '。': '.', '【': '[', '】': ']', '“': '"', '”': '"', '‘': "'", '’': "'" };
+      return text.replace(/[\uff01-\uff5e\u3000。【】“”‘’]/g, ch => {
+        if (ch === '\u3000') return ' ';
+        return punctuation[ch] || String.fromCodePoint(ch.codePointAt(0) - 0xfee0);
+      });
+    }
+
+    function unicodeSequence(text) {
+      return Array.from(text, ch => 'U+' + ch.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')).join(' ');
+    }
+
+    function textMetrics(text) {
+      const chars = getGraphemes(text);
+      return {
+        chars: chars.length,
+        nonSpace: chars.filter(ch => !/^\s+$/u.test(ch)).length,
+        chinese: (text.match(/\p{Script=Han}/gu) || []).length,
+        words: (text.match(/[a-zA-Z0-9_\-]+/g) || []).length,
+        lines: text ? text.split(/\r\n|\r|\n/).length : 0
+      };
+    }
+
     function detectTextContext(text) {
       if (!text) return 'zh';
       if (/[\u3040-\u309f\u30a0-\u30ff]/.test(text)) return 'ja';
@@ -4350,8 +4373,7 @@
       const fragment = document.createDocumentFragment();
       displayChars.forEach((ch, idx) => {
         const info = classifyChar(ch, textContext);
-        const codePoint = ch.codePointAt(0);
-        const hex = codePoint ? 'U+' + codePoint.toString(16).toUpperCase().padStart(4, '0') : '';
+        const hex = unicodeSequence(ch);
 
         const tile = document.createElement('div');
         tile.className = `char-tile ${info.cls}`;
@@ -4392,16 +4414,12 @@
     function analyzeText() {
       const val = textInput ? (textInput.value || '') : '';
       const t = i18n[currentLang] || i18n.zh;
-      countChars.textContent = Array.from(val).length;
-      countNonSpace.textContent = Array.from(val.replace(/\s/g, '')).length;
-
-      const cn = val.match(/[\u4e00-\u9fa5]/g);
-      countChinese.textContent = cn ? cn.length : 0;
-
-      const en = val.trim().match(/[a-zA-Z0-9_\-]+/g);
-      countWords.textContent = en ? en.length : 0;
-
-      countLines.textContent = val ? val.split(/\r\n|\r|\n/).length : 0;
+      const metrics = textMetrics(val);
+      countChars.textContent = metrics.chars;
+      countNonSpace.textContent = metrics.nonSpace;
+      countChinese.textContent = metrics.chinese;
+      countWords.textContent = metrics.words;
+      countLines.textContent = metrics.lines;
 
       const notices = [];
 
@@ -4551,11 +4569,7 @@
             .replace(/[\s_]+/g, '-')
             .toLowerCase();
         } else if (type === 'fullwidth') {
-          const map = {
-            '，': ',', '。': '.', '！': '!', '？': '?', '；': ';', '：': ':',
-            '（': '(', '）': ')', '【': '[', '】': ']', '“': '"', '”': '"', '‘': "'", '’': "'"
-          };
-          textInput.value = val.replace(/[，。！？；：（）【】“”‘’]/g, m => map[m] || m);
+          textInput.value = toHalfwidth(val);
         } else if (type === 'phonetic') {
           triggerPhoneticConversion();
           return;
