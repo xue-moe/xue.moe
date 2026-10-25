@@ -2397,7 +2397,10 @@
         confirmPermDelete: '确定彻底删除该事项吗？此操作不可撤销。',
         promptEditTitle: '编辑待办内容：',
         importSuccess: (count) => `成功导入 ${count} 条待办事项。`,
-        importErrFormat: '文件格式错误，需为 JSON 数组。',
+        importErrFormat: '文件格式错误，需为有效的待办 JSON 数组。',
+        importPreview: (added, trash, skipped) => `将新增 ${added} 项待办、${trash} 项回收站记录，跳过 ${skipped} 项重复记录。现有任务保持不变。是否导入？`,
+        importErrRead: '读取失败，文件需为不超过 5 MB 的 JSON 备份。',
+        importErrSave: '保存失败，本地存储可能已满或不可用，现有数据未改变。',
         importErrParse: '解析文件失败，请确保格式正确。',
         todoCheckDoneTip: '标记为未完成',
         todoCheckUndoneTip: '标记为已完成',
@@ -2572,7 +2575,10 @@
         confirmPermDelete: 'Permanently delete this task? This cannot be undone.',
         promptEditTitle: 'Edit task:',
         importSuccess: (count) => `Successfully imported ${count} ${count === 1 ? 'task' : 'tasks'}.`,
-        importErrFormat: 'Invalid file format. A JSON array is required.',
+        importErrFormat: 'Invalid backup. A valid JSON array of tasks is required.',
+        importPreview: (added, trash, skipped) => `Add ${added} tasks and ${trash} trash records; skip ${skipped} duplicates. Existing tasks will be kept. Import?`,
+        importErrRead: 'Could not read the file. Select a JSON backup up to 5 MB.',
+        importErrSave: 'Could not save. Local storage may be full or unavailable. Existing data was kept.',
         importErrParse: 'Could not parse file. Please verify the JSON structure.',
         todoCheckDoneTip: 'Mark as incomplete',
         todoCheckUndoneTip: 'Mark as complete',
@@ -3470,47 +3476,65 @@
       URL.revokeObjectURL(url);
     });
 
+    function prepareTodoImport(existing, list) {
+      if (!Array.isArray(list)) throw new Error('Invalid backup');
+      const seen = new Set(existing.map(item => item.id));
+      const added = [];
+      let skipped = 0;
+      list.forEach((item, idx) => {
+        if (!item || typeof item !== 'object' || typeof item.title !== 'string' || !item.title.trim()
+            || (item.note !== undefined && typeof item.note !== 'string')
+            || (item.id !== undefined && (!Number.isSafeInteger(item.id) || item.id <= 0))
+            || (item.deadline && (typeof item.deadline !== 'string' || !Number.isFinite(Date.parse(item.deadline))))) {
+          throw new Error('Invalid task');
+        }
+        let id = item.id;
+        if (id === undefined) {
+          id = Date.now() + idx;
+          while (seen.has(id)) id++;
+        }
+        if (seen.has(id)) { skipped++; return; }
+        seen.add(id);
+        added.push({
+          id, title: item.title, note: item.note || '',
+          completed: item.completed === true, removed: item.removed === true,
+          createdAt: Number.isFinite(item.createdAt) ? item.createdAt : Date.now(),
+          deadline: item.deadline || '', hasDeadline: !!item.deadline && item.hasDeadline !== false,
+          customOrder: Number.isFinite(item.customOrder) ? item.customOrder : idx + 1
+        });
+      });
+      return { added, skipped };
+    }
+
     const importInput = document.getElementById('importInput');
     document.getElementById('importBtn').addEventListener('click', () => importInput.click());
     importInput.addEventListener('change', e => {
       const t = i18n[currentLang] || i18n.zh;
       const file = e.target.files[0];
+      importInput.value = '';
       if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { alert(t.importErrRead); return; }
       const reader = new FileReader();
+      reader.onerror = () => alert(t.importErrRead);
       reader.onload = ev => {
+        let result;
         try {
-          const list = JSON.parse(ev.target.result);
-          if (Array.isArray(list)) {
-            let count = 0;
-            const seenIds = new Set([...todos, ...recycleBin].map(t => t.id));
-            list.forEach((item, idx) => {
-              if (item.title) {
-                const id = seenIds.has(item.id) ? Date.now() + idx : (item.id || Date.now() + idx);
-                todos.unshift({
-                  id,
-                  title: item.title,
-                  note: item.note || '',
-                  completed: !!item.completed,
-                  removed: false,
-                  createdAt: item.createdAt || Date.now(),
-                  deadline: item.deadline || '',
-                  hasDeadline: !!item.hasDeadline,
-                  customOrder: item.customOrder || idx + 1
-                });
-                count++;
-              }
-            });
-            saveData();
-            alert(t.importSuccess(count));
-          } else {
-            alert(t.importErrFormat);
-          }
-        } catch (_) {
-          alert(t.importErrParse);
-        }
+          result = prepareTodoImport([...todos, ...recycleBin], JSON.parse(ev.target.result));
+        } catch (_) { alert(t.importErrFormat); return; }
+        const { added, skipped } = result;
+        const trashCount = added.filter(item => item.removed).length;
+        if (!confirm(t.importPreview(added.length - trashCount, trashCount, skipped))) return;
+        const next = [...todos, ...recycleBin, ...added];
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        } catch (_) { alert(t.importErrSave); return; }
+        todos = next.filter(item => !item.removed);
+        recycleBin = next.filter(item => item.removed);
+        renderTodos();
+        updateCounts();
+        alert(t.importSuccess(added.length));
       };
       reader.readAsText(file);
-      importInput.value = '';
     });
 
     let timerDuration = 25 * 60;

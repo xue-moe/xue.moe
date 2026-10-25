@@ -75,3 +75,33 @@ test('all inline scripts parse', () => {
     if (!match[0].includes('application/ld+json')) new vm.Script(match[1]);
   }
 });
+
+function importHarness() {
+  const state = { Date, Number, Set, JSON };
+  vm.createContext(state);
+  vm.runInContext(html.slice(html.indexOf('    function prepareTodoImport('), html.indexOf('    const importInput =')), state);
+  return (existing, incoming) => state.prepareTodoImport(existing, incoming);
+}
+
+test('backup round trip preserves task fields and trash, repeated import adds nothing', () => {
+  const prepare = importHarness();
+  const tasks = [
+    { id: 1, title: 'Active', note: 'Notes', completed: false, removed: false, createdAt: 100, deadline: '2026-10-25T13:00', hasDeadline: true, customOrder: 1 },
+    { id: 2, title: 'Deleted', note: '', completed: true, removed: true, createdAt: 200, deadline: '', hasDeadline: false, customOrder: 2 }
+  ];
+  const imported = prepare([], JSON.parse(JSON.stringify(tasks)));
+  assert.equal(JSON.stringify(imported.added), JSON.stringify(tasks));
+  assert.equal(prepare(imported.added, tasks).added.length, 0);
+  assert.equal(prepare(imported.added, tasks).skipped, 2);
+  assert.equal(prepare([], [tasks[0], tasks[0]]).added.length, 1);
+});
+
+test('invalid backups fail before mutation and missing IDs remain unique', () => {
+  const prepare = importHarness(); const existing = [{id: 1, title: 'Keep'}];
+  for (const invalid of [null, {}, [null], [{title: 123}], [{title: 'x', note: {}}], [{title: 'x', deadline: 'invalid'}], [{id: '1', title: 'x'}]]) {
+    assert.throws(() => prepare(existing, invalid));
+    assert.deepEqual(existing, [{id: 1, title: 'Keep'}]);
+  }
+  const result = prepare([], [{title: 'First'}, {title: 'Second'}]);
+  assert.equal(new Set(result.added.map(t => t.id)).size, 2);
+});
