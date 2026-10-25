@@ -877,6 +877,19 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
 
+    .timer-custom-form:not([hidden]) {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      text-align: left;
+      background: var(--card-inner);
+    }
+    .timer-custom-form input { min-height: 44px; font-size: 16px; }
+
     .timer-clock {
       font-size: 82px;
       font-weight: 800;
@@ -2231,8 +2244,17 @@
           <button class="timer-mode-btn active" data-minutes="25" id="timerMode25">专注 25分钟</button>
           <button class="timer-mode-btn" data-minutes="5" id="timerMode5">短休 5分钟</button>
           <button class="timer-mode-btn" data-minutes="15" id="timerMode15">长休 15分钟</button>
-          <button class="timer-mode-btn" data-minutes="custom" id="timerModeCustom">自定义</button>
+          <button class="timer-mode-btn" data-minutes="custom" id="timerModeCustom" aria-controls="timerCustomForm" aria-expanded="false">自定义</button>
         </div>
+
+        <form id="timerCustomForm" class="timer-custom-form" hidden>
+          <label for="timerCustomMinutes" id="timerCustomLabel">时长（1–360 分钟）</label>
+          <input type="number" id="timerCustomMinutes" class="sub-input" min="1" max="360" step="1" required inputmode="numeric" />
+          <div class="dialog-actions">
+            <button type="button" id="timerCustomCancel" class="btn btn-ghost">取消</button>
+            <button type="submit" id="timerCustomApply" class="btn btn-primary">应用时长</button>
+          </div>
+        </form>
 
         <div class="timer-clock" id="timerClock">25:00</div>
         <p id="timerStatus" role="status" style="min-height:1.5em; margin-bottom:16px;"></p>
@@ -2585,7 +2607,9 @@
         timerReset: '重置',
         timerFocusingTitle: (str) => `(${str}) 专注中 · tools.xue.moe`,
         timerTimeUp: '时间到，休息片刻吧。',
-        timerPromptCustom: '输入自定义时长（分钟）：',
+        timerCustomLabel: '时长（1–360 分钟）',
+        timerCustomApply: '应用时长',
+        timerCustomInvalid: '请输入 1–360 之间的整数分钟。',
         textLabTitle: '文本与字符分析',
         textLabSub: '字数统计、易混淆字符比对、中文拼音、日文罗马音',
         textInputPlaceholder: '输入或粘贴文本...',
@@ -2771,7 +2795,9 @@
         timerReset: 'Reset',
         timerFocusingTitle: (str) => `(${str}) Focusing · tools.xue.moe`,
         timerTimeUp: 'Time is up! Take a break.',
-        timerPromptCustom: 'Enter duration in minutes:',
+        timerCustomLabel: 'Duration (1–360 minutes)',
+        timerCustomApply: 'Apply duration',
+        timerCustomInvalid: 'Enter a whole number from 1 to 360 minutes.',
         textLabTitle: 'Text Lab & Character Inspector',
         textLabSub: 'Character count, confusable glyphs, Pinyin & Romaji transliteration',
         textInputPlaceholder: 'Type or paste text here...',
@@ -3747,6 +3773,8 @@
     const timerToggle = document.getElementById('timerToggle');
     const timerReset = document.getElementById('timerReset');
     const timerModeBtns = document.querySelectorAll('.timer-mode-btn');
+    const timerCustomForm = document.getElementById('timerCustomForm');
+    const timerCustomMinutes = document.getElementById('timerCustomMinutes');
 
     function updateClock() {
       const mins = Math.floor(timerRemaining / 60);
@@ -3863,21 +3891,44 @@
     });
     timerReset.addEventListener('click', resetTimer);
 
+    function applyTimerDuration(minutes, mode) {
+      timerDuration = minutes * 60;
+      timerMode = mode;
+      timerModeBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.minutes === mode));
+      timerCustomForm.hidden = true;
+      document.getElementById('timerModeCustom').setAttribute('aria-expanded', 'false');
+      resetTimer();
+    }
+
+    timerCustomMinutes.addEventListener('input', () => timerCustomMinutes.setCustomValidity(''));
+    timerCustomForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const minutes = Number(timerCustomMinutes.value);
+      if (!Number.isInteger(minutes) || minutes < 1 || minutes > 360) {
+        timerCustomMinutes.setCustomValidity((i18n[currentLang] || i18n.zh).timerCustomInvalid);
+        timerCustomMinutes.reportValidity();
+        return;
+      }
+      applyTimerDuration(minutes, 'custom');
+    });
+    document.getElementById('timerCustomCancel').addEventListener('click', () => {
+      timerCustomForm.hidden = true;
+      document.getElementById('timerModeCustom').setAttribute('aria-expanded', 'false');
+      document.getElementById('timerModeCustom').focus();
+    });
     timerModeBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        const t = i18n[currentLang] || i18n.zh;
         const val = btn.dataset.minutes;
-        let minutes = Number(val);
         if (val === 'custom') {
-          const custom = prompt(t.timerPromptCustom, String(timerDuration / 60));
-          if (custom === null || !/^\d+$/.test(custom.trim())) return;
-          minutes = Number(custom);
-          if (minutes < 1 || minutes > 360) return;
+          timerCustomMinutes.setCustomValidity('');
+          timerCustomMinutes.value = String(timerDuration / 60);
+          timerCustomForm.hidden = false;
+          btn.setAttribute('aria-expanded', 'true');
+          timerCustomMinutes.focus();
+          timerCustomMinutes.select();
+          return;
         }
-        timerDuration = minutes * 60;
-        timerMode = val;
-        timerModeBtns.forEach(b => b.classList.toggle('active', b === btn));
-        resetTimer();
+        applyTimerDuration(Number(val), val);
       });
     });
 
@@ -4992,6 +5043,9 @@
       const faqA2 = document.getElementById('faqA2');
       if (faqA2 && t.faqA2) faqA2.textContent = t.faqA2;
 
+      document.getElementById('timerCustomLabel').textContent = t.timerCustomLabel;
+      document.getElementById('timerCustomApply').textContent = t.timerCustomApply;
+      document.getElementById('timerCustomCancel').textContent = t.btnCancel;
       // Timer panel
       const timerTitle = document.getElementById('timerTitle');
       if (timerTitle) timerTitle.textContent = t.timerTitle;

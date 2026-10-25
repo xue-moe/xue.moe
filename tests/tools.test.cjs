@@ -8,7 +8,7 @@ function timerHarness(saved) {
   let now = 100000;
   const store = new Map(saved ? [['xue-focus-timer-v1', saved]] : []);
   const elements = new Map();
-  const element = () => ({ textContent: '', dataset: {}, classList: { toggle() {} }, addEventListener(name, fn) { this[name] = fn; } });
+  const element = () => ({ textContent: '', value: '', hidden: true, dataset: {}, setAttribute() {}, focus() {}, select() {}, setCustomValidity() {}, reportValidity() {}, classList: { toggle() {} }, addEventListener(name, fn) { this[name] = fn; } });
   const modes = ['25', '5', '15', 'custom'].map(mode => Object.assign(element(), { dataset: { minutes: mode } }));
   const state = {
     Date: { now: () => now }, Math, JSON, Number,
@@ -25,7 +25,7 @@ function timerHarness(saved) {
   };
   vm.createContext(state);
   vm.runInContext(html.slice(html.indexOf('    let timerDuration ='), html.indexOf('    const clockMainTime')) + '\nplayBeep = () => { beeps++; };', state);
-  return { state, store, modes, run: source => vm.runInContext(source, state), advance: ms => { now += ms; } };
+  return { state, store, modes, elements, run: source => vm.runInContext(source, state), advance: ms => { now += ms; } };
 }
 
 test('timer uses elapsed wall time when callbacks are delayed and completes only once', () => {
@@ -66,6 +66,9 @@ test('reload restores running and expired deadlines; invalid storage is ignored'
 
 test('cancelling custom duration preserves the existing mode and running timer', () => {
   const h = timerHarness(); h.run('startTimer()'); h.modes[3].click();
+  assert.equal(h.elements.get('timerCustomForm').hidden, false);
+  h.elements.get('timerCustomCancel').click();
+  assert.equal(h.elements.get('timerCustomForm').hidden, true);
   assert.equal(h.run('timerMode'), '25');
   assert.equal(h.run('timerRunning'), true);
 });
@@ -207,4 +210,21 @@ test('conversion preview keeps the input intact; applying and clearing can be un
 test('clipboard denial reports a visible failure', async () => {
   const h = textControllerHarness(); await h.state.copyText('text');
   assert.equal(h.elements.get('textActionStatus').textContent, 'failed');
+});
+
+
+test('custom duration validates minutes before resetting a running timer and persists the new mode', () => {
+  const h = timerHarness(); h.run('startTimer()'); h.modes[3].click();
+  const input = h.elements.get('timerCustomMinutes');
+  const form = h.elements.get('timerCustomForm');
+  for (const value of ['', '0', '361', '1.5', 'bad']) {
+    input.value = value; form.submit({ preventDefault() {} });
+    assert.equal(h.run('timerDuration'), 1500);
+    assert.equal(h.run('timerRunning'), true);
+  }
+  input.value = '42'; form.submit({ preventDefault() {} });
+  assert.equal(h.run('timerRemaining'), 2520); assert.equal(h.run('timerRunning'), false);
+  assert.equal(h.run('timerMode'), 'custom'); assert.equal(form.hidden, true);
+  const restored = timerHarness(h.store.get('xue-focus-timer-v1')); restored.run('restoreTimer()');
+  assert.equal(restored.run('timerDuration'), 2520); assert.equal(restored.run('timerMode'), 'custom');
 });
