@@ -438,6 +438,7 @@
     }
 
     .slogan-input {
+      min-width: 0;
       flex: 1;
       padding: 6px 14px;
       border-radius: 999px;
@@ -463,6 +464,8 @@
     }
 
     .todo-input {
+      min-width: 0;
+      width: 100%;
       flex: 1;
       padding: 13px 18px;
       border-radius: 16px;
@@ -778,7 +781,8 @@
       transition: opacity 0.15s ease;
     }
 
-    .todo-item:hover .item-actions {
+    .todo-item:hover .item-actions,
+    .todo-item:focus-within .item-actions {
       opacity: 1;
     }
 
@@ -1851,10 +1855,21 @@
       50% { transform: scale(1.2); opacity: 0.75; }
     }
 
+    :where(button, a, input, textarea, select):focus-visible {
+      outline: 3px solid var(--primary);
+      outline-offset: 3px;
+    }
+
+    @media (hover: none) {
+      .item-actions { opacity: 1; }
+    }
+
     @media (max-width: 640px) {
+      body { background-attachment: scroll; }
+      main { margin: 16px auto 24px; padding: 0 12px; }
       .nav-wrap {
-        padding: calc(10px + env(safe-area-inset-top)) 14px 10px;
-        gap: 8px;
+        padding: calc(10px + env(safe-area-inset-top)) 12px 10px;
+        gap: 10px;
         flex-wrap: wrap;
       }
       .nav-segmented {
@@ -1862,34 +1877,66 @@
         flex: 1 0 100%;
         width: 100%;
         min-width: 0;
-        max-width: 100%;
-        overflow-x: auto;
-        justify-content: flex-start;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        border-radius: 16px;
       }
-      .nav-segmented::-webkit-scrollbar { display: none; }
       .seg-btn {
-        flex: 0 0 auto;
-        min-height: 40px;
-        padding: 8px 12px;
-        white-space: nowrap;
+        min-width: 0;
+        min-height: 44px;
+        justify-content: center;
+        padding: 8px 4px;
+        font-size: 12px;
+        border-radius: 12px;
       }
       .nav-right { gap: 8px; margin-left: auto; }
-      .theme-toggle-btn { width: 40px; height: 40px; flex: 0 0 40px; }
-      .clock-btn, .timer-mode-btn { min-height: 40px; }
+      .theme-toggle-btn { width: 44px; height: 44px; flex: 0 0 44px; }
       .brand-hello { font-size: 22px; }
       .brand-sub { font-size: 12px; }
       .nav-link { display: none; }
-      .timer-clock {
-        max-width: 100%;
-        font-size: clamp(42px, 16vw, 60px);
-        line-height: 1.05;
-        letter-spacing: -1.5px;
-      }
+      .glass-card { padding: 20px 16px; border-radius: 20px; margin-bottom: 16px; }
+      .slogan-input-wrap { flex-wrap: wrap; }
+      .slogan-input { flex-basis: 100%; }
+      .create-main-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+      .todo-input { grid-column: 1 / -1; }
+      .create-main-row .btn { min-width: 0; white-space: normal; }
+      .todo-input, .sub-input, .deadline-input, .slogan-input, .textarea-box, .sort-select { font-size: 16px; }
+      .deadline-input { min-width: 0; max-width: 100%; min-height: 44px; }
+      .deadline-picker-row > div { flex-wrap: wrap; min-width: 0; max-width: 100%; }
+      .filter-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; border-radius: 16px; }
+      .filter-tab { justify-content: space-between; min-height: 44px; border-radius: 12px; padding: 8px 10px; }
+      .sort-select { width: 100%; min-height: 44px; }
+      .todo-item { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; padding: 12px; }
+      .check-btn { width: 44px; height: 44px; margin: 0; }
+      .item-body { align-self: center; }
+      .item-actions { grid-column: 2; justify-content: flex-end; flex-wrap: wrap; opacity: 1; }
+      .text-action-btn, .btn-subtle, .btn, .inspector-btn, .timer-mode-btn { min-height: 44px; }
+      .text-action-btn { padding: 8px 12px; }
+      .footer-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%; }
+      .footer-actions button { border: 1px solid var(--card-border); border-radius: 12px; }
+      .timer-segmented { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; border-radius: 16px; }
+      .timer-mode-btn { min-width: 0; padding: 8px; border-radius: 12px; }
+      .timer-clock { max-width: 100%; font-size: clamp(42px, 16vw, 60px); line-height: 1.05; letter-spacing: -1.5px; }
       .timer-btn-row { flex-wrap: wrap; }
-      .glass-card { padding: 20px 16px; border-radius: 20px; }
-      .item-actions { opacity: 1; }
+      .clock-sync-badge { flex-wrap: wrap; white-space: normal; border-radius: 14px; line-height: 1.6; padding: 8px 10px; }
+      .sync-dot { flex-shrink: 0; }
+      .sync-tz { flex-basis: 100%; overflow-wrap: anywhere; }
+      .clock-time-display { flex-wrap: wrap; max-width: 100%; font-size: clamp(32px, 10vw, 60px); letter-spacing: -1px; }
+      .clock-millis { min-width: 0; font-size: 18px; }
+      .clock-ampm { font-size: 16px; margin-left: 2px; }
+      .clock-toolbar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+      .clock-btn { min-width: 0; padding: 8px; white-space: normal; }
+      .world-clock-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .world-clock-card { min-width: 0; padding: 12px 6px; }
+      .world-time { font-size: 20px; }
+      .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .tool-btn-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .tool-btn-row .btn { min-width: 0; padding: 8px; white-space: normal; margin-left: 0 !important; }
+      .inspector-actions-bar { width: 100%; justify-content: space-between; flex-wrap: wrap; }
+      .char-inspector { padding: 12px; }
+      .char-empty, .notice-box { overflow-wrap: anywhere; }
+      #btnShowAllChars, #btnCopyPhonetic { min-height: 44px !important; }
+      footer { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
     }
   </style>
 </head>
@@ -1906,17 +1953,17 @@
         <span class="brand-sub" id="navBrandSub">tools</span>
       </a>
 
-      <nav class="nav-segmented" role="tablist">
-        <button class="seg-btn active" data-tab="todo" role="tab" id="tabBtnTodo">
+      <nav class="nav-segmented" role="tablist" aria-label="Tools">
+        <button class="seg-btn active" data-tab="todo" role="tab" id="tabBtnTodo" aria-controls="panel-todo" aria-selected="true" tabindex="0">
           待办清单
         </button>
-        <button class="seg-btn" data-tab="clock" role="tab" id="tabBtnClock">
+        <button class="seg-btn" data-tab="clock" role="tab" id="tabBtnClock" aria-controls="panel-clock" aria-selected="false" tabindex="-1">
           现在时间
         </button>
-        <button class="seg-btn" data-tab="timer" role="tab" id="tabBtnTimer">
+        <button class="seg-btn" data-tab="timer" role="tab" id="tabBtnTimer" aria-controls="panel-timer" aria-selected="false" tabindex="-1">
           专注钟
         </button>
-        <button class="seg-btn" data-tab="text" role="tab" id="tabBtnText">
+        <button class="seg-btn" data-tab="text" role="tab" id="tabBtnText" aria-controls="panel-text" aria-selected="false" tabindex="-1">
           文本排错
         </button>
       </nav>
@@ -1949,7 +1996,7 @@
 
   <main>
     
-    <section id="panel-todo" class="panel active">
+    <section role="tabpanel" aria-labelledby="tabBtnTodo" id="panel-todo" class="panel active">
       <h1 class="sr-only" id="todoHeading">待办清单</h1>
       
       <div class="glass-card slogan-card" id="sloganBox" title="双击修改标语">
@@ -2046,7 +2093,7 @@
     </section>
 
     
-    <section id="panel-clock" class="panel">
+    <section role="tabpanel" aria-labelledby="tabBtnClock" id="panel-clock" class="panel">
       <h1 class="sr-only" id="clockHeading">标准时间与世界时钟 · 网络时间偏差估算</h1>
       <div class="glass-card clock-hero-card" id="clockHero">
         <button class="clock-fullscreen-exit" id="btnExitFullscreen" title="退出全屏 (ESC键)">退出全屏</button>
@@ -2146,7 +2193,7 @@
     </section>
 
     
-    <section id="panel-timer" class="panel">
+    <section role="tabpanel" aria-labelledby="tabBtnTimer" id="panel-timer" class="panel">
       <div class="glass-card timer-wrap">
         <h1 id="timerTitle" style="font-size:20px; font-weight:800; margin-bottom:6px;">专注倒计时</h1>
         <p id="timerSub" style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">
@@ -2171,7 +2218,7 @@
     </section>
 
     
-    <section id="panel-text" class="panel">
+    <section role="tabpanel" aria-labelledby="tabBtnText" id="panel-text" class="panel">
       <div class="glass-card">
         <h1 id="textLabTitle" style="font-size:18px; font-weight:800; margin-bottom:8px;">文本与字符分析</h1>
         <p id="textLabSub" style="font-size:13px; color:var(--text-muted); margin-bottom:18px;">
@@ -2353,7 +2400,7 @@
         themeLightTip: '切换为深色模式',
         tabTodo: '待办清单',
         tabClock: '标准时间',
-        tabTimer: '专注倒计时',
+        tabTimer: '专注钟',
         tabText: '文本排错',
         navBlog: '博客',
         navDuo: '幻方',
@@ -2531,9 +2578,9 @@
         themeDarkTip: 'Switch to light mode',
         themeLightTip: 'Switch to dark mode',
         tabTodo: 'Todo',
-        tabClock: 'Standard Time',
-        tabTimer: 'Focus Timer',
-        tabText: 'Text Inspector',
+        tabClock: 'Time',
+        tabTimer: 'Focus',
+        tabText: 'Text',
         navBlog: 'Blog',
         navDuo: 'Magic Square',
         navHome: 'Home',
@@ -2967,7 +3014,10 @@
     function switchTab(tabName, updateUrl = true) {
       if (!panels[tabName]) tabName = 'todo';
       segBtns.forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tabName);
+        const selected = btn.dataset.tab === tabName;
+        btn.classList.toggle('active', selected);
+        btn.setAttribute('aria-selected', String(selected));
+        btn.tabIndex = selected ? 0 : -1;
       });
       Object.keys(panels).forEach(key => {
         panels[key].classList.toggle('active', key === tabName);
@@ -3010,6 +3060,19 @@
 
     segBtns.forEach(btn => {
       btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+      btn.addEventListener('keydown', e => {
+        const tabs = Array.from(segBtns);
+        const index = tabs.indexOf(btn);
+        let next;
+        if (e.key === 'ArrowRight') next = (index + 1) % tabs.length;
+        if (e.key === 'ArrowLeft') next = (index + tabs.length - 1) % tabs.length;
+        if (e.key === 'Home') next = 0;
+        if (e.key === 'End') next = tabs.length - 1;
+        if (next === undefined) return;
+        e.preventDefault();
+        tabs[next].focus();
+        switchTab(tabs[next].dataset.tab);
+      });
     });
 
     function getInitialTab() {
@@ -3211,10 +3274,10 @@
 
     addTodoBtn.addEventListener('click', addTodo);
     todoTitleInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') addTodo();
+      if (e.key === 'Enter' && !e.isComposing) addTodo();
     });
     todoNoteInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') addTodo();
+      if (e.key === 'Enter' && !e.isComposing) addTodo();
     });
 
     function escapeHtml(str) {
