@@ -163,3 +163,16 @@ test('dictionary loading times out instead of polling forever', async () => {
   [...h.timers.values()][0](); await pending;
   assert.equal(errors, 1); assert.equal(h.scripts[0].removed, true);
 });
+
+test('editing task details preserves identity and state, supports clearing deadline and rejects blank titles', () => {
+  const state = { Date, Number }; vm.createContext(state);
+  vm.runInContext(html.slice(html.indexOf('    function withTodoDetails('), html.indexOf("    todoEditTitle.addEventListener('input'")), state);
+  const original = { id: 12, title: 'Original', note: '', completed: true, customOrder: 5, createdAt: 123, deadline: '2026-10-25T12:00', hasDeadline: true };
+  const edited = state.withTodoDetails(original, ' Updated ', 'Two\nlines', '');
+  assert.equal(edited.title, 'Updated'); assert.equal(edited.note, 'Two\nlines');
+  assert.equal(edited.hasDeadline, false); assert.equal(edited.deadline, '');
+  assert.equal(edited.id, 12); assert.equal(edited.completed, true); assert.equal(edited.createdAt, 123);
+  assert.equal(original.title, 'Original');
+  assert.throws(() => state.withTodoDetails(original, ' ', '', ''));
+  assert.throws(() => state.withTodoDetails(original, 'Valid', '', 'invalid'));
+});

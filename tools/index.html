@@ -1855,6 +1855,28 @@
       50% { transform: scale(1.2); opacity: 0.75; }
     }
 
+    .tool-dialog {
+      margin: auto;
+      width: min(480px, calc(100% - 24px));
+      max-height: calc(100dvh - 32px);
+      padding: 24px;
+      border: 1px solid var(--item-border);
+      border-radius: 20px;
+      background: var(--card-inner);
+      color: var(--text-main);
+      box-shadow: var(--shadow-soft);
+      overflow-y: auto;
+      overflow-wrap: anywhere;
+    }
+    .tool-dialog::backdrop { background: rgba(15, 23, 42, 0.55); }
+    .dialog-form { display: flex; flex-direction: column; gap: 16px; }
+    .dialog-form h2 { font-size: 20px; }
+    .dialog-form label { display: flex; flex-direction: column; gap: 8px; font-size: 14px; font-weight: 600; }
+    .dialog-form input, .dialog-form textarea { width: 100%; min-width: 0; min-height: 44px; font-size: 16px; margin: 0; }
+    .dialog-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
+    .dialog-actions button { min-height: 44px; }
+    .dialog-error { color: var(--danger); font-size: 14px; }
+
     :where(button, a, input, textarea, select):focus-visible {
       outline: 3px solid var(--primary);
       outline-offset: 3px;
@@ -2328,6 +2350,20 @@
     </section>
   </main>
 
+  <dialog id="todoEditDialog" class="tool-dialog" aria-labelledby="todoEditHeading">
+    <form id="todoEditForm" class="dialog-form">
+      <h2 id="todoEditHeading">编辑待办</h2>
+      <label><span id="todoEditTitleLabel">标题</span><input id="todoEditTitle" class="sub-input" required autofocus autocomplete="off" /></label>
+      <label><span id="todoEditNoteLabel">备注</span><textarea id="todoEditNote" class="textarea-box" rows="4"></textarea></label>
+      <label><span id="todoEditDeadlineLabel">截止时间</span><input id="todoEditDeadline" class="deadline-input" type="datetime-local" /></label>
+      <p id="todoEditError" class="dialog-error" role="alert" hidden></p>
+      <div class="dialog-actions">
+        <button id="todoEditCancel" type="button" class="btn btn-ghost">取消</button>
+        <button id="todoEditSave" type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
   <div id="charInspectorBackdrop" class="char-inspector-backdrop"></div>
 
   
@@ -2443,6 +2479,9 @@
         confirmEmptyTrash: (count) => `确定彻底清空回收站中的 ${count} 项记录吗？此操作不可撤销。`,
         confirmPermDelete: '确定彻底删除该事项吗？此操作不可撤销。',
         promptEditTitle: '编辑待办内容：',
+        editTodoTitle: '编辑待办',
+        todoTitleLabel: '标题',
+        todoTitleRequired: '请输入待办标题。',
         importSuccess: (count) => `成功导入 ${count} 条待办事项。`,
         importErrFormat: '文件格式错误，需为有效的待办 JSON 数组。',
         importPreview: (added, trash, skipped) => `将新增 ${added} 项待办、${trash} 项回收站记录，跳过 ${skipped} 项重复记录。现有任务保持不变。是否导入？`,
@@ -2622,6 +2661,9 @@
         confirmEmptyTrash: (count) => `Permanently delete ${count} ${count === 1 ? 'item' : 'items'} from trash? This cannot be undone.`,
         confirmPermDelete: 'Permanently delete this task? This cannot be undone.',
         promptEditTitle: 'Edit task:',
+        editTodoTitle: 'Edit task',
+        todoTitleLabel: 'Title',
+        todoTitleRequired: 'Enter a task title.',
         importSuccess: (count) => `Successfully imported ${count} ${count === 1 ? 'task' : 'tasks'}.`,
         importErrFormat: 'Invalid backup. A valid JSON array of tasks is required.',
         importPreview: (added, trash, skipped) => `Add ${added} tasks and ${trash} trash records; skip ${skipped} duplicates. Existing tasks will be kept. Import?`,
@@ -3459,14 +3501,68 @@
       }
     }
 
+    let editingTodoId = null;
+    const todoEditDialog = document.getElementById('todoEditDialog');
+    const todoEditForm = document.getElementById('todoEditForm');
+    const todoEditTitle = document.getElementById('todoEditTitle');
+    const todoEditNote = document.getElementById('todoEditNote');
+    const todoEditDeadline = document.getElementById('todoEditDeadline');
+    const todoEditError = document.getElementById('todoEditError');
+
     function inlineEdit(item) {
       const t = i18n[currentLang] || i18n.zh;
-      const newTitle = prompt(t.promptEditTitle, item.title);
-      if (newTitle !== null && newTitle.trim()) {
-        item.title = newTitle.trim();
-        saveData();
-      }
+      editingTodoId = item.id;
+      todoEditTitle.value = item.title;
+      todoEditTitle.setCustomValidity('');
+      todoEditNote.value = item.note;
+      todoEditDeadline.value = item.hasDeadline ? item.deadline : '';
+      todoEditError.hidden = true;
+      document.getElementById('todoEditHeading').textContent = t.editTodoTitle;
+      document.getElementById('todoEditTitleLabel').textContent = t.todoTitleLabel;
+      document.getElementById('todoEditNoteLabel').textContent = t.todoNotePlaceholder;
+      document.getElementById('todoEditDeadlineLabel').textContent = t.todoDeadlineLabel;
+      document.getElementById('todoEditCancel').textContent = t.btnCancel;
+      document.getElementById('todoEditSave').textContent = t.btnSave;
+      if (!todoEditDialog.open) todoEditDialog.showModal();
+      todoEditTitle.focus();
     }
+
+    function withTodoDetails(item, title, note, deadline) {
+      if (!title.trim()) throw new Error('Title required');
+      if (deadline && !Number.isFinite(Date.parse(deadline))) throw new Error('Invalid deadline');
+      return { ...item, title: title.trim(), note: note.trim(), deadline, hasDeadline: !!deadline };
+    }
+
+    todoEditTitle.addEventListener('input', () => todoEditTitle.setCustomValidity(''));
+    document.getElementById('todoEditCancel').addEventListener('click', () => todoEditDialog.close());
+    todoEditDialog.addEventListener('close', () => {
+      document.querySelector(`.todo-item[data-id="${editingTodoId}"] [data-action="edit"]`)?.focus();
+      editingTodoId = null;
+    });
+    todoEditForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const t = i18n[currentLang] || i18n.zh;
+      if (!todoEditTitle.value.trim()) {
+        todoEditTitle.setCustomValidity(t.todoTitleRequired);
+        todoEditTitle.reportValidity();
+        return;
+      }
+      const item = todos.find(todo => todo.id === editingTodoId);
+      if (!item) { todoEditDialog.close(); return; }
+      const updated = withTodoDetails(item, todoEditTitle.value, todoEditNote.value, todoEditDeadline.value);
+      const next = todos.map(todo => todo.id === editingTodoId ? updated : todo);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify([...next, ...recycleBin]));
+      } catch (_) {
+        todoEditError.textContent = t.importErrSave;
+        todoEditError.hidden = false;
+        return;
+      }
+      todos = next;
+      renderTodos();
+      updateCounts();
+      todoEditDialog.close();
+    });
 
     function updateCounts() {
       document.getElementById('countAll').textContent = todos.length;
