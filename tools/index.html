@@ -2290,6 +2290,8 @@
         </form>
 
         <div class="timer-clock" id="timerClock">25:00</div>
+        <button type="button" id="btnTestTimerSound" class="btn btn-ghost" style="margin-bottom:8px;">试听提示音</button>
+        <p id="timerAudioStatus" role="status" style="font-size:13px; margin-bottom:12px;"></p>
         <p id="timerStatus" role="status" style="min-height:1.5em; margin-bottom:16px;"></p>
 
         <div class="timer-btn-row">
@@ -2651,6 +2653,10 @@
         timerReset: '重置',
         timerFocusingTitle: (str) => `(${str}) 专注中 · tools.xue.moe`,
         timerTimeUp: '时间到，休息片刻吧。',
+        timerTestSound: '试听提示音',
+        timerAudioReady: '提示音已准备，可点击试听检查设备音量。',
+        timerAudioBlocked: '提示音未能启用，请点击试听重试，并检查设备音量。',
+        timerAudioHint: '请先试听；锁屏或切换应用后，系统可能暂停网页声音。',
         timerCustomLabel: '时长（1–360 分钟）',
         timerCustomApply: '应用时长',
         timerCustomInvalid: '请输入 1–360 之间的整数分钟。',
@@ -2844,6 +2850,10 @@
         timerReset: 'Reset',
         timerFocusingTitle: (str) => `(${str}) Focusing · tools.xue.moe`,
         timerTimeUp: 'Time is up! Take a break.',
+        timerTestSound: 'Test alert sound',
+        timerAudioReady: 'Sound is ready. Test it to check your device volume.',
+        timerAudioBlocked: 'Sound could not start. Tap Test alert sound and check your volume.',
+        timerAudioHint: 'Test the sound first. Locking the screen or switching apps may suspend browser audio.',
         timerCustomLabel: 'Duration (1–360 minutes)',
         timerCustomApply: 'Apply duration',
         timerCustomInvalid: 'Enter a whole number from 1 to 360 minutes.',
@@ -3891,21 +3901,81 @@
       }
     }
 
-    function playBeep() {
+    let timerAudioContext = null;
+    let timerAudioState = 'idle';
+    let timerSoundVersion = 0;
+    let timerSoundNodes = [];
+
+    function updateTimerAudioStatus() {
+      const t = i18n[currentLang] || i18n.zh;
+      document.getElementById('timerAudioStatus').textContent = timerAudioState === 'ready'
+        ? t.timerAudioReady : timerAudioState === 'blocked' ? t.timerAudioBlocked : t.timerAudioHint;
+    }
+
+    async function prepareTimerAudio() {
       try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.3);
-        gain.gain.setValueAtTime(0.2, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.9);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.9);
-      } catch (_) {}
+        if (!timerAudioContext || timerAudioContext.state === 'closed') {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) throw new Error('Web Audio unavailable');
+          timerAudioContext = new AudioContextClass();
+        }
+        const ctx = timerAudioContext;
+        // Call resume and start a silent sample synchronously inside the tap handler.
+        const resumed = ctx.state === 'running' ? Promise.resolve() : ctx.resume();
+        const silent = ctx.createBufferSource();
+        silent.buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+        silent.connect(ctx.destination);
+        silent.onended = () => silent.disconnect();
+        silent.start();
+        let timeout;
+        try {
+          await Promise.race([resumed, new Promise((_, reject) => {
+            timeout = setTimeout(() => reject(new Error('Audio activation timed out')), 1500);
+          })]);
+        } finally { clearTimeout(timeout); }
+        if (ctx.state !== 'running') throw new Error('Audio is suspended');
+        timerAudioState = 'ready';
+        updateTimerAudioStatus();
+        return ctx;
+      } catch (_) {
+        timerAudioState = 'blocked';
+        updateTimerAudioStatus();
+        return null;
+      }
+    }
+
+    function stopTimerSound() {
+      timerSoundVersion++;
+      timerSoundNodes.forEach(node => { try { node.stop(); } catch (_) {} });
+      timerSoundNodes = [];
+    }
+
+    async function playBeep() {
+      stopTimerSound();
+      const version = timerSoundVersion;
+      const ctx = await prepareTimerAudio();
+      if (!ctx || version !== timerSoundVersion) return;
+      try {
+        [659.25, 783.99, 1046.5].forEach((frequency, index) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          const start = ctx.currentTime + index * 0.5;
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(frequency, start);
+          gain.gain.setValueAtTime(0, start);
+          gain.gain.linearRampToValueAtTime(0.25, start + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + 0.4);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+          timerSoundNodes.push(osc);
+          osc.start(start);
+          osc.stop(start + 0.45);
+        });
+      } catch (_) {
+        timerAudioState = 'blocked';
+        updateTimerAudioStatus();
+      }
     }
 
     function persistTimer() {
@@ -3931,6 +4001,8 @@
 
     function startTimer() {
       if (timerRunning) return;
+      stopTimerSound();
+      void prepareTimerAudio();
       if (timerRemaining === 0) timerRemaining = timerDuration;
       timerEndAt = Date.now() + timerRemaining * 1000;
       timerRunning = true;
@@ -3950,6 +4022,7 @@
     }
 
     function resetTimer() {
+      stopTimerSound();
       timerRunning = false;
       timerEndAt = null;
       clearInterval(timerInterval);
@@ -3988,6 +4061,7 @@
       else startTimer();
     });
     timerReset.addEventListener('click', resetTimer);
+    document.getElementById('btnTestTimerSound').addEventListener('click', () => { void playBeep(); });
 
     function applyTimerDuration(minutes, mode) {
       timerDuration = minutes * 60;
@@ -5152,6 +5226,8 @@
       document.getElementById('timerCustomLabel').textContent = t.timerCustomLabel;
       document.getElementById('timerCustomApply').textContent = t.timerCustomApply;
       document.getElementById('timerCustomCancel').textContent = t.btnCancel;
+      document.getElementById('btnTestTimerSound').textContent = t.timerTestSound;
+      updateTimerAudioStatus();
       // Timer panel
       const timerTitle = document.getElementById('timerTitle');
       if (timerTitle) timerTitle.textContent = t.timerTitle;

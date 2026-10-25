@@ -11,7 +11,7 @@ function timerHarness(saved) {
   const element = () => ({ textContent: '', value: '', hidden: true, dataset: {}, setAttribute() {}, focus() {}, select() {}, setCustomValidity() {}, reportValidity() {}, classList: { toggle() {} }, addEventListener(name, fn) { this[name] = fn; } });
   const modes = ['25', '5', '15', 'custom'].map(mode => Object.assign(element(), { dataset: { minutes: mode } }));
   const state = {
-    Date: { now: () => now }, Math, JSON, Number,
+    Date: { now: () => now }, Math, JSON, Number, window: {},
     localStorage: { getItem: key => store.get(key) || null, setItem: (key, value) => store.set(key, value) },
     document: {
       getElementById(id) { if (!elements.has(id)) elements.set(id, element()); return elements.get(id); },
@@ -309,4 +309,45 @@ test('trash undo stays available on write failure and expires for records manual
   h.setFail(false); s.commitTodoState(s.todos,s.recycleBin.filter(t=>t.id!==1));
   assert.equal(h.elements.get('todoUndoBar').hidden,true);
   s.undoTrash(); assert.equal(s.todos.length,1);
+});
+
+function audioHarness({rejectResume = false, prefixed = false} = {}) {
+  const stats = {contexts:0,resumes:0,tones:0,silent:0};
+  const status = {};
+  class AudioContextMock {
+    constructor() {stats.contexts++; this.state='suspended'; this.currentTime=1; this.sampleRate=44100; this.destination={};}
+    resume() {stats.resumes++; if(rejectResume) return Promise.reject(new Error('denied')); this.state='running'; return Promise.resolve();}
+    createBuffer() {return {};}
+    createBufferSource() {return {connect(){},disconnect(){},start(){stats.silent++;}};}
+    createOscillator() {return {frequency:{setValueAtTime(){}},connect(){},disconnect(){},start(){stats.tones++;},stop(){}};}
+    createGain() {return {gain:{setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}};}
+  }
+  const state = {window: prefixed ? {webkitAudioContext:AudioContextMock} : {AudioContext:AudioContextMock},
+    document:{getElementById:()=>status}, currentLang:'zh',i18n:{zh:{timerAudioReady:'ready',timerAudioBlocked:'blocked'}},setTimeout,clearTimeout,Promise
+  };
+  vm.createContext(state);
+  vm.runInContext(html.slice(html.indexOf('    let timerAudioContext ='),html.indexOf('    function persistTimer()')),state);
+  return {state,stats,status};
+}
+
+test('audio is unlocked during the start gesture and the same context plays the completion alert', async () => {
+  const h = audioHarness();
+  const ready = h.state.prepareTimerAudio();
+  assert.equal(h.stats.contexts,1); assert.equal(h.stats.resumes,1); assert.equal(h.stats.silent,1);
+  await ready; await h.state.playBeep(); await h.state.playBeep();
+  assert.equal(h.stats.contexts,1); assert.equal(h.stats.tones,6); assert.equal(h.status.textContent,'ready');
+});
+
+test('blocked audio surfaces an error and can be retried; WebKit-prefixed context works', async () => {
+  const blocked = audioHarness({rejectResume:true}); await blocked.state.playBeep();
+  assert.equal(blocked.stats.tones,0); assert.equal(blocked.status.textContent,'blocked');
+  const ctx = vm.runInContext('timerAudioContext',blocked.state);
+  ctx.resume = () => {ctx.state='running'; return Promise.resolve();};
+  await blocked.state.playBeep(); assert.equal(blocked.stats.tones,3); assert.equal(blocked.status.textContent,'ready');
+  const webkit = audioHarness({prefixed:true}); await webkit.state.playBeep(); assert.equal(webkit.stats.tones,3);
+});
+
+test('resetting while audio activation is pending cancels the obsolete sound', async () => {
+  const h = audioHarness(); const sound = h.state.playBeep(); h.state.stopTimerSound(); await sound;
+  assert.equal(h.stats.tones,0);
 });
