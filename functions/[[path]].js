@@ -7,7 +7,8 @@ const INDEXABLE_SITE_URLS = {
   'xue.moe': ['https://xue.moe/'],
   'duo.xue.moe': ['https://duo.xue.moe/'],
   'tools.xue.moe': ['https://tools.xue.moe/'],
-  'time.xue.moe': ['https://time.xue.moe/']
+  'time.xue.moe': ['https://time.xue.moe/'],
+  'ip.xue.moe': ['https://ip.xue.moe/']
 };
 
 function seoFileResponse(hostname, pathname) {
@@ -84,7 +85,7 @@ function getUtcPlusFourVisitorDay(now = Date.now()) {
 }
 
 // 安全响应头注入函数
-function applySecurityHeaders(res) {
+function applySecurityHeaders(res, isIpPage = false) {
   const headers = new Headers(res.headers);
   headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   headers.set('X-Frame-Options', 'SAMEORIGIN');
@@ -93,6 +94,12 @@ function applySecurityHeaders(res) {
   headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), browsing-topics=()');
   headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://cloudflareinsights.com; frame-ancestors 'self';");
+  if (isIpPage) {
+    headers.set('Content-Security-Policy', headers.get('Content-Security-Policy').replace(
+      "connect-src 'self' https://cloudflareinsights.com",
+      "connect-src 'self' https://cloudflareinsights.com https://api.ipify.org https://api64.ipify.org https://api.ip.sb https://4.ipw.cn https://my.ip.cn https://myip.ipip.net https://www.xiaohongshu.com https://www.bilibili.com https://www.qq.com https://www.taobao.com https://github.com https://www.google.com https://cdn.jsdelivr.net https://www.cloudflare.com https://www.youtube.com https://www.qualcomm.cn https://discord.com https://www.visa.com https://medium.com https://cdnjs.cloudflare.com https://registry.npmjs.org https://nodejs.org https://gitlab.com https://chatgpt.com https://claude.ai https://www.perplexity.ai"
+    ));
+  }
 
   return new Response(res.body, {
     status: res.status,
@@ -118,6 +125,64 @@ async function fetchAsset(context, targetPath) {
 }
 
 async function handleRoute(context, url, hostname) {
+  if (url.pathname === '/api/ipcn-session') {
+    const headers = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' };
+    if (context.request.method !== 'GET') return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405, headers: { ...headers, Allow: 'GET' } });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 6000);
+    try {
+      // Fetch only the public page's short-lived query ticket. The visitor queries
+      // my.ip.cn directly so the displayed address belongs to their connection.
+      const upstream = await fetch('https://ip.cn/', { signal: controller.signal, redirect: 'error', headers: { 'Accept': 'text/html' } });
+      if (!upstream.ok || !upstream.body) throw new Error('Query service unavailable');
+      const reader = upstream.body.getReader();
+      const decoder = new TextDecoder();
+      let html = '';
+      let bytes = 0;
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          bytes += value.byteLength;
+          if (bytes > 128 * 1024) throw new Error('Unexpected query response');
+          html += decoder.decode(value, { stream: true });
+        }
+      } finally { await reader.cancel(); }
+      const ticket = html.match(/var\s+_ticket\s*=\s*["']([a-f0-9]{16,128})["']/i)?.[1];
+      if (!ticket) throw new Error('Query ticket unavailable');
+      return new Response(JSON.stringify({ ticket }), { headers });
+    } catch (_) {
+      return new Response(JSON.stringify({ error: 'IP.cn query service unavailable' }), { status: 502, headers });
+    } finally { clearTimeout(timer); }
+  }
+
+  if (url.pathname === '/api/ip') {
+    const headers = {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'private, no-store, max-age=0',
+      'Vary': 'CF-Connecting-IP',
+      'X-Robots-Tag': 'noindex, nofollow'
+    };
+    if (context.request.method !== 'GET') {
+      return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
+        status: 405, headers: { ...headers, Allow: 'GET' }
+      });
+    }
+    // Cloudflare supplies this header; never substitute X-Forwarded-For or query input.
+    const ip = context.request.headers.get('CF-Connecting-IP');
+    if (!ip) {
+      return new Response(JSON.stringify({ error: 'IP information requires Cloudflare Pages.' }), { status: 503, headers });
+    }
+    const cf = context.request.cf || {};
+    return new Response(JSON.stringify({
+      ip, country: cf.country || null, region: cf.region || null,
+      city: cf.city || null, timezone: cf.timezone || null,
+      asn: cf.asn || null, organization: cf.asOrganization || null,
+      colo: cf.colo || null, httpProtocol: cf.httpProtocol || null,
+      tlsVersion: cf.tlsVersion || null
+    }), { headers });
+  }
+
   if (url.pathname === '/api/time') {
     return new Response(JSON.stringify({
       serverTime: Date.now()
@@ -314,6 +379,16 @@ async function handleRoute(context, url, hostname) {
   }
 
   // 1. duo.xue.moe 映射到 /duo/
+  if (hostname === 'ip.xue.moe') {
+    if (url.pathname === '/ip' || url.pathname.startsWith('/ip/')) {
+      return Response.redirect(`${url.origin}${url.pathname.slice(3) || '/'}${url.search}`, 301);
+    }
+    if (url.pathname === '/') return fetchAsset(context, '/ip/');
+    if (url.pathname.startsWith('/fonts/')) return context.env.ASSETS.fetch(context.request);
+    if (['/app.js', '/style.css'].includes(url.pathname)) return fetchAsset(context, '/ip' + url.pathname);
+    return new Response('Not Found', { status: 404 });
+  }
+
   if (hostname.startsWith('duo.')) {
     // 清理旧缓存或多余前缀，重定向回根路径
     if (url.pathname === '/duo' || url.pathname === '/duo/') {
@@ -554,5 +629,5 @@ export async function onRequest(context) {
   }
 
   // 4. 对所有正常返回的响应注入全套安全响应头 (HSTS, CSP, X-Frame-Options 等)
-  return applySecurityHeaders(res);
+  return applySecurityHeaders(res, hostname === 'ip.xue.moe' || url.pathname === '/ip' || url.pathname.startsWith('/ip/'));
 }

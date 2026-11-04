@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>我的网络与 IP · ip.xue.moe</title>
+  <meta name="description" content="一目了然看清你的公网 IPv4 / IPv6 地址、宽带归属地、运营商，以及常用网站访问速度与分流测试。">
+  <link rel="canonical" href="https://ip.xue.moe/">
+  <meta property="og:title" content="我的网络与 IP · ip.xue.moe">
+  <meta property="og:description" content="看清你的当前网络：IPv4 / IPv6 公网地址、宽带归属地与国内外网站访问速度。">
+  <meta property="og:url" content="https://ip.xue.moe/">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='50' font-size='50'%3E❄️%3C/text%3E%3C/svg%3E">
+  <script>
+    (() => {
+      let theme;
+      try {
+        const cookie = document.cookie.split(';').map(v => v.trim()).find(v => v.startsWith('xue-theme='));
+        theme = cookie && decodeURIComponent(cookie.slice(10));
+      } catch (_) {}
+      if (!['light', 'dark'].includes(theme)) {
+        try { theme = localStorage.getItem('xue-theme'); } catch (_) {}
+      }
+      const query = new URLSearchParams(location.search).get('theme');
+      if (['light', 'dark'].includes(query)) theme = query;
+      if (['light', 'dark'].includes(theme)) document.documentElement.dataset.theme = theme;
+    })();
+  </script>
+  <link rel="stylesheet" href="/ip/style.css">
+  <script src="/ip/app.js" defer></script>
+</head>
+<body>
+  <canvas id="snowCanvas"></canvas>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-top">
+        <div class="brand-group">
+          <a class="brand" href="https://xue.moe/" aria-label="返回 xue.moe 主页">xue<span>.moe</span></a>
+          <span class="page-tag">❄ 查 IP</span>
+        </div>
+        <div class="sidebar-desc">
+          <h1>我的网络与 IP</h1>
+          <p>看清当前的公网出口与网站访问速度</p>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" role="tablist" aria-label="功能切换">
+        <button type="button" role="tab" id="tab-local-ip" data-tab="local-ip" aria-controls="local-ip" aria-selected="true" tabindex="0">
+          <span class="tab-icon" aria-hidden="true">🌐</span>
+          <span class="tab-label">我的 IP</span>
+        </button>
+        <button type="button" role="tab" id="tab-routing" data-tab="routing" aria-controls="routing" aria-selected="false" tabindex="-1">
+          <span class="tab-icon" aria-hidden="true">🔀</span>
+          <span class="tab-label">网站分流</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-actions">
+        <button class="control-btn refresh" id="refresh" type="button" title="重新测一次">
+          <span class="btn-icon">↻</span>
+          <span class="btn-text">重新测一次</span>
+        </button>
+        <div class="action-subgroup">
+          <button class="control-btn theme-btn" id="theme" type="button" aria-label="切换深浅色模式" title="切换深浅色模式">◐</button>
+          <a class="control-btn home-link" href="https://xue.moe/" title="返回 xue.moe 主页">
+            <span>❄ 主站</span>
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <div class="workspace-heading">
+        <div class="view-title-wrap">
+          <span class="status-indicator" aria-hidden="true"></span>
+          <h2 id="view-title">我的 IP</h2>
+        </div>
+        <p id="run-status" role="status">准备就绪</p>
+      </div>
+
+      <section id="local-ip" class="overview-panel" aria-label="访问本站的 IP 与不同查询源的出口" role="tabpanel" data-panel aria-labelledby="tab-local-ip">
+        <div class="hero-deck">
+          <article class="card ip-card card-v4" id="ipv4">
+            <div class="card-top">
+              <div class="tag-group">
+                <span class="proto-tag tag-v4">IPv4</span>
+                <h3>当前 IPv4</h3>
+              </div>
+              <span class="badge">本站连接</span>
+            </div>
+
+            <div class="ip-display-row">
+              <button class="address" type="button" title="点击复制 IP 地址" aria-label="IP 地址检测中" disabled>检测中…</button>
+              <span class="copy-hint" aria-hidden="true">点击复制</span>
+            </div>
+            <span class="state" hidden></span>
+
+            <dl class="meta-row">
+              <div class="meta-item">
+                <dt>所在地区</dt>
+                <dd data-field="location">—</dd>
+              </div>
+              <div class="meta-item">
+                <dt>宽带运营商</dt>
+                <dd data-field="isp">—</dd>
+              </div>
+              <div class="meta-item">
+                <dt>网络编号 (ASN)</dt>
+                <dd data-field="asn">—</dd>
+              </div>
+            </dl>
+          </article>
+
+          <article class="card ip-card card-v6" id="ipv6">
+            <div class="card-top">
+              <div class="tag-group">
+                <span class="proto-tag tag-v6">IPv6</span>
+                <h3>当前 IPv6</h3>
+              </div>
+              <span class="badge">双栈检测</span>
+            </div>
+
+            <div class="ip-display-row">
+              <button class="address" type="button" title="点击复制 IP 地址" aria-label="IP 地址检测中" disabled>检测中…</button>
+              <span class="copy-hint" aria-hidden="true">点击复制</span>
+            </div>
+            <span class="state" hidden></span>
+
+            <dl class="meta-row">
+              <div class="meta-item">
+                <dt>所在地区</dt>
+                <dd data-field="location">—</dd>
+              </div>
+              <div class="meta-item">
+                <dt>宽带运营商</dt>
+                <dd data-field="isp">—</dd>
+              </div>
+              <div class="meta-item">
+                <dt>网络编号 (ASN)</dt>
+                <dd data-field="asn">—</dd>
+              </div>
+            </dl>
+          </article>
+        </div>
+
+        <div class="section-title-wrap">
+          <div class="title-left">
+            <h3>国内与海外平台看到的你</h3>
+            <p>不同平台看到的 IP 和地理位置可能不同，一眼就能看出是否走了代理或分流</p>
+          </div>
+        </div>
+
+        <div class="provider-grid">
+          <article class="card provider-card" id="provider-ipcn">
+            <div class="provider-header">
+              <div class="provider-brand">
+                <span class="monogram mono-cn">CN</span>
+                <div class="brand-text">
+                  <h3>IP.cn</h3>
+                  <span class="provider-sub">国内平台</span>
+                </div>
+              </div>
+              <span class="probe-region" data-region="domestic">国内</span>
+            </div>
+            <div class="provider-ip-row">
+              <button class="address" type="button" title="点击复制 IP" aria-label="IP 地址检测中" disabled>检测中…</button>
+              <span class="copy-hint" aria-hidden="true">复制</span>
+            </div>
+            <span class="state" hidden></span>
+            <div class="provider-meta">
+              <p class="provider-location" data-field="location">—</p>
+              <p class="provider-isp" data-field="isp">—</p>
+            </div>
+          </article>
+
+          <article class="card provider-card" id="provider-ipip">
+            <div class="provider-header">
+              <div class="provider-brand">
+                <span class="monogram mono-ipip">IP</span>
+                <div class="brand-text">
+                  <h3>IPIP</h3>
+                  <span class="provider-sub">高精度归属地</span>
+                </div>
+              </div>
+              <span class="probe-region" data-region="domestic">国内</span>
+            </div>
+            <div class="provider-ip-row">
+              <button class="address" type="button" title="点击复制 IP" aria-label="IP 地址检测中" disabled>检测中…</button>
+              <span class="copy-hint" aria-hidden="true">复制</span>
+            </div>
+            <span class="state" hidden></span>
+            <div class="provider-meta">
+              <p class="provider-location" data-field="location">—</p>
+              <p class="provider-isp" data-field="isp">—</p>
+            </div>
+          </article>
+
+          <article class="card provider-card" id="provider-ipw">
+            <div class="provider-header">
+              <div class="provider-brand">
+                <span class="monogram mono-ipw">W</span>
+                <div class="brand-text">
+                  <h3>IPW.cn</h3>
+                  <span class="provider-sub">宽带直连</span>
+                </div>
+              </div>
+              <span class="probe-region" data-region="domestic">国内</span>
+            </div>
+            <div class="provider-ip-row">
+              <button class="address" type="button" title="点击复制 IP" aria-label="IP 地址检测中" disabled>检测中…</button>
+              <span class="copy-hint" aria-hidden="true">复制</span>
+            </div>
+            <span class="state" hidden></span>
+            <div class="provider-meta">
+              <p class="provider-location" data-field="location">—</p>
+              <p class="provider-isp" data-field="isp">—</p>
+            </div>
+          </article>
+
+          <article class="card provider-card" id="provider-ipsb">
+            <div class="provider-header">
+              <div class="provider-brand">
+                <span class="monogram mono-ipsb">SB</span>
+                <div class="brand-text">
+                  <h3>IP.SB</h3>
+                  <span class="provider-sub">海外出口</span>
+                </div>
+              </div>
+              <span class="probe-region" data-region="global">海外</span>
+            </div>
+            <div class="provider-ip-row">
+              <button class="address" type="button" title="点击复制 IP" aria-label="IP 地址检测中" disabled>检测中…</button>
+              <span class="copy-hint" aria-hidden="true">复制</span>
+            </div>
+            <span class="state" hidden></span>
+            <div class="provider-meta">
+              <p class="provider-location" data-field="location">—</p>
+              <p class="provider-isp" data-field="isp">—</p>
+            </div>
+          </article>
+
+          <article class="card provider-card" id="provider-cloudflare">
+            <div class="provider-header">
+              <div class="provider-brand">
+                <span class="monogram mono-cf">CF</span>
+                <div class="brand-text">
+                  <h3>Cloudflare</h3>
+                  <span class="provider-sub">全球边缘网络</span>
+                </div>
+              </div>
+              <span class="probe-region" data-region="global">海外</span>
+            </div>
+            <div class="provider-ip-row">
+              <button class="address" type="button" title="点击复制 IP" aria-label="IP 地址检测中" disabled>检测中…</button>
+              <span class="copy-hint" aria-hidden="true">复制</span>
+            </div>
+            <span class="state" hidden></span>
+            <div class="provider-meta">
+              <p class="provider-location" data-field="location">—</p>
+              <p class="provider-isp" data-field="isp">—</p>
+            </div>
+          </article>
+
+          <article class="card provider-card" id="provider-ipify">
+            <div class="provider-header">
+              <div class="provider-brand">
+                <span class="monogram mono-ipify">FY</span>
+                <div class="brand-text">
+                  <h3>ipify</h3>
+                  <span class="provider-sub">海外公网出口</span>
+                </div>
+              </div>
+              <span class="probe-region" data-region="global">海外</span>
+            </div>
+            <div class="provider-ip-row">
+              <button class="address" type="button" title="点击复制 IP" aria-label="IP 地址检测中" disabled>检测中…</button>
+              <span class="copy-hint" aria-hidden="true">复制</span>
+            </div>
+            <span class="state" hidden></span>
+            <div class="provider-meta">
+              <p class="provider-location" data-field="location">—</p>
+              <p class="provider-isp" data-field="isp">—</p>
+            </div>
+          </article>
+        </div>
+
+        <section class="card routing-panel" id="connectivity">
+          <div class="section-heading">
+            <div class="heading-main">
+              <h2>常用网站打开快不快</h2>
+              <p>实测你的浏览器打开各大常用平台需要多少毫秒</p>
+            </div>
+            <div class="speed-legend">
+              <span class="legend-item"><span class="legend-dot dot-fast"></span>&lt;100ms 飞快</span>
+              <span class="legend-item"><span class="legend-dot dot-norm"></span>100-300ms 正常</span>
+              <span class="legend-item"><span class="legend-dot dot-slow"></span>&gt;300ms 偏慢</span>
+            </div>
+          </div>
+          <section class="probe-grid" id="probes" aria-label="网站连通性检测"></section>
+        </section>
+      </section>
+
+      <section class="card feature split-panel" id="routing" role="tabpanel" data-panel aria-labelledby="tab-routing" hidden>
+        <div class="panel-header-row">
+          <div class="panel-info">
+            <h3>各个网站分流情况</h3>
+            <p>看看你访问不同网站时，对方看到的是你的真实宽带，还是走了代理？</p>
+          </div>
+          <button class="control-btn" type="button" id="split-start">↻ 重新测一次</button>
+        </div>
+        <div class="table-wrap">
+          <table class="split-table">
+            <thead>
+              <tr>
+                <th scope="col">目标网站</th>
+                <th scope="col">分类</th>
+                <th scope="col">对方看到的 IP</th>
+                <th scope="col">出口地区</th>
+                <th scope="col">分流情况</th>
+              </tr>
+            </thead>
+            <tbody id="split-results"></tbody>
+          </table>
+        </div>
+        <p class="note">💡 提示：这里直接检测各网站看到你的 IP 地址。如果部分网站因为安全防护拦截了跨域探测，会显示未通，不影响你正常使用这些网站。</p>
+      </section>
+
+      <noscript>
+        <p class="card about">请在浏览器中启用 JavaScript 以使用网络检测工具。</p>
+      </noscript>
+
+      <footer>
+        <a href="https://xue.moe/">❄ xue.moe</a>
+        <span>Designed by Ryosetsu</span>
+        <a href="https://icp.gov.moe/?keyword=20230238" target="_blank" rel="noopener noreferrer">萌ICP备20230238号</a>
+      </footer>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <script>
+    (() => {
+      const canvas = document.getElementById('snowCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let width = canvas.width = window.innerWidth;
+      let height = canvas.height = window.innerHeight;
+      window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      });
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const flakeCount = window.matchMedia('(max-width: 680px)').matches ? 16 : 28;
+      const flakes = Array.from({ length: flakeCount }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        r: Math.random() * 2.2 + 1,
+        d: Math.random() + 0.5,
+        alpha: Math.random() * 0.45 + 0.25
+      }));
+      function drawSnow() {
+        ctx.clearRect(0, 0, width, height);
+        flakes.forEach(f => {
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(165, 180, 252, ${f.alpha})`;
+          ctx.fill();
+          f.y += f.d * 0.65;
+          f.x += Math.sin(f.y * 0.01) * 0.35;
+          if (f.y > height) {
+            f.y = -10;
+            f.x = Math.random() * width;
+          }
+        });
+        requestAnimationFrame(drawSnow);
+      }
+      if (!prefersReducedMotion) drawSnow();
+    })();
+  </script>
+</body>
+</html>

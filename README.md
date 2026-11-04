@@ -20,6 +20,7 @@
 | **[tools.xue.moe](https://tools.xue.moe)** | `/tools/index.html` | **效率工具箱**：待办清单、标准时间与世界时钟、专注计时与字符排错工坊 |
 | **[time.xue.moe](https://time.xue.moe)** | `/tools/index.html` | **标准时间与世界时钟**：多次网络测量估算设备与服务器的时间差 |
 | **[duo.xue.moe](https://duo.xue.moe)** | `/duo/index.html` | **多邻国数学求解器**：3x3 幻方九宫格实时辅助求解计算器 |
+| **[ip.xue.moe](https://ip.xue.moe)** | `/ip/index.html` | **网络诊断**：本机 IP、国内外查询源与网站分流测试 |
 | **[dev.xue.moe](https://dev.xue.moe)** | `/dev/index.html` | **实验工坊**：原型功能试验与灵感孵化空间（目前设为 noindex，待有实质内容后再开放收录） |
 
 ---
@@ -54,6 +55,10 @@
 │   └── index.html        # 多邻国数学求解器 (duo.xue.moe)
 ├── dev/
 │   └── index.html        # 实验工坊引导页 (dev.xue.moe)
+├── ip/                   # IP 查询与网络诊断 (ip.xue.moe)
+│   ├── index.html
+│   ├── style.css
+│   └── app.js
 ├── fonts/                # 本地字体资源 (Borel.woff2 等)
 ├── _headers              # 静态资源安全响应头
 ├── _routes.json          # 控制 Pages Function 的路由范围
@@ -102,6 +107,23 @@ npx serve .
    - `time.xue.moe`
    - `duo.xue.moe`
    - `dev.xue.moe`
+   - `ip.xue.moe`
+
+### IP 查询与网络诊断
+
+`ip.xue.moe` 使用同一个 Pages 项目，无需构建、数据库或 API 密钥。在 Pages 的 **Custom domains** 添加 `ip.xue.moe` 并完成 DNS 绑定，也可在主域名 `/ip/` 预览。
+
+- **本机 IP**：`/api/ip` 返回 Cloudflare 实际看到的连接 IP、归属地与 ASN，按协议填入 IPv4 或 IPv6 卡片，另一协议显示“本次未使用”。点击地址即可复制。
+- **国内查询源**：IP.cn、IPIP、IPW.cn。
+- **国际查询源**：IP.SB、Cloudflare、ipify。各源由浏览器直连获取真实出口；IPW.cn 与 ipify 提供地址，不虚构归属地。服务地域标签不保证实际节点位置。
+- **首页连通性**：检测小红书、Bilibili、腾讯、淘宝、GitHub、Google、Cloudflare、YouTube 的 HTTP 请求耗时，并按 100 / 300 / 1000 ms 分档着色。跨域响应不代表完整可用性，数值不是 ICMP Ping。
+- **网站分流测试**：独立 Tab 展示访问目标网站时的出口 IP 和国家 / 地区。读取目标网站的 Cloudflare trace，接口受限时单独标明失败。
+
+仅保留本机 IP 与网站分流两个 Tab，进入时自动检测，运行中不重复发起。页面沿用主站配色与共享 `xue-theme` 偏好，使用独立的工具布局。
+
+`GET /api/ipcn-session` 仅取得 IP.cn 公开页面提供的临时查询 ticket，访客浏览器直接请求 `my.ip.cn` 获取出口；不会在服务端代查访客 IP。`/api/ip` 响应为 `private, no-store`，不使用访客统计 KV。普通静态服务器不运行这两个 API；本地 Functions 预览也不保证有生产 IP 元数据。
+
+数据来源：[IP.cn](https://ip.cn/)、[IPIP](https://www.ipip.net/myip.html)、[IPW.cn](https://ipw.cn/)、[IP.SB](https://ip.sb/api/)、[ipify](https://www.ipify.org/)。功能灵感来自 [ip.skk.moe](https://ip.skk.moe/)。
 
 ### 附加：部署贡献日历缓存任务
 

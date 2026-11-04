@@ -975,7 +975,7 @@
       </a>
 
       <!-- 卡片 3 (标配 2 列): 实用工具箱 -->
-      <a href="https://tools.xue.moe" class="site-card card-span-2" target="_blank" rel="noopener noreferrer">
+      <a href="https://tools.xue.moe" class="site-card card-span-3" target="_blank" rel="noopener noreferrer">
         <div class="site-head">
           <span class="site-badge badge-tools">tools.xue.moe</span>
           <span class="status-dot"></span>
@@ -991,8 +991,15 @@
         </div>
       </a>
 
+      <a href="https://ip.xue.moe" class="site-card card-span-3" target="_blank" rel="noopener noreferrer">
+        <div class="site-head"><span class="site-badge badge-time">ip.xue.moe</span><span class="status-dot"></span></div>
+        <div class="site-title-row"><h3 class="site-title" id="ipTitle">IP 查询与网络诊断</h3></div>
+        <p class="site-desc" id="ipDesc">本机 IP、国内外出口查询与网站分流测试。</p>
+        <div class="site-foot"><span class="site-arrow" id="ipArrow">访问 ↗</span></div>
+      </a>
+
       <!-- 卡片 4 (标配 2 列): 博客随笔 -->
-      <a href="https://blog.xue.moe" class="site-card card-span-2" target="_blank" rel="noopener noreferrer">
+      <a href="https://blog.xue.moe" class="site-card card-span-3" target="_blank" rel="noopener noreferrer">
         <div class="site-head">
           <span class="site-badge badge-blog">blog.xue.moe</span>
           <span class="status-dot"></span>
@@ -1009,7 +1016,7 @@
       </a>
 
       <!-- 卡片 5 (标配 2 列): 实验工坊 -->
-      <a href="https://dev.xue.moe" class="site-card card-span-2" target="_blank" rel="noopener noreferrer">
+      <a href="https://dev.xue.moe" class="site-card card-span-3" target="_blank" rel="noopener noreferrer">
         <div class="site-head">
           <span class="site-badge badge-dev">dev.xue.moe</span>
           <span class="status-dot"></span>
@@ -1094,6 +1101,8 @@
         timeSynced: (acc) => `网络时间偏差估算 (±${(acc / 1000).toFixed(3)}秒)`,
         duoTitle: "多邻国幻方求解器",
         duoDesc: "多邻国数学 3×3 幻方关卡求解器，支持唯一解快速推导与候选数校验。",
+        ipTitle: "IP 查询与网络诊断",
+        ipDesc: "本机 IP、国内外出口查询与网站分流测试。",
         toolsTitle: "实用工具箱",
         toolsDesc: "待办清单、多时区时钟、专注倒计时与字符排错分析。",
         blogTitle: "博客随笔",
@@ -1142,6 +1151,8 @@
         timeSynced: (acc) => `Estimated network time offset (±${(acc / 1000).toFixed(3)}s)`,
         duoTitle: "Duolingo Math Solver",
         duoDesc: "Duolingo Math 3×3 magic square solver with instant deduction and candidate validation.",
+        ipTitle: "IP & Network Diagnostics",
+        ipDesc: "Public IPs, regional lookup sources, and split tunnel diagnostics.",
         toolsTitle: "Utility Toolbox",
         toolsDesc: "To-do list, standard world clocks, focus timer, and character inspector.",
         blogTitle: "Blog & Notes",
@@ -1289,6 +1300,9 @@
       document.getElementById('duoDesc').textContent = t.duoDesc;
       document.getElementById('duoArrow').textContent = t.visit;
 
+      document.getElementById('ipTitle').textContent = t.ipTitle;
+      document.getElementById('ipDesc').textContent = t.ipDesc;
+      document.getElementById('ipArrow').textContent = t.visit;
       document.getElementById('toolsTitle').textContent = t.toolsTitle;
       document.getElementById('toolsDesc').textContent = t.toolsDesc;
       document.getElementById('toolsArrow').textContent = t.visit;
