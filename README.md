@@ -123,7 +123,25 @@ curl -6 ip.xue.moe
 curl -6 https://ip.xue.moe
 ```
 
-`-4` / `-6` 由 curl 选择连接协议；IPv6 需要本机网络和域名同时支持 IPv6。curl 的 User-Agent 或 `Accept: text/plain` 触发纯文本响应，且禁用缓存。若 Cloudflare 在到达 Pages 前强制跳转 HTTPS，请使用上述 HTTPS 地址，或在该跳转规则中排除 IP 查询请求。
+`-4` / `-6` 由 curl 选择连接协议；IPv6 需要本机网络和域名同时支持 IPv6。curl 的 User-Agent 或 `Accept: text/plain` 触发纯文本响应，且禁用缓存。
+
+**裸域名 HTTP 查询还需单独部署入口 Worker**：Pages 的 HTTP→HTTPS 跳转可能发生在 Function 前，仅推送 Pages 代码不够。`ip-http-worker.js` 通过 `http://ip.xue.moe/*` 路由提前处理 curl 请求；浏览器与非首页请求继续跳转 HTTPS，HTTPS 页面仍由 Pages 提供。
+
+```bash
+npx wrangler deploy --config wrangler.ip-http.toml
+```
+
+域名级“始终使用 HTTPS”须关闭；以带例外的重定向规则保持其他请求升级 HTTPS：
+
+```text
+(not ssl) and not (
+  http.host eq "ip.xue.moe" and
+  http.request.uri.path eq "/" and
+  starts_with(http.user_agent, "curl/")
+)
+```
+
+目标为 `concat("https://", http.host, http.request.uri.path)`，保留查询字符串。该例外允许 curl 到达 HTTP Worker；Pages 的 Git 自动部署不会部署此独立 Worker。
 
 - **本机 IP**：`/api/ip` 返回 Cloudflare 实际看到的连接 IP、归属地与 ASN，按协议填入 IPv4 或 IPv6 卡片，另一协议显示“本次未使用”。点击地址即可复制。
 - **国内查询源**：IP.cn、IPIP、IPW.cn。

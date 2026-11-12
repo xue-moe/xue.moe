@@ -1,0 +1,15 @@
+name = "xue-moe-ip-http"
+main = "ip-http-worker.js"
+compatibility_date = "2026-11-12"
+account_id = "002a4243ef5e14764560cef85aeef81e"
+workers_dev = false
+
+# Match HTTP only. The HTTPS domain remains attached to Pages.
+routes = [{ pattern = "http://ip.xue.moe/*", zone_name = "xue.moe" }]
+
+[observability]
+enabled = true
+
+[observability.traces]
+enabled = true
+head_sampling_rate = 0.01

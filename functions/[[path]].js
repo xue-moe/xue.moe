@@ -626,7 +626,7 @@ export async function onRequest(context) {
   const url = new URL(context.request.url);
   const hostname = url.hostname.toLowerCase();
 
-  // Plain HTTP must also work for `curl ip.xue.moe`, without requiring -L.
+  // Serve plain HTTP if it reaches the Function; the HTTP Worker handles Pages edge redirects.
   if (hostname === 'ip.xue.moe' && url.pathname === '/' && wantsPlainIP(context.request)) {
     return applySecurityHeaders(plainIPResponse(context.request));
   }
