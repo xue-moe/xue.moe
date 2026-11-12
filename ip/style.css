@@ -223,7 +223,7 @@ button {
   line-height: 1.5;
 }
 
-/* Vertical Sidebar Nav (NO top horizontal tabs!) */
+/* Sidebar tabs */
 .sidebar-nav {
   display: flex;
   flex-direction: column;
@@ -1026,7 +1026,7 @@ footer a:hover {
 @media (max-width: 860px) {
   .app-layout {
     width: calc(100% - 24px);
-    margin: 16px auto 72px;
+    margin: 16px auto calc(24px + env(safe-area-inset-bottom, 0px));
     grid-template-columns: 1fr;
     gap: 16px;
   }
@@ -1064,33 +1064,30 @@ footer a:hover {
     width: auto;
   }
 
-  /* Bottom Floating Capsule Dock on Mobile - Completely avoids any top tab bar */
+  /* Keep mobile tabs in flow so they cannot cover cards or table rows. */
+  .sidebar-top { order: 0; }
+  .sidebar-actions { order: 1; }
+
   .sidebar-nav {
-    position: fixed;
-    bottom: 18px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 99;
-    flex-direction: row;
-    background: var(--card-bg);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    border: 1px solid var(--card-border);
-    border-radius: 999px;
+    order: 2;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
     padding: 5px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
-    width: min(340px, calc(100% - 32px));
-    justify-content: center;
-    border-top: 0;
-    border-bottom: 0;
+    background: var(--card-inner);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    min-width: 0;
   }
 
   .sidebar-nav button {
-    flex: 1;
+    min-width: 0;
     justify-content: center;
-    padding: 8px 14px;
-    border-radius: 999px;
+    gap: 6px;
+    padding: 10px 6px;
+    border-radius: 10px;
     font-size: 13px;
+    white-space: nowrap;
   }
 
   .provider-grid {
