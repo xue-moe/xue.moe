@@ -34,16 +34,16 @@ test('IP subdomain maps page/assets, normalizes prefixes and scopes external CSP
   const run = router();
   for (const [url, expected] of [['https://ip.xue.moe/', '/ip/'], ['https://ip.xue.moe/app.js', '/ip/app.js'], ['https://ip.xue.moe/style.css', '/ip/style.css']]) {
     const res = await run(ctx(url)); assert.equal(await res.text(), expected);
-    assert.match(res.headers.get('Content-Security-Policy'), /https:\/\/4\.wsmdn\.top/);
+    assert.match(res.headers.get('Content-Security-Policy'), /https:\/\/v4\.yinghualuo\.cn/);
     assert.match(res.headers.get('Content-Security-Policy'), /https:\/\/api64.ipify.org/);
   }
   const redirect = await run(ctx('https://ip.xue.moe/ip/?theme=dark'));
   assert.equal(redirect.status, 301); assert.equal(redirect.headers.get('Location'), 'https://ip.xue.moe/?theme=dark');
   assert.equal((await run(ctx('https://ip.xue.moe/missing.js'))).status, 404);
   const home = await run(ctx('https://xue.moe/'));
-  assert.doesNotMatch(home.headers.get('Content-Security-Policy'), /4\.wsmdn\.top/);
+  assert.doesNotMatch(home.headers.get('Content-Security-Policy'), /v4\.yinghualuo\.cn/);
   const local = await run(ctx('https://xue.moe/ip/'));
-  assert.match(local.headers.get('Content-Security-Policy'), /4\.wsmdn\.top/);
+  assert.match(local.headers.get('Content-Security-Policy'), /v4\.yinghualuo\.cn/);
   const sitemap = await run(ctx('https://ip.xue.moe/sitemap.xml'));
   assert.match(await sitemap.text(), /https:\/\/ip.xue.moe\//);
 });
@@ -170,11 +170,11 @@ test('IP.cn bridge fetches only a bounded public ticket and never proxies visito
 test('only the two retained tools and six selected lookup sources remain', () => {
   const html = readFileSync(path.join(root, 'ip/index.html'), 'utf8');
   assert.deepEqual([...html.matchAll(/data-tab="([^"]+)"/g)].map(m => m[1]), ['local-ip', 'routing']);
-  assert.deepEqual([...html.matchAll(/id="provider-([^"]+)"/g)].map(m => m[1]), ['ipcn', 'ipip', 'ipw', 'ipsb', 'cloudflare', 'ipify']);
+  assert.deepEqual([...html.matchAll(/id="provider-([^"]+)"/g)].map(m => m[1]), ['ipcn', 'ipip', 'yinghualuo', 'ipsb', 'cloudflare', 'ipify']);
   const context = {}; vm.createContext(context);
   const sources = app.slice(app.indexOf('const providerSources = ['), app.indexOf('async function queryProvider('));
   vm.runInContext(sources + ';globalThis.ids = providerSources.map(item => item.id);', context);
-  assert.deepEqual(Array.from(context.ids), ['ipcn', 'ipip', 'ipw', 'ipsb', 'cloudflare', 'ipify']);
+  assert.deepEqual(Array.from(context.ids), ['ipcn', 'ipip', 'yinghualuo', 'ipsb', 'cloudflare', 'ipify']);
   assert.doesNotMatch(app, /RTCPeerConnection|bash\.ws|stat\.ripe\.net|ipinfo\.io|ip138/);
 });
 
@@ -232,34 +232,10 @@ test('IP.cn retries the official alternative and accepts current ticket declarat
   assert.equal(res.status, 200); assert.equal((await res.json()).ticket, 'abcdef0123456789');
   assert.deepEqual(calls, ['https://ip.cn/', 'https://www.ip.cn/']);
 });
-test('NIPW availability distinguishes missing DNS records from resolver failure', async () => {
-  for (const [answer, expectedStatus, expectedAvailable] of [
-    [{ Status: 0, Answer: [{ type: 1, data: '203.0.113.9' }] }, 200, true],
-    [{ Status: 0, Authority: [{ type: 6 }] }, 200, false],
-    [{ Status: 3 }, 200, false],
-    [{ Status: 2 }, 503, null]
-  ]) {
-    const calls = [];
-    const run = router(async (url, options) => {
-      calls.push(url);
-      assert.equal(options.headers.Accept, 'application/dns-json');
-      return new Response(JSON.stringify(answer));
-    });
-    const res = await run(ctx('https://ip.xue.moe/api/ipw-status?name=attacker.example'));
-    assert.equal(res.status, expectedStatus); assert.equal((await res.json()).available, expectedAvailable);
-    assert.deepEqual(calls, ['https://cloudflare-dns.com/dns-query?name=4.wsmdn.top&type=A', 'https://cloudflare-dns.com/dns-query?name=4.wsmdn.top&type=AAAA']);
-  }
-});
-test('browser skips NIPW requests when DNS has no address and resumes when it recovers', async () => {
-  const calls = [];
-  let available = false;
-  const context = { request: async url => { calls.push(url); return url === '/api/ipw-status' ? { available } : '203.0.113.8\n'; } };
-  vm.createContext(context);
-  vm.runInContext(app.slice(app.indexOf('const providerSources = ['), app.indexOf('async function queryProvider(')) + ';globalThis.ipw = providerSources.find(item => item.id === "ipw");', context);
-  await assert.rejects(context.ipw.load(new AbortController().signal), error => error.code === 'DNS_UNAVAILABLE');
-  assert.deepEqual(calls, ['/api/ipw-status']);
-  available = true;
-  const data = await context.ipw.load(new AbortController().signal);
-  assert.equal(data.ip, '203.0.113.8');
-  assert.deepEqual(calls.slice(1), ['/api/ipw-status', 'https://4.wsmdn.top/']);
+test('Yinghualuo uses the browser JSON endpoint and preserves location and ISP', () => {
+  const context = {}; vm.createContext(context);
+  vm.runInContext(app.slice(app.indexOf('const providerSources = ['), app.indexOf('async function queryProvider(')) + ';globalThis.source = providerSources.find(item => item.id === "yinghualuo");', context);
+  assert.equal(context.source.url, 'https://v4.yinghualuo.cn/bejson');
+  const result = context.source.normalize({ ip: '203.0.113.8', location: '测试地区', isp: '测试运营商' });
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), { ip: '203.0.113.8', location: '测试地区', isp: '测试运营商' });
 });

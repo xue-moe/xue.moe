@@ -97,7 +97,7 @@ function applySecurityHeaders(res, isIpPage = false) {
   if (isIpPage) {
     headers.set('Content-Security-Policy', headers.get('Content-Security-Policy').replace(
       "connect-src 'self' https://cloudflareinsights.com",
-      "connect-src 'self' https://cloudflareinsights.com https://api.ipify.org https://api64.ipify.org https://api.ip.sb https://4.wsmdn.top https://my.ip.cn https://myip.ipip.net https://www.xiaohongshu.com https://www.bilibili.com https://www.qq.com https://h5.news.qq.com https://www.taobao.com https://gw.alicdn.com https://github.com https://www.google.com https://cdn.jsdelivr.net https://www.cloudflare.com https://www.youtube.com https://www.qualcomm.cn https://discord.com https://www.visa.com https://medium.com https://cdnjs.cloudflare.com https://registry.npmjs.org https://nodejs.org https://gitlab.com https://chatgpt.com https://claude.ai https://www.perplexity.ai"
+      "connect-src 'self' https://cloudflareinsights.com https://api.ipify.org https://api64.ipify.org https://api.ip.sb https://v4.yinghualuo.cn https://my.ip.cn https://myip.ipip.net https://www.xiaohongshu.com https://www.bilibili.com https://www.qq.com https://h5.news.qq.com https://www.taobao.com https://gw.alicdn.com https://github.com https://www.google.com https://cdn.jsdelivr.net https://www.cloudflare.com https://www.youtube.com https://www.qualcomm.cn https://discord.com https://www.visa.com https://medium.com https://cdnjs.cloudflare.com https://registry.npmjs.org https://nodejs.org https://gitlab.com https://chatgpt.com https://claude.ai https://www.perplexity.ai"
     ));
   }
 
@@ -169,27 +169,6 @@ async function handleRoute(context, url, hostname) {
     }
     console.warn(JSON.stringify({ event: 'ipcn_session_unavailable', reason, upstreamStatus, failureDetail }));
     return new Response(JSON.stringify({ error: 'IP.cn query service unavailable', reason }), { status: 502, headers });
-  }
-
-  if (url.pathname === '/api/ipw-status') {
-    const headers = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=60', 'X-Robots-Tag': 'noindex, nofollow' };
-    if (context.request.method !== 'GET') return new Response('Method Not Allowed', { status: 405, headers: { ...headers, Allow: 'GET' } });
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 4000);
-    try {
-      const queries = await Promise.all(['A', 'AAAA'].map(async type => {
-        const res = await fetch(`https://cloudflare-dns.com/dns-query?name=4.wsmdn.top&type=${type}`, {
-          headers: { Accept: 'application/dns-json' }, signal: controller.signal
-        });
-        if (!res.ok) throw new Error('DNS resolver unavailable');
-        return res.json();
-      }));
-      if (queries.some(data => ![0, 3].includes(data.Status))) throw new Error('DNS query failed');
-      const available = queries.some(data => (data.Answer || []).some(record => [1, 28].includes(record.type)));
-      return new Response(JSON.stringify({ available }), { headers });
-    } catch (_) {
-      return new Response(JSON.stringify({ available: null }), { status: 503, headers: { ...headers, 'Cache-Control': 'no-store' } });
-    } finally { clearTimeout(timer); }
   }
 
   if (url.pathname === '/api/ip') {

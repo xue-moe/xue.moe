@@ -160,14 +160,7 @@ const providerSources = [
     return { ip: data.ip, location: [data.country, data.province, data.city, data.district].filter(Boolean).join(' · '), isp: data.isp };
   } },
   { id: 'ipip', name: 'IPIP', group: '国内', url: 'https://myip.ipip.net/json', normalize: data => ({ ip: data.data?.ip, location: data.data?.location?.filter(Boolean).join(' · ') }) },
-  { id: 'ipw', name: 'NIPW.cn', group: '国内', load: async signal => {
-    const status = await request('/api/ipw-status', { signal, timeout: 6000 });
-    if (status.available === false) {
-      const error = new Error('NIPW.cn domain has no DNS address records'); error.code = 'DNS_UNAVAILABLE'; throw error;
-    }
-    if (status.available !== true) throw new Error('DNS availability unknown');
-    return { ip: (await request('https://4.wsmdn.top/', { signal }, 'text')).trim() };
-  } },
+  { id: 'yinghualuo', name: '樱花落', group: '国内', url: 'https://v4.yinghualuo.cn/bejson', normalize: data => ({ ip: data.ip, location: data.location, isp: data.isp }) },
   { id: 'ipsb', name: 'IP.SB', group: '境外', url: 'https://api.ip.sb/geoip', normalize: data => ({ ip: data.ip, location: locationText(data), isp: data.isp || data.organization }) },
   { id: 'cloudflare', name: 'Cloudflare', group: '境外', url: 'https://www.cloudflare.com/cdn-cgi/trace', parse: 'text', normalize: text => {
     const data = parseTrace(text); return { ip: data.ip, location: [data.loc, data.colo].filter(Boolean).join(' · ') };
@@ -185,7 +178,7 @@ async function providers(signal) {
     try {
       const data = await queryProvider(source, signal);
       put(`provider-${source.id}`, { ...data, status: '' }, signal);
-    } catch (error) { put(`provider-${source.id}`, { error: error.code === 'DNS_UNAVAILABLE' ? '域名未解析' : '暂不可用', status: '' }, signal); }
+    } catch (_) { put(`provider-${source.id}`, { error: '暂不可用', status: '' }, signal); }
   }));
 }
 async function runOverview() {
