@@ -152,7 +152,7 @@ function parseTrace(text) {
 }
 const providerSources = [
   { id: 'ipcn', name: 'IP.cn 查询网', group: '国内', load: async signal => {
-    const { ticket } = await request('/api/ipcn-session', { signal, timeout: 9000 });
+    const { ticket } = await request('/api/ipcn-session', { signal, timeout: 10500 });
     if (!/^[a-f0-9]{16,128}$/i.test(ticket)) throw new Error('无效查询会话');
     const payload = await request(`https://my.ip.cn/json/?ticket=${encodeURIComponent(ticket)}`, { signal });
     if (!payload.status || !payload.data) throw new Error('查询源暂不可用');
@@ -160,7 +160,14 @@ const providerSources = [
     return { ip: data.ip, location: [data.country, data.province, data.city, data.district].filter(Boolean).join(' · '), isp: data.isp };
   } },
   { id: 'ipip', name: 'IPIP', group: '国内', url: 'https://myip.ipip.net/json', normalize: data => ({ ip: data.data?.ip, location: data.data?.location?.filter(Boolean).join(' · ') }) },
-  { id: 'ipw', name: 'IPW.cn', group: '国内', url: 'https://4.ipw.cn/', parse: 'text', normalize: text => ({ ip: text.trim() }) },
+  { id: 'ipw', name: 'IPW.cn', group: '国内', load: async signal => {
+    const status = await request('/api/ipw-status', { signal, timeout: 6000 });
+    if (status.available === false) {
+      const error = new Error('IPW.cn domain has no DNS address records'); error.code = 'DNS_UNAVAILABLE'; throw error;
+    }
+    if (status.available !== true) throw new Error('DNS availability unknown');
+    return { ip: (await request('https://4.ipw.cn/', { signal }, 'text')).trim() };
+  } },
   { id: 'ipsb', name: 'IP.SB', group: '境外', url: 'https://api.ip.sb/geoip', normalize: data => ({ ip: data.ip, location: locationText(data), isp: data.isp || data.organization }) },
   { id: 'cloudflare', name: 'Cloudflare', group: '境外', url: 'https://www.cloudflare.com/cdn-cgi/trace', parse: 'text', normalize: text => {
     const data = parseTrace(text); return { ip: data.ip, location: [data.loc, data.colo].filter(Boolean).join(' · ') };
@@ -178,7 +185,7 @@ async function providers(signal) {
     try {
       const data = await queryProvider(source, signal);
       put(`provider-${source.id}`, { ...data, status: '' }, signal);
-    } catch (_) { put(`provider-${source.id}`, { error: '暂不可用', status: '' }, signal); }
+    } catch (error) { put(`provider-${source.id}`, { error: error.code === 'DNS_UNAVAILABLE' ? '域名未解析' : '暂不可用', status: '' }, signal); }
   }));
 }
 async function runOverview() {

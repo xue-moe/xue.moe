@@ -151,7 +151,9 @@ npx wrangler deploy --config wrangler.ip-http.toml
 
 仅保留本机 IP 与网站分流两个 Tab，进入时自动检测，运行中不重复发起。页面沿用主站配色与共享 `xue-theme` 偏好，使用独立的工具布局。
 
-`GET /api/ipcn-session` 仅取得 IP.cn 公开页面提供的临时查询 ticket，访客浏览器直接请求 `my.ip.cn` 获取出口；不会在服务端代查访客 IP。`/api/ip` 响应为 `private, no-store`，不使用访客统计 KV。普通静态服务器不运行这两个 API；本地 Functions 预览也不保证有生产 IP 元数据。
+`GET /api/ipw-status` 通过公共 DNS 检查 IPW 的固定域名，确认无地址记录时页面显示“域名未解析”，避免浏览器直接请求失效域名；恢复解析后自动恢复查询。检测不获取或替代访客出口 IP。
+
+`GET /api/ipcn-session` 以明确的客户端标识请求官网，必要时尝试备用官网入口，仅取得 IP.cn 公开页面提供的临时查询 ticket，访客浏览器直接请求 `my.ip.cn` 获取出口；不会在服务端代查访客 IP。`/api/ip` 响应为 `private, no-store`，不使用访客统计 KV。普通静态服务器不运行这两个 API；本地 Functions 预览也不保证有生产 IP 元数据。
 
 数据来源：[IP.cn](https://ip.cn/)、[IPIP](https://www.ipip.net/myip.html)、[IPW.cn](https://ipw.cn/)、[IP.SB](https://ip.sb/api/)、[ipify](https://www.ipify.org/)。功能灵感来自 [ip.skk.moe](https://ip.skk.moe/)。
 

@@ -210,3 +210,54 @@ test('browser HTML and non-root requests keep their original routes', async () =
   const home = await run(ctx('https://xue.moe/', { headers: { 'User-Agent': 'curl/8.10' } }));
   assert.equal(await home.text(), 'next');
 });
+
+test('IP-page CSP permits Tencent and Taobao redirect hosts without widening the homepage', async () => {
+  const run = router();
+  const page = await run(ctx('https://ip.xue.moe/'));
+  const csp = page.headers.get('Content-Security-Policy');
+  for (const host of ['https://h5.news.qq.com', 'https://gw.alicdn.com']) assert.ok(csp.includes(host));
+  const home = await run(ctx('https://xue.moe/'));
+  assert.doesNotMatch(home.headers.get('Content-Security-Policy'), /h5\.news\.qq\.com|gw\.alicdn\.com/);
+});
+test('IP.cn retries the official alternative and accepts current ticket declaration forms', async () => {
+  const calls = [];
+  const run = router(async (url, options) => {
+    calls.push(url);
+    assert.match(options.headers['User-Agent'], /^xue-moe-ip\//);
+    return calls.length === 1 ? new Response('Unavailable', { status: 503 }) : new Response('const _ticket = "abcdef0123456789";');
+  });
+  const res = await run(ctx('https://ip.xue.moe/api/ipcn-session'));
+  assert.equal(res.status, 200); assert.equal((await res.json()).ticket, 'abcdef0123456789');
+  assert.deepEqual(calls, ['https://ip.cn/', 'https://www.ip.cn/']);
+});
+test('IPW availability distinguishes missing DNS records from resolver failure', async () => {
+  for (const [answer, expectedStatus, expectedAvailable] of [
+    [{ Status: 0, Answer: [{ type: 1, data: '203.0.113.9' }] }, 200, true],
+    [{ Status: 0, Authority: [{ type: 6 }] }, 200, false],
+    [{ Status: 3 }, 200, false],
+    [{ Status: 2 }, 503, null]
+  ]) {
+    const calls = [];
+    const run = router(async (url, options) => {
+      calls.push(url);
+      assert.equal(options.headers.Accept, 'application/dns-json');
+      return new Response(JSON.stringify(answer));
+    });
+    const res = await run(ctx('https://ip.xue.moe/api/ipw-status?name=attacker.example'));
+    assert.equal(res.status, expectedStatus); assert.equal((await res.json()).available, expectedAvailable);
+    assert.deepEqual(calls, ['https://cloudflare-dns.com/dns-query?name=4.ipw.cn&type=A', 'https://cloudflare-dns.com/dns-query?name=4.ipw.cn&type=AAAA']);
+  }
+});
+test('browser skips IPW requests when DNS has no address and resumes when it recovers', async () => {
+  const calls = [];
+  let available = false;
+  const context = { request: async url => { calls.push(url); return url === '/api/ipw-status' ? { available } : '203.0.113.8\n'; } };
+  vm.createContext(context);
+  vm.runInContext(app.slice(app.indexOf('const providerSources = ['), app.indexOf('async function queryProvider(')) + ';globalThis.ipw = providerSources.find(item => item.id === "ipw");', context);
+  await assert.rejects(context.ipw.load(new AbortController().signal), error => error.code === 'DNS_UNAVAILABLE');
+  assert.deepEqual(calls, ['/api/ipw-status']);
+  available = true;
+  const data = await context.ipw.load(new AbortController().signal);
+  assert.equal(data.ip, '203.0.113.8');
+  assert.deepEqual(calls.slice(1), ['/api/ipw-status', 'https://4.ipw.cn/']);
+});

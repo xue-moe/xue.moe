@@ -97,7 +97,7 @@ function applySecurityHeaders(res, isIpPage = false) {
   if (isIpPage) {
     headers.set('Content-Security-Policy', headers.get('Content-Security-Policy').replace(
       "connect-src 'self' https://cloudflareinsights.com",
-      "connect-src 'self' https://cloudflareinsights.com https://api.ipify.org https://api64.ipify.org https://api.ip.sb https://4.ipw.cn https://my.ip.cn https://myip.ipip.net https://www.xiaohongshu.com https://www.bilibili.com https://www.qq.com https://www.taobao.com https://github.com https://www.google.com https://cdn.jsdelivr.net https://www.cloudflare.com https://www.youtube.com https://www.qualcomm.cn https://discord.com https://www.visa.com https://medium.com https://cdnjs.cloudflare.com https://registry.npmjs.org https://nodejs.org https://gitlab.com https://chatgpt.com https://claude.ai https://www.perplexity.ai"
+      "connect-src 'self' https://cloudflareinsights.com https://api.ipify.org https://api64.ipify.org https://api.ip.sb https://4.ipw.cn https://my.ip.cn https://myip.ipip.net https://www.xiaohongshu.com https://www.bilibili.com https://www.qq.com https://h5.news.qq.com https://www.taobao.com https://gw.alicdn.com https://github.com https://www.google.com https://cdn.jsdelivr.net https://www.cloudflare.com https://www.youtube.com https://www.qualcomm.cn https://discord.com https://www.visa.com https://medium.com https://cdnjs.cloudflare.com https://registry.npmjs.org https://nodejs.org https://gitlab.com https://chatgpt.com https://claude.ai https://www.perplexity.ai"
     ));
   }
 
@@ -128,31 +128,65 @@ async function handleRoute(context, url, hostname) {
   if (url.pathname === '/api/ipcn-session') {
     const headers = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' };
     if (context.request.method !== 'GET') return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405, headers: { ...headers, Allow: 'GET' } });
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 6000);
-    try {
-      // Fetch only the public page's short-lived query ticket. The visitor queries
-      // my.ip.cn directly so the displayed address belongs to their connection.
-      const upstream = await fetch('https://ip.cn/', { signal: controller.signal, redirect: 'error', headers: { 'Accept': 'text/html' } });
-      if (!upstream.ok || !upstream.body) throw new Error('Query service unavailable');
-      const reader = upstream.body.getReader();
-      const decoder = new TextDecoder();
-      let html = '';
-      let bytes = 0;
+    let reason = 'upstream_unavailable';
+    let upstreamStatus = null;
+    for (const origin of ['https://ip.cn/', 'https://www.ip.cn/']) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4000);
       try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          bytes += value.byteLength;
-          if (bytes > 128 * 1024) throw new Error('Unexpected query response');
-          html += decoder.decode(value, { stream: true });
+        // Only fetch a public query ticket; visitor IP lookup remains browser-direct.
+        const upstream = await fetch(origin, {
+          signal: controller.signal, redirect: 'error',
+          headers: { Accept: 'text/html', 'User-Agent': 'xue-moe-ip/1.0 (+https://ip.xue.moe/)' }
+        });
+        upstreamStatus = upstream.status;
+        if (!upstream.ok || !upstream.body) {
+          reason = 'upstream_rejected';
+          if (upstream.body) await upstream.body.cancel();
+          continue;
         }
-      } finally { await reader.cancel(); }
-      const ticket = html.match(/var\s+_ticket\s*=\s*["']([a-f0-9]{16,128})["']/i)?.[1];
-      if (!ticket) throw new Error('Query ticket unavailable');
-      return new Response(JSON.stringify({ ticket }), { headers });
+        const reader = upstream.body.getReader();
+        const decoder = new TextDecoder();
+        let html = '';
+        let bytes = 0;
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            bytes += value.byteLength;
+            if (bytes > 128 * 1024) throw new Error('Response too large');
+            html += decoder.decode(value, { stream: true });
+          }
+        } finally { await reader.cancel(); }
+        const ticket = html.match(/\b(?:var|let|const)\s+_ticket\s*=\s*["']([a-f0-9]{16,128})["']/i)?.[1];
+        if (!ticket) { reason = 'ticket_unavailable'; continue; }
+        return new Response(JSON.stringify({ ticket }), { headers });
+      } catch (error) {
+        reason = error.name === 'AbortError' ? 'upstream_timeout' : 'upstream_unavailable';
+      } finally { clearTimeout(timer); }
+    }
+    console.warn(JSON.stringify({ event: 'ipcn_session_unavailable', reason, upstreamStatus }));
+    return new Response(JSON.stringify({ error: 'IP.cn query service unavailable', reason }), { status: 502, headers });
+  }
+
+  if (url.pathname === '/api/ipw-status') {
+    const headers = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=60', 'X-Robots-Tag': 'noindex, nofollow' };
+    if (context.request.method !== 'GET') return new Response('Method Not Allowed', { status: 405, headers: { ...headers, Allow: 'GET' } });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
+    try {
+      const queries = await Promise.all(['A', 'AAAA'].map(async type => {
+        const res = await fetch(`https://cloudflare-dns.com/dns-query?name=4.ipw.cn&type=${type}`, {
+          headers: { Accept: 'application/dns-json' }, signal: controller.signal
+        });
+        if (!res.ok) throw new Error('DNS resolver unavailable');
+        return res.json();
+      }));
+      if (queries.some(data => ![0, 3].includes(data.Status))) throw new Error('DNS query failed');
+      const available = queries.some(data => (data.Answer || []).some(record => [1, 28].includes(record.type)));
+      return new Response(JSON.stringify({ available }), { headers });
     } catch (_) {
-      return new Response(JSON.stringify({ error: 'IP.cn query service unavailable' }), { status: 502, headers });
+      return new Response(JSON.stringify({ available: null }), { status: 503, headers: { ...headers, 'Cache-Control': 'no-store' } });
     } finally { clearTimeout(timer); }
   }
 
