@@ -137,7 +137,7 @@ async function handleRoute(context, url, hostname) {
       try {
         // Only fetch a public query ticket; visitor IP lookup remains browser-direct.
         const upstream = await fetch(origin, {
-          signal: controller.signal, redirect: 'error',
+          signal: controller.signal, redirect: 'manual',
           headers: { Accept: 'text/html', 'User-Agent': 'xue-moe-ip/1.0 (+https://ip.xue.moe/)' }
         });
         upstreamStatus = upstream.status;

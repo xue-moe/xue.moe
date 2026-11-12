@@ -224,6 +224,8 @@ test('IP.cn retries the official alternative and accepts current ticket declarat
   const run = router(async (url, options) => {
     calls.push(url);
     assert.match(options.headers['User-Agent'], /^xue-moe-ip\//);
+    // Cloudflare workerd only supports follow/manual, unlike Node's fetch.
+    assert.equal(options.redirect, 'manual');
     return calls.length === 1 ? new Response('Unavailable', { status: 503 }) : new Response('const _ticket = "abcdef0123456789";');
   });
   const res = await run(ctx('https://ip.xue.moe/api/ipcn-session'));
