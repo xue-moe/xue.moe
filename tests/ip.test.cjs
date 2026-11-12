@@ -177,3 +177,36 @@ test('only the two retained tools and six selected lookup sources remain', () =>
   assert.deepEqual(Array.from(context.ids), ['ipcn', 'ipip', 'ipw', 'ipsb', 'cloudflare', 'ipify']);
   assert.doesNotMatch(app, /RTCPeerConnection|bash\.ws|stat\.ripe\.net|ipinfo\.io|ip138/);
 });
+
+test('curl root returns only the connection IP over HTTP and HTTPS for either family', async () => {
+  const run = router();
+  for (const scheme of ['http', 'https']) for (const ip of ['203.0.113.8', '2001:db8::8']) {
+    const res = await run(ctx(`${scheme}://ip.xue.moe/`, { ip, headers: { 'User-Agent': 'curl/8.10.0', Accept: '*/*' } }));
+    assert.equal(res.status, 200); assert.equal(await res.text(), `${ip}\n`);
+    assert.match(res.headers.get('Content-Type'), /text\/plain/);
+    assert.match(res.headers.get('Cache-Control'), /private, no-store/);
+    assert.match(res.headers.get('Vary'), /Accept, User-Agent/);
+  }
+});
+test('explicit plain text, HEAD, missing metadata, and curl method handling are bounded', async () => {
+  const run = router();
+  const plain = await run(ctx('https://ip.xue.moe/', { ip: '203.0.113.9', headers: { Accept: 'text/plain' } }));
+  assert.equal(await plain.text(), '203.0.113.9\n');
+  const head = await run(ctx('https://ip.xue.moe/', { ip: '203.0.113.9', method: 'HEAD', headers: { 'User-Agent': 'curl/8.10' } }));
+  assert.equal(head.status, 200); assert.equal(await head.text(), '');
+  const missing = await run(ctx('https://ip.xue.moe/?ip=1.1.1.1', { headers: { 'User-Agent': 'curl/8.10', 'X-Forwarded-For': '1.1.1.1' } }));
+  assert.equal(missing.status, 503); assert.equal(await missing.text(), 'IP information unavailable\n');
+  const post = await run(ctx('https://ip.xue.moe/', { method: 'POST', headers: { 'User-Agent': 'curl/8.10' } }));
+  assert.equal(post.status, 405); assert.equal(post.headers.get('Allow'), 'GET, HEAD');
+});
+test('browser HTML and non-root requests keep their original routes', async () => {
+  const run = router();
+  const html = await run(ctx('https://ip.xue.moe/', { headers: { 'User-Agent': 'curl/8.10', Accept: 'text/html' } }));
+  assert.equal(await html.text(), '/ip/'); assert.match(html.headers.get('Vary'), /Accept, User-Agent/);
+  const redirect = await run(ctx('http://ip.xue.moe/', { headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'text/html' } }));
+  assert.equal(redirect.status, 301);
+  const asset = await run(ctx('https://ip.xue.moe/app.js', { headers: { 'User-Agent': 'curl/8.10' } }));
+  assert.equal(await asset.text(), '/ip/app.js');
+  const home = await run(ctx('https://xue.moe/', { headers: { 'User-Agent': 'curl/8.10' } }));
+  assert.equal(await home.text(), 'next');
+});

@@ -383,7 +383,13 @@ async function handleRoute(context, url, hostname) {
     if (url.pathname === '/ip' || url.pathname.startsWith('/ip/')) {
       return Response.redirect(`${url.origin}${url.pathname.slice(3) || '/'}${url.search}`, 301);
     }
-    if (url.pathname === '/') return fetchAsset(context, '/ip/');
+    if (url.pathname === '/') {
+      const res = await fetchAsset(context, '/ip/');
+      const headers = new Headers(res.headers);
+      const vary = headers.get('Vary');
+      headers.set('Vary', [vary, 'Accept', 'User-Agent'].filter(Boolean).join(', '));
+      return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+    }
     if (url.pathname.startsWith('/fonts/')) return context.env.ASSETS.fetch(context.request);
     if (['/app.js', '/style.css'].includes(url.pathname)) return fetchAsset(context, '/ip' + url.pathname);
     return new Response('Not Found', { status: 404 });
@@ -594,9 +600,36 @@ async function handleRoute(context, url, hostname) {
   return context.next();
 }
 
+function wantsPlainIP(request) {
+  const accept = request.headers.get('Accept') || '';
+  if (/\btext\/html\b/i.test(accept)) return false;
+  return /\btext\/plain\b/i.test(accept) || /^curl\//i.test(request.headers.get('User-Agent') || '');
+}
+
+function plainIPResponse(request) {
+  const headers = {
+    'Content-Type': 'text/plain; charset=utf-8',
+    'Cache-Control': 'private, no-store, max-age=0',
+    'Vary': 'Accept, User-Agent, CF-Connecting-IP',
+    'X-Robots-Tag': 'noindex, nofollow'
+  };
+  if (!['GET', 'HEAD'].includes(request.method)) {
+    return new Response('Method Not Allowed\n', { status: 405, headers: { ...headers, Allow: 'GET, HEAD' } });
+  }
+  const ip = request.headers.get('CF-Connecting-IP');
+  return new Response(request.method === 'HEAD' ? null : ip ? `${ip}\n` : 'IP information unavailable\n', {
+    status: ip ? 200 : 503, headers
+  });
+}
+
 export async function onRequest(context) {
   const url = new URL(context.request.url);
   const hostname = url.hostname.toLowerCase();
+
+  // Plain HTTP must also work for `curl ip.xue.moe`, without requiring -L.
+  if (hostname === 'ip.xue.moe' && url.pathname === '/' && wantsPlainIP(context.request)) {
+    return applySecurityHeaders(plainIPResponse(context.request));
+  }
 
   // 1. 强制 HTTPS 规范化重定向
   const proto = context.request.headers.get('x-forwarded-proto') || (url.protocol ? url.protocol.replace(':', '') : 'https');

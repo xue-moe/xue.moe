@@ -113,6 +113,18 @@ npx serve .
 
 `ip.xue.moe` 使用同一个 Pages 项目，无需构建、数据库或 API 密钥。在 Pages 的 **Custom domains** 添加 `ip.xue.moe` 并完成 DNS 绑定，也可在主域名 `/ip/` 预览。
 
+命令行直接返回当前连接的公网 IP（末尾带换行），浏览器访问仍显示网页：
+
+```bash
+curl ip.xue.moe
+curl -4 ip.xue.moe
+curl -6 ip.xue.moe
+# 也支持 HTTPS
+curl -6 https://ip.xue.moe
+```
+
+`-4` / `-6` 由 curl 选择连接协议；IPv6 需要本机网络和域名同时支持 IPv6。curl 的 User-Agent 或 `Accept: text/plain` 触发纯文本响应，且禁用缓存。若 Cloudflare 在到达 Pages 前强制跳转 HTTPS，请使用上述 HTTPS 地址，或在该跳转规则中排除 IP 查询请求。
+
 - **本机 IP**：`/api/ip` 返回 Cloudflare 实际看到的连接 IP、归属地与 ASN，按协议填入 IPv4 或 IPv6 卡片，另一协议显示“本次未使用”。点击地址即可复制。
 - **国内查询源**：IP.cn、IPIP、IPW.cn。
 - **国际查询源**：IP.SB、Cloudflare、ipify。各源由浏览器直连获取真实出口；IPW.cn 与 ipify 提供地址，不虚构归属地。服务地域标签不保证实际节点位置。
