@@ -130,6 +130,7 @@ async function handleRoute(context, url, hostname) {
     if (context.request.method !== 'GET') return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405, headers: { ...headers, Allow: 'GET' } });
     let reason = 'upstream_unavailable';
     let upstreamStatus = null;
+    let failureDetail = null;
     for (const origin of ['https://ip.cn/', 'https://www.ip.cn/']) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 4000);
@@ -163,9 +164,10 @@ async function handleRoute(context, url, hostname) {
         return new Response(JSON.stringify({ ticket }), { headers });
       } catch (error) {
         reason = error.name === 'AbortError' ? 'upstream_timeout' : 'upstream_unavailable';
+        failureDetail = `${error.name}: ${error.message}`.slice(0, 180);
       } finally { clearTimeout(timer); }
     }
-    console.warn(JSON.stringify({ event: 'ipcn_session_unavailable', reason, upstreamStatus }));
+    console.warn(JSON.stringify({ event: 'ipcn_session_unavailable', reason, upstreamStatus, failureDetail }));
     return new Response(JSON.stringify({ error: 'IP.cn query service unavailable', reason }), { status: 502, headers });
   }
 
