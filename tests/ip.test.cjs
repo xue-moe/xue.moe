@@ -34,16 +34,16 @@ test('IP subdomain maps page/assets, normalizes prefixes and scopes external CSP
   const run = router();
   for (const [url, expected] of [['https://ip.xue.moe/', '/ip/'], ['https://ip.xue.moe/app.js', '/ip/app.js'], ['https://ip.xue.moe/style.css', '/ip/style.css']]) {
     const res = await run(ctx(url)); assert.equal(await res.text(), expected);
-    assert.match(res.headers.get('Content-Security-Policy'), /https:\/\/4\.ipw\.cn/);
+    assert.match(res.headers.get('Content-Security-Policy'), /https:\/\/4\.wsmdn\.top/);
     assert.match(res.headers.get('Content-Security-Policy'), /https:\/\/api64.ipify.org/);
   }
   const redirect = await run(ctx('https://ip.xue.moe/ip/?theme=dark'));
   assert.equal(redirect.status, 301); assert.equal(redirect.headers.get('Location'), 'https://ip.xue.moe/?theme=dark');
   assert.equal((await run(ctx('https://ip.xue.moe/missing.js'))).status, 404);
   const home = await run(ctx('https://xue.moe/'));
-  assert.doesNotMatch(home.headers.get('Content-Security-Policy'), /4\.ipw\.cn/);
+  assert.doesNotMatch(home.headers.get('Content-Security-Policy'), /4\.wsmdn\.top/);
   const local = await run(ctx('https://xue.moe/ip/'));
-  assert.match(local.headers.get('Content-Security-Policy'), /4\.ipw\.cn/);
+  assert.match(local.headers.get('Content-Security-Policy'), /4\.wsmdn\.top/);
   const sitemap = await run(ctx('https://ip.xue.moe/sitemap.xml'));
   assert.match(await sitemap.text(), /https:\/\/ip.xue.moe\//);
 });
@@ -232,7 +232,7 @@ test('IP.cn retries the official alternative and accepts current ticket declarat
   assert.equal(res.status, 200); assert.equal((await res.json()).ticket, 'abcdef0123456789');
   assert.deepEqual(calls, ['https://ip.cn/', 'https://www.ip.cn/']);
 });
-test('IPW availability distinguishes missing DNS records from resolver failure', async () => {
+test('NIPW availability distinguishes missing DNS records from resolver failure', async () => {
   for (const [answer, expectedStatus, expectedAvailable] of [
     [{ Status: 0, Answer: [{ type: 1, data: '203.0.113.9' }] }, 200, true],
     [{ Status: 0, Authority: [{ type: 6 }] }, 200, false],
@@ -247,10 +247,10 @@ test('IPW availability distinguishes missing DNS records from resolver failure',
     });
     const res = await run(ctx('https://ip.xue.moe/api/ipw-status?name=attacker.example'));
     assert.equal(res.status, expectedStatus); assert.equal((await res.json()).available, expectedAvailable);
-    assert.deepEqual(calls, ['https://cloudflare-dns.com/dns-query?name=4.ipw.cn&type=A', 'https://cloudflare-dns.com/dns-query?name=4.ipw.cn&type=AAAA']);
+    assert.deepEqual(calls, ['https://cloudflare-dns.com/dns-query?name=4.wsmdn.top&type=A', 'https://cloudflare-dns.com/dns-query?name=4.wsmdn.top&type=AAAA']);
   }
 });
-test('browser skips IPW requests when DNS has no address and resumes when it recovers', async () => {
+test('browser skips NIPW requests when DNS has no address and resumes when it recovers', async () => {
   const calls = [];
   let available = false;
   const context = { request: async url => { calls.push(url); return url === '/api/ipw-status' ? { available } : '203.0.113.8\n'; } };
@@ -261,5 +261,5 @@ test('browser skips IPW requests when DNS has no address and resumes when it rec
   available = true;
   const data = await context.ipw.load(new AbortController().signal);
   assert.equal(data.ip, '203.0.113.8');
-  assert.deepEqual(calls.slice(1), ['/api/ipw-status', 'https://4.ipw.cn/']);
+  assert.deepEqual(calls.slice(1), ['/api/ipw-status', 'https://4.wsmdn.top/']);
 });

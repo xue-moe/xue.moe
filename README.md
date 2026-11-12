@@ -144,18 +144,18 @@ npx wrangler deploy --config wrangler.ip-http.toml
 目标为 `concat("https://", http.host, http.request.uri.path)`，保留查询字符串。该例外允许 curl 到达 HTTP Worker；Pages 的 Git 自动部署不会部署此独立 Worker。
 
 - **本机 IP**：`/api/ip` 返回 Cloudflare 实际看到的连接 IP、归属地与 ASN，按协议填入 IPv4 或 IPv6 卡片，另一协议显示“本次未使用”。点击地址即可复制。
-- **国内查询源**：IP.cn、IPIP、IPW.cn。
-- **国际查询源**：IP.SB、Cloudflare、ipify。各源由浏览器直连获取真实出口；IPW.cn 与 ipify 提供地址，不虚构归属地。服务地域标签不保证实际节点位置。
+- **国内查询源**：IP.cn、IPIP、NIPW.cn。
+- **国际查询源**：IP.SB、Cloudflare、ipify。各源由浏览器直连获取真实出口；NIPW.cn 与 ipify 提供地址，不虚构归属地。服务地域标签不保证实际节点位置。
 - **首页连通性**：检测小红书、Bilibili、腾讯、淘宝、GitHub、Google、Cloudflare、YouTube 的 HTTP 请求耗时，并按 100 / 300 / 1000 ms 分档着色。跨域响应不代表完整可用性，数值不是 ICMP Ping。
 - **网站分流测试**：独立 Tab 展示访问目标网站时的出口 IP 和国家 / 地区。读取目标网站的 Cloudflare trace，接口受限时单独标明失败。
 
 仅保留本机 IP 与网站分流两个 Tab，进入时自动检测，运行中不重复发起。页面沿用主站配色与共享 `xue-theme` 偏好，使用独立的工具布局。
 
-`GET /api/ipw-status` 通过公共 DNS 检查 IPW 的固定域名，确认无地址记录时页面显示“域名未解析”，避免浏览器直接请求失效域名；恢复解析后自动恢复查询。检测不获取或替代访客出口 IP。
+`GET /api/ipw-status` 通过公共 DNS 检查 NIPW.cn 公布的固定接口域名 `4.wsmdn.top`，确认无地址记录时页面显示“域名未解析”，避免浏览器直接请求失效域名；恢复解析后自动恢复查询。检测不获取或替代访客出口 IP。
 
 `GET /api/ipcn-session` 以明确的客户端标识请求官网，必要时尝试备用官网入口，仅取得 IP.cn 公开页面提供的临时查询 ticket，访客浏览器直接请求 `my.ip.cn` 获取出口；不会在服务端代查访客 IP。`/api/ip` 响应为 `private, no-store`，不使用访客统计 KV。普通静态服务器不运行这两个 API；本地 Functions 预览也不保证有生产 IP 元数据。
 
-数据来源：[IP.cn](https://ip.cn/)、[IPIP](https://www.ipip.net/myip.html)、[IPW.cn](https://ipw.cn/)、[IP.SB](https://ip.sb/api/)、[ipify](https://www.ipify.org/)。功能灵感来自 [ip.skk.moe](https://ip.skk.moe/)。
+数据来源：[IP.cn](https://ip.cn/)、[IPIP](https://www.ipip.net/myip.html)、[NIPW.cn](https://nipw.cn/)、[IP.SB](https://ip.sb/api/)、[ipify](https://www.ipify.org/)。功能灵感来自 [ip.skk.moe](https://ip.skk.moe/)。
 
 ### 附加：部署贡献日历缓存任务
 

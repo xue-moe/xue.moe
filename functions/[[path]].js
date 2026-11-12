@@ -97,7 +97,7 @@ function applySecurityHeaders(res, isIpPage = false) {
   if (isIpPage) {
     headers.set('Content-Security-Policy', headers.get('Content-Security-Policy').replace(
       "connect-src 'self' https://cloudflareinsights.com",
-      "connect-src 'self' https://cloudflareinsights.com https://api.ipify.org https://api64.ipify.org https://api.ip.sb https://4.ipw.cn https://my.ip.cn https://myip.ipip.net https://www.xiaohongshu.com https://www.bilibili.com https://www.qq.com https://h5.news.qq.com https://www.taobao.com https://gw.alicdn.com https://github.com https://www.google.com https://cdn.jsdelivr.net https://www.cloudflare.com https://www.youtube.com https://www.qualcomm.cn https://discord.com https://www.visa.com https://medium.com https://cdnjs.cloudflare.com https://registry.npmjs.org https://nodejs.org https://gitlab.com https://chatgpt.com https://claude.ai https://www.perplexity.ai"
+      "connect-src 'self' https://cloudflareinsights.com https://api.ipify.org https://api64.ipify.org https://api.ip.sb https://4.wsmdn.top https://my.ip.cn https://myip.ipip.net https://www.xiaohongshu.com https://www.bilibili.com https://www.qq.com https://h5.news.qq.com https://www.taobao.com https://gw.alicdn.com https://github.com https://www.google.com https://cdn.jsdelivr.net https://www.cloudflare.com https://www.youtube.com https://www.qualcomm.cn https://discord.com https://www.visa.com https://medium.com https://cdnjs.cloudflare.com https://registry.npmjs.org https://nodejs.org https://gitlab.com https://chatgpt.com https://claude.ai https://www.perplexity.ai"
     ));
   }
 
@@ -178,7 +178,7 @@ async function handleRoute(context, url, hostname) {
     const timer = setTimeout(() => controller.abort(), 4000);
     try {
       const queries = await Promise.all(['A', 'AAAA'].map(async type => {
-        const res = await fetch(`https://cloudflare-dns.com/dns-query?name=4.ipw.cn&type=${type}`, {
+        const res = await fetch(`https://cloudflare-dns.com/dns-query?name=4.wsmdn.top&type=${type}`, {
           headers: { Accept: 'application/dns-json' }, signal: controller.signal
         });
         if (!res.ok) throw new Error('DNS resolver unavailable');
