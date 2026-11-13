@@ -120,22 +120,56 @@ targets.forEach(createProbe);
 function latencyBand(ms) {
   return ms < 100 ? 'fast' : ms < 300 ? 'normal' : ms < 1000 ? 'slow' : 'high';
 }
+function medianLatency(samples) {
+  const sorted = [...samples].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return Math.max(1, Math.round(sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2));
+}
 async function probe([, , url], index, signal) {
   const root = $(`#probe-${index}`);
-  root.dataset.state = 'pending'; delete root.dataset.latency; $('.probe-result', root).textContent = '…'; $('.probe-state', root).textContent = '测速中…';
-  const start = performance.now();
-  try {
-    const res = await request(`${url}?_=${Date.now()}`, { signal, mode: 'no-cors', timeout: 6000 }, 'response');
-    if (res.body) await res.body.cancel();
+  const samples = [];
+  for (let attempt = 0; attempt < 6; attempt++) {
     if (signal.aborted) return;
-    const ms = Math.max(1, Math.round(performance.now() - start));
-    root.dataset.state = 'ok'; root.dataset.latency = latencyBand(ms);
-    $('.probe-result', root).textContent = `${ms} ms`;
-    $('.probe-state', root).textContent = ms < 100 ? '极快' : ms < 300 ? '顺畅' : '较慢';
-  } catch (_) {
-    if (signal.aborted) return;
-    root.dataset.state = 'error'; root.dataset.latency = 'error'; $('.probe-result', root).textContent = '—'; $('.probe-state', root).textContent = '打不开或超时';
+    $('.probe-state', root).textContent = `检测 ${attempt + 1}/6 · 成功 ${samples.length} 次`;
+    const start = performance.now();
+    try {
+      const res = await request(`${url}?_=${Date.now()}-${index}-${attempt}`, { signal, mode: 'no-cors', timeout: 6000 }, 'response');
+      const elapsed = performance.now() - start;
+      if (res.body) await res.body.cancel();
+      if (signal.aborted) return;
+      samples.push(elapsed);
+    } catch (_) { if (signal.aborted) return; }
+    if (samples.length) {
+      const ms = medianLatency(samples);
+      root.dataset.latency = latencyBand(ms);
+      $('.probe-result', root).textContent = `${ms} ms`;
+    }
+    if (attempt < 5 && !signal.aborted) await new Promise(resolve => setTimeout(resolve, 500));
   }
+  if (signal.aborted) return;
+  root.dataset.state = samples.length ? 'ok' : 'error';
+  if (samples.length) {
+    $('.probe-state', root).textContent = `成功 ${samples.length}/6 · 中位耗时`;
+  } else {
+    root.dataset.latency = 'error';
+    $('.probe-result', root).textContent = '—';
+    $('.probe-state', root).textContent = '成功 0/6 · 超时或受限';
+  }
+}
+async function runProbes(signal) {
+  for (let i = 0; i < targets.length; i++) {
+    const root = $(`#probe-${i}`);
+    root.dataset.state = 'pending'; delete root.dataset.latency;
+    $('.probe-result', root).textContent = '…';
+    $('.probe-state', root).textContent = '等待检测';
+  }
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(4, targets.length) }, async () => {
+    while (!signal.aborted && next < targets.length) {
+      const index = next++;
+      await probe(targets[index], index, signal);
+    }
+  }));
 }
 function textValue(text) {
   const el = document.createElement('span'); el.textContent = String(text || '—'); return el;
@@ -186,7 +220,7 @@ async function runOverview() {
   const controller = new AbortController(); runController = controller;
   const { signal } = controller;
   for (const id of ['ipv4', 'ipv6']) put(id, { error: '检测中…', status: '' }, signal);
-  await Promise.allSettled([edge(signal), providers(signal), ...targets.map((target, i) => probe(target, i, signal))]);
+  await Promise.allSettled([edge(signal), providers(signal), runProbes(signal)]);
 }
 $('#refresh').addEventListener('click', () => runTab(activeTab));
 const tabNames = { 'local-ip': '我的 IP', routing: '网站分流' };

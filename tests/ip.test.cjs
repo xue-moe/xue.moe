@@ -239,3 +239,44 @@ test('Yinghualuo uses the browser JSON endpoint and preserves location and ISP',
   const result = context.source.normalize({ ip: '203.0.113.8', location: '测试地区', isp: '测试运营商' });
   assert.deepEqual(JSON.parse(JSON.stringify(result)), { ip: '203.0.113.8', location: '测试地区', isp: '测试运营商' });
 });
+
+test('six probe attempts show median of successes and report partial or total failure', async () => {
+  for (const outcomes of [[10, 40, null, 1000, 60, 80], [null, null, null, null, null, null]]) {
+    const result = {}, state = {}, root = { dataset: {} };
+    let calls = 0, now = 0;
+    const context = {
+      $: selector => selector === '.probe-result' ? result : selector === '.probe-state' ? state : root,
+      performance: { now: () => now },
+      request: async () => {
+        const value = outcomes[calls++];
+        if (value === null) throw new Error('timeout');
+        now += value; return {};
+      },
+      setTimeout: resolve => resolve()
+    };
+    vm.createContext(context);
+    vm.runInContext(app.slice(app.indexOf('function latencyBand('), app.indexOf('async function runProbes(')), context);
+    await context.probe(['Test', '国内', 'https://example.com/favicon.ico'], 0, new AbortController().signal);
+    assert.equal(calls, 6);
+    assert.equal(result.textContent, outcomes[0] === null ? '—' : '60 ms');
+    assert.equal(state.textContent, outcomes[0] === null ? '成功 0/6 · 超时或受限' : '成功 5/6 · 中位耗时');
+    assert.equal(root.dataset.state, outcomes[0] === null ? 'error' : 'ok');
+    assert.equal(context.medianLatency([1000, 10, 20, 30, 40, 50]), 35);
+  }
+});
+
+test('probe queue limits concurrency to four and does not start after cancellation', async () => {
+  let active = 0, peak = 0, calls = 0;
+  const context = {
+    targets: Array.from({ length: 8 }, (_, i) => [i]),
+    $: () => ({ dataset: {} }),
+    probe: async () => { calls++; active++; peak = Math.max(peak, active); await Promise.resolve(); active--; }
+  };
+  vm.createContext(context);
+  vm.runInContext(app.slice(app.indexOf('async function runProbes('), app.indexOf('function textValue(')), context);
+  await context.runProbes(new AbortController().signal);
+  assert.equal(calls, 8); assert.equal(peak, 4);
+  const controller = new AbortController(); controller.abort();
+  await context.runProbes(controller.signal);
+  assert.equal(calls, 8);
+});
