@@ -349,7 +349,7 @@
       border-color: rgba(145, 167, 255, 0.4);
     }
 
-    /* 2. 代码足迹日历：严控高度，大幅瘦身，不再显得膨胀 */
+    /* 2. 代码足迹：严控高度，大幅瘦身，不再显得膨胀 */
     .activity-card {
       background: var(--card-bg);
       backdrop-filter: blur(20px) saturate(160%);
@@ -769,7 +769,6 @@
       }
     }
 
-
     .visually-hidden {
       position: absolute;
       width: 1px;
@@ -835,7 +834,7 @@
 <body data-1p-ignore data-bwignore data-lpignore="true">
   <canvas id="snowCanvas"></canvas>
 
-  <div id="toast" class="toast" role="status" aria-live="polite">已复制邮箱 me@xue.moe 到剪贴板</div>
+  <div id="toast" class="toast" role="status" aria-live="polite">已复制邮箱</div>
 
   <main class="container">
     <!-- 1. HERO 个人主卡片 -->
@@ -894,10 +893,10 @@
       </div>
     </section>
 
-    <!-- 2. 代码足迹日历 (压缩至极致紧凑) -->
+    <!-- 2. 代码足迹 (压缩至极致紧凑) -->
     <section class="activity-card">
       <div class="activity-head">
-        <h2 id="calCardTitle" class="activity-title">代码足迹日历</h2>
+        <h2 id="calCardTitle" class="activity-title">代码足迹</h2>
         <a href="https://github.com/xue-moe" id="calProfileLink" target="_blank" rel="noopener noreferrer" class="activity-meta">
           <span>@xue-moe ↗</span>
         </a>
@@ -945,13 +944,11 @@
           <span class="status-dot"></span>
         </div>
         <div class="site-title-row">
-          <h3 class="site-title" id="timeTitle">标准时间与世界时钟</h3>
+          <h3 class="site-title" id="timeTitle">世界时钟</h3>
           <span class="live-clock-pill" id="homeClockDigits">--:--:--</span>
           <span class="visually-hidden" id="homeClockStatus" aria-live="polite">同步中...</span>
         </div>
-        <p class="site-desc" id="timeDesc">
-          高精度网络授时同步，实时毫秒校准与全球时区标准时间。
-        </p>
+        <p class="site-desc" id="timeDesc">世界时钟</p>
         <div class="site-foot">
           <span class="site-arrow" id="timeArrow">访问 ↗</span>
         </div>
@@ -964,28 +961,24 @@
           <span class="status-dot"></span>
         </div>
         <div class="site-title-row">
-          <h3 class="site-title" id="duoTitle">多邻国幻方求解器</h3>
+          <h3 class="site-title" id="duoTitle">幻方求解</h3>
         </div>
-        <p class="site-desc" id="duoDesc">
-          多邻国数学 3×3 幻方关卡求解器，支持唯一解快速推导与候选数校验。
-        </p>
+        <p class="site-desc" id="duoDesc">九宫格求解</p>
         <div class="site-foot">
           <span class="site-arrow" id="duoArrow">访问 ↗</span>
         </div>
       </a>
 
-      <!-- 卡片 3 (标配 2 列): 实用工具箱 -->
+      <!-- 卡片 3 (标配 2 列): 工具箱 -->
       <a href="https://tools.xue.moe" class="site-card card-span-3" target="_blank" rel="noopener noreferrer">
         <div class="site-head">
           <span class="site-badge badge-tools">tools.xue.moe</span>
           <span class="status-dot"></span>
         </div>
         <div class="site-title-row">
-          <h3 class="site-title" id="toolsTitle">实用工具箱</h3>
+          <h3 class="site-title" id="toolsTitle">工具箱</h3>
         </div>
-        <p class="site-desc" id="toolsDesc">
-          纯前端本地计算的高频效率轻量工具。
-        </p>
+        <p class="site-desc" id="toolsDesc">待办 · 时钟 · 专注 · 文本</p>
         <div class="site-foot">
           <span class="site-arrow" id="toolsArrow">访问 ↗</span>
         </div>
@@ -993,8 +986,8 @@
 
       <a href="https://ip.xue.moe" class="site-card card-span-3" target="_blank" rel="noopener noreferrer">
         <div class="site-head"><span class="site-badge badge-time">ip.xue.moe</span><span class="status-dot"></span></div>
-        <div class="site-title-row"><h3 class="site-title" id="ipTitle">IP 查询与网络诊断</h3></div>
-        <p class="site-desc" id="ipDesc">本机 IP、国内外出口查询与网站分流测试。</p>
+        <div class="site-title-row"><h3 class="site-title" id="ipTitle">IP 查询</h3></div>
+        <p class="site-desc" id="ipDesc">IP · 测速 · 分流</p>
         <div class="site-foot"><span class="site-arrow" id="ipArrow">访问 ↗</span></div>
       </a>
 
@@ -1007,9 +1000,7 @@
         <div class="site-title-row">
           <h3 class="site-title" id="blogTitle">博客随笔</h3>
         </div>
-        <p class="site-desc" id="blogDesc">
-          技术笔记、架构随想与生活切片存档。
-        </p>
+        <p class="site-desc" id="blogDesc">技术与生活</p>
         <div class="site-foot">
           <span class="site-arrow" id="blogArrow">访问 ↗</span>
         </div>
@@ -1024,9 +1015,7 @@
         <div class="site-title-row">
           <h3 class="site-title" id="devTitle">实验工坊</h3>
         </div>
-        <p class="site-desc" id="devDesc">
-          实验性项目与前端微交互原型孵化。
-        </p>
+        <p class="site-desc" id="devDesc">项目预览</p>
         <div class="site-foot">
           <span class="site-arrow" id="devArrow">访问 ↗</span>
         </div>
@@ -1076,9 +1065,9 @@
           "保持专注与极简。"
         ],
         copyTitle: "点击复制邮箱",
-        copiedToast: "已复制邮箱 me@xue.moe 到剪贴板",
+        copiedToast: "已复制邮箱",
         blog: "博客随笔",
-        calTitle: "代码足迹日历",
+        calTitle: "代码足迹",
         calProfileHint: "查看 GitHub 完整主页",
         thisMonth: "本月动态",
         calUnit: "次提交",
@@ -1095,20 +1084,20 @@
         tooltipCommit: (cnt) => `${cnt} 次代码提交`,
         tooltipToday: ", 今日",
         siteIndex: "站点索引",
-        timeTitle: "标准时间与世界时钟",
-        timeDesc: "通过多次网络请求估算本地时钟偏差，并查看世界主要时区时间。",
+        timeTitle: "世界时钟",
+        timeDesc: "世界时钟",
         timeSyncing: "同步中...",
-        timeSynced: (acc) => `网络时间偏差估算 (±${(acc / 1000).toFixed(3)}秒)`,
-        duoTitle: "多邻国幻方求解器",
-        duoDesc: "多邻国数学 3×3 幻方关卡求解器，支持唯一解快速推导与候选数校验。",
-        ipTitle: "IP 查询与网络诊断",
-        ipDesc: "本机 IP、国内外出口查询与网站分流测试。",
-        toolsTitle: "实用工具箱",
-        toolsDesc: "待办清单、多时区时钟、专注倒计时与字符排错分析。",
+        timeSynced: () => '已同步',
+        duoTitle: "幻方求解",
+        duoDesc: "九宫格求解",
+        ipTitle: "IP 查询",
+        ipDesc: "IP · 测速 · 分流",
+        toolsTitle: "工具箱",
+        toolsDesc: "待办 · 时钟 · 专注 · 文本",
         blogTitle: "博客随笔",
-        blogDesc: "技术笔记、架构随想与生活切片存档。",
+        blogDesc: "技术与生活",
         devTitle: "实验工坊",
-        devDesc: "实验性项目、前端组件与交互原型孵化。",
+        devDesc: "项目预览",
         visit: "访问 ↗",
         themeDarkTip: "切换为浅色模式",
         themeLightTip: "切换为深色模式",
@@ -1146,19 +1135,19 @@
         tooltipToday: ", Today",
         siteIndex: "Projects & Sites",
         timeTitle: "Standard Time & World Clocks",
-        timeDesc: "Estimate your clock offset with repeated network requests and view major time zones.",
+        timeDesc: "World clocks",
         timeSyncing: "Syncing...",
-        timeSynced: (acc) => `Estimated network time offset (±${(acc / 1000).toFixed(3)}s)`,
+        timeSynced: () => 'Synced',
         duoTitle: "Duolingo Math Solver",
-        duoDesc: "Duolingo Math 3×3 magic square solver with instant deduction and candidate validation.",
+        duoDesc: "Magic squares",
         ipTitle: "IP & Network Diagnostics",
-        ipDesc: "Public IPs, regional lookup sources, and split tunnel diagnostics.",
+        ipDesc: "IP · Latency · Routing",
         toolsTitle: "Utility Toolbox",
-        toolsDesc: "To-do list, standard world clocks, focus timer, and character inspector.",
+        toolsDesc: "Todo · Time · Focus · Text",
         blogTitle: "Blog & Notes",
-        blogDesc: "Technical writings, architectural musings, and slices of life.",
+        blogDesc: "Tech & life",
         devTitle: "Dev Lab",
-        devDesc: "Experimental projects, web components, and frontend prototypes.",
+        devDesc: "Project previews",
         visit: "Visit ↗",
         themeDarkTip: "Switch to light mode",
         themeLightTip: "Switch to dark mode",

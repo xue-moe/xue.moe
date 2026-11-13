@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>多邻国数学 9宫格（九宫格）幻方求解器 | duo.xue.moe</title>
+  <title>幻方求解 | duo.xue.moe</title>
   <meta name="description" content="在线求解多邻国数学 3×3 幻方：在9宫格（九宫格）中输入已知数字，自动推导空格、校验候选值并展示符合条件的解。" />
   <meta name="keywords" content="多邻国数学,多邻国幻方,9宫格,九宫格,9宫格求解器,九宫格求解器,3×3幻方,Duolingo Math,幻方解法,九宫格计算器,数学求解器" />
   <link rel="canonical" href="https://duo.xue.moe/" />
-  <meta property="og:title" content="多邻国数学 9宫格（九宫格）幻方求解器 | duo.xue.moe" />
+  <meta property="og:title" content="幻方求解 | duo.xue.moe" />
   <meta property="og:description" content="在线求解多邻国数学 3×3 幻方：在9宫格（九宫格）中输入已知数字，自动推导空格、校验候选值并展示符合条件的解。" />
   <meta property="og:url" content="https://duo.xue.moe/" />
   <meta property="og:type" content="website" />
@@ -18,7 +18,7 @@
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="多邻国数学 9宫格与九宫格幻方求解器示例" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="多邻国数学 9宫格（九宫格）幻方求解器 | duo.xue.moe" />
+  <meta name="twitter:title" content="幻方求解 | duo.xue.moe" />
   <meta name="twitter:description" content="在线求解多邻国数学 3×3 幻方：在9宫格（九宫格）中输入已知数字，自动推导空格、校验候选值并展示符合条件的解。" />
   <meta name="twitter:image" content="https://duo.xue.moe/images/og/duo.png" />
   <meta name="twitter:image:alt" content="多邻国数学 9宫格与九宫格幻方求解器示例" />
@@ -161,7 +161,6 @@
       aspect-ratio: 1 / 1;
     }
 
-    
     input[type="number"]::-webkit-outer-spin-button,
     input[type="number"]::-webkit-inner-spin-button {
       -webkit-appearance: none;
@@ -663,23 +662,20 @@ html {
       <div class="nav-left">
         <a href="https://xue.moe" class="nav-brand" id="navBrand" title="访问 xue.moe 门户主页">xue.moe</a>
         <span class="nav-sep">/</span>
-        <span class="nav-current" id="navCurrent">多邻国数学求解器</span>
+        <span class="nav-current" id="navCurrent">幻方求解</span>
       </div>
       <div class="nav-right">
         <a href="#grid-section" class="nav-link" id="navLinkGrid">九宫格</a>
-        <a href="#settings-section" class="nav-link" id="navLinkSettings">参数配置</a>
-        <a href="#guide" class="nav-link" id="navLinkGuide">解题技巧</a>
+        <a href="#settings-section" class="nav-link" id="navLinkSettings">设置</a>
+
         <button id="langToggleBtn" class="nav-lang-btn" title="Switch Language / 切换语言">EN</button>
       </div>
     </nav>
 
     <div class="card">
       <div class="header-row">
-        <h1 id="h1Title">多邻国数学 9宫格（九宫格）幻方求解器</h1>
+        <h1 id="h1Title">幻方求解</h1>
       </div>
-      <p class="sub" id="subDesc">
-        专为多邻国数学（Duolingo Math）幻方关卡设计。在 3×3 九宫格（9宫格）内填入已知正整数，程序将自动解出其余数字并标识备选值所在位置。
-      </p>
 
       <div class="layout">
         <div class="grid-wrap" id="grid-section">
@@ -693,14 +689,14 @@ html {
         </div>
 
         <div class="side" id="settings-section">
-          <h2 class="side-title" id="sideTitle">参数配置与计算</h2>
+          <h2 class="side-title" id="sideTitle">设置</h2>
           <div class="field">
-            <label for="targetSum" id="labelTargetSum">目标和值（各行、列与对角线之和）</label>
-            <input id="targetSum" type="number" step="1" inputmode="numeric" autocomplete="off" data-1p-ignore data-bwignore placeholder="例如：15 (可自动计算)">
+            <label for="targetSum" id="labelTargetSum">目标和值</label>
+            <input id="targetSum" type="number" step="1" inputmode="numeric" autocomplete="off" data-1p-ignore data-bwignore placeholder="15">
           </div>
 
           <div class="field">
-            <label for="candidateValues" id="labelCandidateValues">备选数字（题目候选选项）</label>
+            <label for="candidateValues" id="labelCandidateValues">备选数字</label>
             <input
               id="candidateValues"
               type="text"
@@ -708,30 +704,26 @@ html {
               autocomplete="off"
               data-1p-ignore
               data-bwignore
-              placeholder="例如：5 或 5, 10, 6"
+              placeholder="5, 10, 6"
             >
           </div>
 
           <div class="buttons">
-            <button class="primary" id="solveBtn">计算并补全</button>
+            <button class="primary" id="solveBtn">求解</button>
             <button class="ghost" id="clearBtn">重置</button>
           </div>
 
           <div class="status" id="status">
-            九宫格为空。请输入已知数字或目标和值。
+            待求解
           </div>
 
-          <div class="hint" id="hintBox">
-            • 颜色指引：<span class="badge-blue">蓝色</span>为已知，<span class="badge-green">绿色</span>为计算填充，<span class="badge-orange">橙色</span>为备选值命中位置。<br>
-            • 快速按键：九宫格支持方向键移动；空按 <kbd>Backspace</kbd> 倒退上格；按 <kbd>Enter</kbd> 快速计算。
-          </div>
         </div>
       </div>
     </div>
 
     <div class="card results-card" id="resultsCard">
       <div class="results-head">
-        <h2 class="results-title" id="resultsTitle">所有符合条件的解</h2>
+        <h2 class="results-title" id="resultsTitle">解集</h2>
         <div class="results-count" id="resultsCount"></div>
       </div>
 
@@ -743,33 +735,11 @@ html {
       </div>
     </div>
 
-    <div class="card guide-card" id="guide">
-      <div class="header-row">
-        <h2 class="guide-title" id="guideCardTitle">幻方规则与解题技巧</h2>
-      </div>
-      <div class="guide-grid">
-        <div class="guide-item">
-          <h3 id="guideH1">中心数黄金定律</h3>
-          <p id="guideP1">在任意 3×3 幻方中，<strong>中心数恒等于目标和值的 1/3</strong>（即 <code>目标和值 = 3 × 中心格</code>）。只要填入中心格或目标和值，系统将自动双向推导补全。</p>
-        </div>
-        <div class="guide-item">
-          <h3 id="guideH2">对称互补特性</h3>
-          <p id="guideP2">穿过中心格的相对两数之和恒等于 <code>2 × 中心数</code>。按从左到右、从上到下的 1–9 号位，输入 <code>19 / 28 / 37 / 46</code> 任一对即可推导中心数与目标和值。</p>
-        </div>
-        <div class="guide-item">
-          <h3 id="guideH3">三数推导中心</h3>
-          <p id="guideP3">按 1–9 号位，<code>中心 = (2 × 1号位 + 2号位 + 4号位) / 4</code>，也有 <code>中心 = (2 × 1号位 + 2号位 − 6号位) / 2</code>。输入 <code>124 / 126</code> 或旋转、镜像后的组合即可自动推导。多邻国备选值会以橙色标出。</p>
-        </div>
-      </div>
-    </div>
   </div>
 
   <footer>
     <div class="footer-links">
-      <a href="#top" id="footerLinkTop">回到顶部 ↑</a>
-      <span class="sep">|</span>
-      <a href="#guide" id="footerLinkGuide">解题技巧</a>
-      <span class="sep">|</span>
+      <a href="#top" id="footerLinkTop">回到顶部 ↑</a><span class="sep">|</span>
       <a href="https://xue.moe" id="footerLinkHome">xue.moe 首页</a>
     </div>
     <div>
@@ -792,118 +762,96 @@ html {
     const i18n = {
       zh: {
         langBtn: "EN",
-        docTitle: "多邻国数学 9宫格（九宫格）幻方求解器 | duo.xue.moe",
+        docTitle: "幻方求解 | duo.xue.moe",
         docDesc: "在线求解多邻国数学 3×3 幻方：在9宫格（九宫格）中输入已知数字，自动推导空格、校验候选值并展示符合条件的解。",
-        navCurrent: "多邻国数学求解器",
+        navCurrent: "幻方求解",
         navGrid: "九宫格",
-        navSettings: "参数配置",
-        navGuide: "解题技巧",
-        h1Title: "多邻国数学 9宫格（九宫格）幻方求解器",
-        subDesc: "专为多邻国数学（Duolingo Math）幻方关卡设计。在 3×3 九宫格（9宫格）内填入已知正整数，程序将自动解出其余数字并标识备选值所在位置。",
+        navSettings: "设置",
+        h1Title: "幻方求解",
         srOnlyTitle: "九宫格输入棋盘",
         gridPrevBtn: "◀ 上一组",
         gridNextBtn: "下一组 ▶",
-        sideTitle: "参数配置与计算",
-        labelTargetSum: "目标和值（各行、列与对角线之和）",
-        placeholderTargetSum: "例如：15 (可自动计算)",
-        labelCandidateValues: "备选数字（题目候选选项）",
-        placeholderCandidates: "例如：5 或 5, 10, 6",
-        solveBtn: "计算并补全",
+        sideTitle: "设置",
+        labelTargetSum: "目标和值",
+        placeholderTargetSum: "15",
+        labelCandidateValues: "备选数字",
+        placeholderCandidates: "5, 10, 6",
+        solveBtn: "求解",
         clearBtn: "重置",
-        statusEmpty: "九宫格为空。请输入已知数字或目标和值。",
-        hintColors: "• 颜色指引：<span class=\"badge-blue\">蓝色</span>为已知，<span class=\"badge-green\">绿色</span>为计算填充，<span class=\"badge-orange\">橙色</span>为备选值命中位置。<br>• 快速按键：九宫格支持方向键移动；空按 <kbd>Backspace</kbd> 倒退上格；按 <kbd>Enter</kbd> 快速计算。",
-        resultsTitle: "所有符合条件的解",
+        statusEmpty: "待求解",
+        resultsTitle: "解集",
         prevBtn: "◀ 上一组",
         nextBtn: "下一组 ▶",
-        guideCardTitle: "幻方规则与解题技巧",
-        guideH1: "中心数黄金定律",
-        guideP1: "在任意 3×3 幻方中，<strong>中心数恒等于目标和值的三分之一</strong>（即 <code>目标和值 = 3 × 中心格</code>）。输入任意一项即可自动推导另一项。",
-        guideH2: "对称互补特性",
-        guideP2: "穿过中心格的相对两数之和恒等于 <code>2 × 中心数</code>。按从左到右、从上到下的 1–9 号位，输入 <code>19 / 28 / 37 / 46</code> 任一对即可推导中心数与目标和值。",
-        guideH3: "三数推导中心",
-        guideP3: "按 1–9 号位，<code>中心 = (2 × 1号位 + 2号位 + 4号位) / 4</code>，也有 <code>中心 = (2 × 1号位 + 2号位 − 6号位) / 2</code>。输入 <code>124 / 126</code> 或旋转、镜像后的组合即可自动推导。多邻国备选值会以橙色标出。",
         footerTop: "回到顶部 ↑",
-        footerGuide: "解题技巧",
         footerHome: "xue.moe 首页",
-        statusReset: "九宫格已重置。请输入已知数字或目标和值。",
+        statusReset: "已重置",
         errCellInt: (idx) => `第 ${idx + 1} 格必须输入正整数。`,
-        statusUpdated: "已更新已知数字。",
-        errConflictSum: (sums) => `推导出的目标和值产生冲突：${sums}。请检查输入是否有误。`,
-        okPartialSolution: (count) => `已推算 ${count} 个确定格子，其余格子还需更多已知数或备选值。`,
-        okAutoDetected: (val) => `已自动推算目标和值：${val}`,
-        errTargetMismatch: (det, cur) => `根据已知数推算和值为 ${det}，与当前目标和值 ${cur} 矛盾。`,
-        errNeedTarget: "请先输入目标和值，或填入中心格、对称数对及足够的已知数，让程序自动推导。",
-        errInferredCenter: (center) => `推导出的中心数 ${center} 不是正整数，九宫格无正整数解。`,
+        statusUpdated: "已更新",
+        errConflictSum: (sums) => `和值冲突：${sums}`,
+        okPartialSolution: (count) => `已填 ${count} 格`,
+        okAutoDetected: (val) => `目标和值：${val}`,
+        errTargetMismatch: (det, cur) => `和值冲突：${det} / ${cur}`,
+        errNeedTarget: "缺少目标和值",
+        errInferredCenter: (center) => `无正整数解`,
         errTargetPosInt: "目标和值必须是正整数。",
-        errCandidatesPosInt: "备选值只能输入正整数，多个请用逗号或空格分隔。",
-        errDupeFixed: (dupes) => `数字不能重复：已知数字中存在重复数字 ${dupes}。`,
-        errDupeCandInFixed: (dupes) => `数字不能重复：备选值 ${dupes} 已经填在九宫格已知数中了。`,
-        errNeedInput: "请先输入至少一个已知数字，或输入备选值。",
-        errTargetDiv3: (tgt) => `目标和值 ${tgt} 不能被 3 整除，九宫格无整数解。`,
-        errNoSolution: "没有找到符合该和值与备选条件的九宫格解，请核对输入。",
-        okSingleSolution: "找到唯一解，已自动补全在九宫格中。",
-        okSameNumbersMultiSolutions: (cnt) => `解的数值已确定（共 ${cnt} 组不同位置解法），已自动补全。`,
-        okMultiSolutions: (cnt) => `找到 ${cnt} 组符合条件的解，可切换查看。`,
-        resultsCountAll: (total) => `共 ${total} 组，已全部展示（可点击卡片切换）`,
+        errCandidatesPosInt: "备选数字须为正整数",
+        errDupeFixed: (dupes) => `重复数字：${dupes}`,
+        errDupeCandInFixed: (dupes) => `重复数字：${dupes}`,
+        errNeedInput: "缺少已知数字",
+        errTargetDiv3: (tgt) => `无整数解`,
+        errNoSolution: "无解",
+        okSingleSolution: "唯一解",
+        okSameNumbersMultiSolutions: (cnt) => `${cnt} 组解`,
+        okMultiSolutions: (cnt) => `${cnt} 组解`,
+        resultsCountAll: (total) => `${total} 组解`,
         resultsCountPaginated: (total, cur) => `共 ${total} 组，当前第 ${cur} 组`,
         groupLabel: (idx) => `第 ${idx + 1} 组`,
         gridNavLabel: (cur, total) => `解法 ${cur} / ${total}`
       },
       en: {
         langBtn: "中",
-        docTitle: "Duolingo Math Magic Square Solver - 3x3 Solver & Validator | duo.xue.moe",
+        docTitle: "Magic Square - 3x3 Solver & Validator | duo.xue.moe",
         docDesc: "Interactive 3x3 Magic Square solver for Duolingo Math levels. Instant auto-completion of positive integers, target sum deduction, candidate validation, and multiple solution viewing.",
         navCurrent: "Duolingo Math Solver",
         navGrid: "Grid",
         navSettings: "Settings",
-        navGuide: "Guide",
-        h1Title: "Duolingo Math Magic Square Solver",
-        subDesc: "Designed for Duolingo Math magic square levels. Enter known positive integers; the solver will auto-complete the remaining cells and highlight candidate positions.",
+        h1Title: "Magic Square",
         srOnlyTitle: "Magic Square Grid Input",
         gridPrevBtn: "◀ Prev",
         gridNextBtn: "Next ▶",
-        sideTitle: "Parameters & Solver",
-        labelTargetSum: "Target Sum (Row, column & diagonal sum)",
-        placeholderTargetSum: "e.g. 15 (auto-deduced)",
-        labelCandidateValues: "Available Numbers (Duolingo choices)",
-        placeholderCandidates: "e.g. 5 or 5, 10, 6",
-        solveBtn: "Solve & Fill",
+        sideTitle: "Settings",
+        labelTargetSum: "Target sum",
+        placeholderTargetSum: "15",
+        labelCandidateValues: "Candidates",
+        placeholderCandidates: "5, 10, 6",
+        solveBtn: "Solve",
         clearBtn: "Reset",
-        statusEmpty: "The grid is empty. Enter known numbers or a target sum.",
-        hintColors: "• Colors: <span class=\"badge-blue\">Blue</span> = known, <span class=\"badge-green\">Green</span> = solved, <span class=\"badge-orange\">Orange</span> = candidate match.<br>• Shortcuts: Arrow keys navigate; <kbd>Backspace</kbd> on an empty cell steps back; <kbd>Enter</kbd> solves.",
-        resultsTitle: "Valid Solutions",
+        statusEmpty: "Ready",
+        resultsTitle: "Solutions",
         prevBtn: "◀ Prev",
         nextBtn: "Next ▶",
-        guideCardTitle: "Rules & Solving Strategies",
-        guideH1: "Golden Rule of the Center Cell",
-        guideP1: "In any 3×3 magic square, <strong>the center number is always exactly one third of the target sum</strong> (<code>Target Sum = 3 × Center</code>). Entering either value immediately determines the other.",
-        guideH2: "Symmetry & Complementarity",
-        guideP2: "Opposite pairs sum to <code>2 × Center</code>. Numbering cells 1–9 from left to right, top to bottom, enter any pair <code>19 / 28 / 37 / 46</code> to infer the center and target sum.",
-        guideH3: "Infer from Three Cells",
-        guideP3: "With cells numbered 1–9, <code>Center = (2 × Cell 1 + Cell 2 + Cell 4) / 4</code> and <code>Center = (2 × Cell 1 + Cell 2 − Cell 6) / 2</code>. Enter <code>124 / 126</code> or rotated/reflected combinations to infer the center and target sum. Available numbers are highlighted in orange.",
         footerTop: "Back to Top ↑",
-        footerGuide: "Solving Tips",
         footerHome: "xue.moe Home",
-        statusReset: "Grid reset. Enter known numbers or a target sum.",
+        statusReset: "Reset",
         errCellInt: (idx) => `Cell ${idx + 1} must be a positive integer.`,
-        statusUpdated: "Known numbers updated.",
-        errConflictSum: (sums) => `Conflicting target sums detected: ${sums}. Please check your inputs.`,
-        okPartialSolution: (count) => `Filled ${count} determined cells. Add known numbers or available numbers to determine the remaining cells.`,
+        statusUpdated: "Updated",
+        errConflictSum: (sums) => `Conflicting sums: ${sums}`,
+        okPartialSolution: (count) => `${count} cells filled`,
         okAutoDetected: (val) => `Auto-detected target sum: ${val}`,
-        errTargetMismatch: (det, cur) => `Deduction yields sum ${det}, which conflicts with target sum ${cur}.`,
-        errNeedTarget: "Enter a target sum, a center value, an opposite pair, or enough known cells to deduce it.",
-        errInferredCenter: (center) => `The inferred center ${center} is not a positive integer. No positive integer solution exists.`,
+        errTargetMismatch: (det, cur) => `Conflicting sums: ${det} / ${cur}`,
+        errNeedTarget: "Target sum required",
+        errInferredCenter: (center) => `No positive integer solution`,
         errTargetPosInt: "Target sum must be a positive integer.",
-        errCandidatesPosInt: "Available numbers must be positive integers separated by commas or spaces.",
+        errCandidatesPosInt: "Candidates must be positive integers",
         errDupeFixed: (dupes) => `Numbers cannot repeat: duplicate ${dupes} found in known cells.`,
         errDupeCandInFixed: (dupes) => `Numbers cannot repeat: candidate ${dupes} is already placed in the grid.`,
-        errNeedInput: "Please enter at least one known number or available numbers.",
+        errNeedInput: "Known numbers required",
         errTargetDiv3: (tgt) => `Target sum ${tgt} is not divisible by 3. No integer solution exists.`,
-        errNoSolution: "No valid magic square matches the given constraints. Please verify your inputs.",
-        okSingleSolution: "Unique solution found and filled into the grid.",
-        okSameNumbersMultiSolutions: (cnt) => `Values uniquely determined (${cnt} position variations). Auto-filled into grid.`,
-        okMultiSolutions: (cnt) => `Found ${cnt} valid solutions. Use the controls to browse.`,
-        resultsCountAll: (total) => `Found ${total} solution${total === 1 ? '' : 's'}. Click a card to preview.`,
+        errNoSolution: "No solution",
+        okSingleSolution: "Unique solution",
+        okSameNumbersMultiSolutions: (cnt) => `${cnt} solutions`,
+        okMultiSolutions: (cnt) => `${cnt} solutions`,
+        resultsCountAll: (total) => `${total} solution${total === 1 ? '' : 's'}`,
         resultsCountPaginated: (total, cur) => `Solution ${cur} of ${total}`,
         groupLabel: (idx) => `Solution ${idx + 1}`,
         gridNavLabel: (cur, total) => `Solution ${cur} of ${total}`
@@ -1741,10 +1689,8 @@ html {
       document.getElementById('navCurrent').textContent = t.navCurrent;
       document.getElementById('navLinkGrid').textContent = t.navGrid;
       document.getElementById('navLinkSettings').textContent = t.navSettings;
-      document.getElementById('navLinkGuide').textContent = t.navGuide;
 
       document.getElementById('h1Title').textContent = t.h1Title;
-      document.getElementById('subDesc').textContent = t.subDesc;
       document.getElementById('srOnlyTitle').textContent = t.srOnlyTitle;
       gridPrevBtn.textContent = t.gridPrevBtn;
       gridNextBtn.textContent = t.gridNextBtn;
@@ -1757,22 +1703,12 @@ html {
 
       solveBtn.textContent = t.solveBtn;
       clearBtn.textContent = t.clearBtn;
-      document.getElementById('hintBox').innerHTML = t.hintColors;
 
       document.getElementById('resultsTitle').textContent = t.resultsTitle;
       prevBtn.textContent = t.prevBtn;
       nextBtn.textContent = t.nextBtn;
 
-      document.getElementById('guideCardTitle').textContent = t.guideCardTitle;
-      document.getElementById('guideH1').textContent = t.guideH1;
-      document.getElementById('guideP1').innerHTML = t.guideP1;
-      document.getElementById('guideH2').textContent = t.guideH2;
-      document.getElementById('guideP2').innerHTML = t.guideP2;
-      document.getElementById('guideH3').textContent = t.guideH3;
-      document.getElementById('guideP3').innerHTML = t.guideP3;
-
       document.getElementById('footerLinkTop').textContent = t.footerTop;
-      document.getElementById('footerLinkGuide').textContent = t.footerGuide;
       document.getElementById('footerLinkHome').textContent = t.footerHome;
 
       if (allSolutions.length > 0) {

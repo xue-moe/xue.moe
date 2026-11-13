@@ -40,7 +40,7 @@ for (const root of $$('.ip-card, .provider-card')) {
     const ip = values.get(root.id)?.ip;
     if (!ip) return;
     try { await navigator.clipboard.writeText(ip); toast('IP 已复制'); }
-    catch (_) { toast('复制失败，请手动选择 IP 地址'); }
+    catch (_) { toast('复制失败'); }
   });
 }
 async function request(url, { signal, timeout = 7000, ...options } = {}, parse = 'json') {
@@ -115,10 +115,10 @@ function createProbe([name, region], index) {
     const el = document.createElement('p'); el.className = className; el.textContent = value; root.appendChild(el);
   }
   const history = document.createElement('div'); history.className = 'probe-history';
-  history.setAttribute('role', 'img'); history.setAttribute('aria-label', '六次检测尚未开始');
+  history.setAttribute('role', 'img'); history.setAttribute('aria-label', '待测');
   for (let i = 0; i < 6; i++) {
     const segment = document.createElement('span'); segment.dataset.state = 'waiting';
-    segment.title = `第 ${i + 1} 次：等待检测`; history.appendChild(segment);
+    segment.title = `第 ${i + 1} 次：待测`; history.appendChild(segment);
   }
   root.appendChild(history);
   $('#probes').appendChild(root);
@@ -176,10 +176,10 @@ async function runProbes(signal) {
     root.dataset.state = 'pending'; delete root.dataset.latency;
     $('.probe-result', root).textContent = '…';
     const history = $('.probe-history', root);
-    history.setAttribute('aria-label', '六次检测尚未开始');
+    history.setAttribute('aria-label', '待测');
     [...history.children].forEach((segment, index) => {
       segment.dataset.state = 'waiting'; delete segment.dataset.latency;
-      segment.title = `第 ${index + 1} 次：等待检测`;
+      segment.title = `第 ${index + 1} 次：待测`;
     });
   }
   let next = 0;
@@ -226,7 +226,7 @@ async function queryProvider(source, signal) {
   return data;
 }
 async function providers(signal) {
-  for (const source of providerSources) put(`provider-${source.id}`, { error: '检测中…', status: '' }, signal);
+  for (const source of providerSources) put(`provider-${source.id}`, { error: '测试中...', status: '' }, signal);
   await Promise.allSettled(providerSources.map(async source => {
     try {
       const data = await queryProvider(source, signal);
@@ -238,7 +238,7 @@ async function runOverview() {
   runController?.abort();
   const controller = new AbortController(); runController = controller;
   const { signal } = controller;
-  for (const id of ['ipv4', 'ipv6']) put(id, { error: '检测中…', status: '' }, signal);
+  for (const id of ['ipv4', 'ipv6']) put(id, { error: '测试中...', status: '' }, signal);
   await Promise.allSettled([edge(signal), providers(signal), runProbes(signal)]);
 }
 $('#refresh').addEventListener('click', () => runTab(activeTab));
@@ -274,7 +274,6 @@ for (const tab of tabs) {
 }
 window.addEventListener('hashchange', () => selectTab(location.hash.slice(1), false));
 
-
 const splitTargets = [
   ['www.qualcomm.cn', '国内网站'],
   ['www.cloudflare.com', '海外网络'],
@@ -299,21 +298,21 @@ function splitRow(host, category, ip, country, status) {
   }
   return tr;
 }
-splitTargets.forEach(([host, category]) => $('#split-results').appendChild(splitRow(host, category, null, null, '等待检测')));
+splitTargets.forEach(([host, category]) => $('#split-results').appendChild(splitRow(host, category, null, null, '待测')));
 async function runSplit() {
   const button = $('#split-start'); button.disabled = true;
   const root = $('#split-results'); root.replaceChildren();
   const rows = splitTargets.map(([host, category]) => {
-    const tr = splitRow(host, category, null, null, '测速中…'); root.appendChild(tr); return tr;
+    const tr = splitRow(host, category, null, null, '测试中...'); root.appendChild(tr); return tr;
   });
   await Promise.allSettled(splitTargets.map(async ([host, category], index) => {
     try {
       const trace = parseTrace(await request(`https://${host}/cdn-cgi/trace`, { timeout: 7000 }, 'text'));
       if (!isIP(trace.ip)) throw new Error('目标没有返回出口 IP');
       const baseline = values.get('edge')?.ip;
-      const status = baseline ? (trace.ip === baseline ? '直连（与本站一致）' : '分流（走代理）') : '正常识别';
+      const status = baseline ? (trace.ip === baseline ? '直连' : '分流') : '已识别';
       rows[index].replaceWith(splitRow(host, category, trace.ip, trace.loc, status));
-    } catch (_) { rows[index].replaceWith(splitRow(host, category, null, null, '打不开或受限')); }
+    } catch (_) { rows[index].replaceWith(splitRow(host, category, null, null, '受限')); }
   }));
   button.disabled = false;
 }
@@ -325,19 +324,19 @@ const tabRunners = { 'local-ip': runOverview, routing: runSplit };
 function showRunStatus(id) {
   if (id !== activeTab) return;
   const busy = tabRuns.has(id);
-  $('#run-status').textContent = busy ? '测速中…' : tabStatus.get(id) || '准备就绪';
+  $('#run-status').textContent = busy ? '测试中...' : tabStatus.get(id) || '就绪';
   $('#refresh').disabled = busy;
   const btnText = $('#refresh .btn-text');
-  if (btnText) btnText.textContent = busy ? '测速中…' : '重新测一次';
-  else $('#refresh').textContent = busy ? '测速中…' : '↻ 重新测一次';
+  if (btnText) btnText.textContent = busy ? '测试中...' : '重测';
+  else $('#refresh').textContent = busy ? '测试中...' : '↻ 重测';
 }
 function runTab(id) {
   if (!tabRunners[id]) return Promise.resolve();
   if (tabRuns.has(id)) { showRunStatus(id); return tabRuns.get(id); }
   const task = Promise.resolve().then(() => tabRunners[id]()).then(() => {
-    tabStatus.set(id, `刚刚完成 · ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`);
+    tabStatus.set(id, `完成 · ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`);
   }).catch(() => {
-    tabStatus.set(id, '检测遇到问题，请重试');
+    tabStatus.set(id, '测试失败');
   }).finally(() => {
     tabRuns.delete(id);
     showRunStatus(id);

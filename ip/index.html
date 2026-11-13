@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
-  <title>我的网络与 IP · ip.xue.moe</title>
+  <title>IP 查询 · ip.xue.moe</title>
   <meta name="description" content="一目了然看清你的公网 IPv4 / IPv6 地址、宽带归属地、运营商，以及常用网站访问速度与分流测试。">
   <link rel="canonical" href="https://ip.xue.moe/">
-  <meta property="og:title" content="我的网络与 IP · ip.xue.moe">
+  <meta property="og:title" content="IP 查询 · ip.xue.moe">
   <meta property="og:description" content="看清你的当前网络：IPv4 / IPv6 公网地址、宽带归属地与国内外网站访问速度。">
   <meta property="og:url" content="https://ip.xue.moe/">
   <meta property="og:type" content="website">
@@ -40,8 +40,7 @@
           <span class="page-tag">❄ 查 IP</span>
         </div>
         <div class="sidebar-desc">
-          <h1>我的网络与 IP</h1>
-          <p>看清当前的公网出口与网站访问速度</p>
+          <h1>IP 查询</h1>
         </div>
       </div>
 
@@ -57,9 +56,9 @@
       </nav>
 
       <div class="sidebar-actions">
-        <button class="control-btn refresh" id="refresh" type="button" title="重新测一次">
+        <button class="control-btn refresh" id="refresh" type="button" title="重测">
           <span class="btn-icon">↻</span>
-          <span class="btn-text">重新测一次</span>
+          <span class="btn-text">重测</span>
         </button>
         <div class="action-subgroup">
           <button class="control-btn theme-btn" id="theme" type="button" aria-label="切换深浅色模式" title="切换深浅色模式">◐</button>
@@ -76,7 +75,7 @@
           <span class="status-indicator" aria-hidden="true"></span>
           <h2 id="view-title">我的 IP</h2>
         </div>
-        <p id="run-status" role="status">准备就绪</p>
+        <p id="run-status" role="status">就绪</p>
       </div>
 
       <section id="local-ip" class="overview-panel" aria-label="访问本站的 IP 与不同查询源的出口" role="tabpanel" data-panel aria-labelledby="tab-local-ip">
@@ -85,28 +84,27 @@
             <div class="card-top">
               <div class="tag-group">
                 <span class="proto-tag tag-v4">IPv4</span>
-                <h3>当前 IPv4</h3>
+                <h3>IPv4 地址</h3>
               </div>
-              <span class="badge">本站连接</span>
             </div>
 
             <div class="ip-display-row">
-              <button class="address" type="button" title="点击复制 IP 地址" aria-label="IP 地址检测中" disabled>检测中…</button>
-              <span class="copy-hint" aria-hidden="true">点击复制</span>
+              <button class="address" type="button" title="复制 IP" aria-label="IP 测试中" disabled>测试中...</button>
+              <span class="copy-hint" aria-hidden="true">复制</span>
             </div>
             <span class="state" hidden></span>
 
             <dl class="meta-row">
               <div class="meta-item">
-                <dt>所在地区</dt>
+                <dt>地区</dt>
                 <dd data-field="location">—</dd>
               </div>
               <div class="meta-item">
-                <dt>宽带运营商</dt>
+                <dt>运营商</dt>
                 <dd data-field="isp">—</dd>
               </div>
               <div class="meta-item">
-                <dt>网络编号 (ASN)</dt>
+                <dt>ASN</dt>
                 <dd data-field="asn">—</dd>
               </div>
             </dl>
@@ -116,28 +114,27 @@
             <div class="card-top">
               <div class="tag-group">
                 <span class="proto-tag tag-v6">IPv6</span>
-                <h3>当前 IPv6</h3>
+                <h3>IPv6 地址</h3>
               </div>
-              <span class="badge">双栈检测</span>
             </div>
 
             <div class="ip-display-row">
-              <button class="address" type="button" title="点击复制 IP 地址" aria-label="IP 地址检测中" disabled>检测中…</button>
-              <span class="copy-hint" aria-hidden="true">点击复制</span>
+              <button class="address" type="button" title="复制 IP" aria-label="IP 测试中" disabled>测试中...</button>
+              <span class="copy-hint" aria-hidden="true">复制</span>
             </div>
             <span class="state" hidden></span>
 
             <dl class="meta-row">
               <div class="meta-item">
-                <dt>所在地区</dt>
+                <dt>地区</dt>
                 <dd data-field="location">—</dd>
               </div>
               <div class="meta-item">
-                <dt>宽带运营商</dt>
+                <dt>运营商</dt>
                 <dd data-field="isp">—</dd>
               </div>
               <div class="meta-item">
-                <dt>网络编号 (ASN)</dt>
+                <dt>ASN</dt>
                 <dd data-field="asn">—</dd>
               </div>
             </dl>
@@ -146,8 +143,7 @@
 
         <div class="section-title-wrap">
           <div class="title-left">
-            <h3>国内与海外平台看到的你</h3>
-            <p>不同平台看到的 IP 和地理位置可能不同，一眼就能看出是否走了代理或分流</p>
+            <h3>出口 IP</h3>
           </div>
         </div>
 
@@ -158,13 +154,12 @@
                 <span class="monogram mono-cn">CN</span>
                 <div class="brand-text">
                   <h3>IP.cn</h3>
-                  <span class="provider-sub">国内平台</span>
                 </div>
               </div>
               <span class="probe-region" data-region="domestic">国内</span>
             </div>
             <div class="provider-ip-row">
-              <button class="address" type="button" title="点击复制 IP" aria-label="IP 地址检测中" disabled>检测中…</button>
+              <button class="address" type="button" title="复制 IP" aria-label="IP 测试中" disabled>测试中...</button>
               <span class="copy-hint" aria-hidden="true">复制</span>
             </div>
             <span class="state" hidden></span>
@@ -180,13 +175,12 @@
                 <span class="monogram mono-ipip">IP</span>
                 <div class="brand-text">
                   <h3>IPIP</h3>
-                  <span class="provider-sub">高精度归属地</span>
                 </div>
               </div>
               <span class="probe-region" data-region="domestic">国内</span>
             </div>
             <div class="provider-ip-row">
-              <button class="address" type="button" title="点击复制 IP" aria-label="IP 地址检测中" disabled>检测中…</button>
+              <button class="address" type="button" title="复制 IP" aria-label="IP 测试中" disabled>测试中...</button>
               <span class="copy-hint" aria-hidden="true">复制</span>
             </div>
             <span class="state" hidden></span>
@@ -202,13 +196,12 @@
                 <span class="monogram mono-yinghualuo">樱</span>
                 <div class="brand-text">
                   <h3>樱花落</h3>
-                  <span class="provider-sub">宽带直连</span>
                 </div>
               </div>
               <span class="probe-region" data-region="domestic">国内</span>
             </div>
             <div class="provider-ip-row">
-              <button class="address" type="button" title="点击复制 IP" aria-label="IP 地址检测中" disabled>检测中…</button>
+              <button class="address" type="button" title="复制 IP" aria-label="IP 测试中" disabled>测试中...</button>
               <span class="copy-hint" aria-hidden="true">复制</span>
             </div>
             <span class="state" hidden></span>
@@ -224,13 +217,12 @@
                 <span class="monogram mono-ipsb">SB</span>
                 <div class="brand-text">
                   <h3>IP.SB</h3>
-                  <span class="provider-sub">海外出口</span>
                 </div>
               </div>
               <span class="probe-region" data-region="global">海外</span>
             </div>
             <div class="provider-ip-row">
-              <button class="address" type="button" title="点击复制 IP" aria-label="IP 地址检测中" disabled>检测中…</button>
+              <button class="address" type="button" title="复制 IP" aria-label="IP 测试中" disabled>测试中...</button>
               <span class="copy-hint" aria-hidden="true">复制</span>
             </div>
             <span class="state" hidden></span>
@@ -246,13 +238,12 @@
                 <span class="monogram mono-cf">CF</span>
                 <div class="brand-text">
                   <h3>Cloudflare</h3>
-                  <span class="provider-sub">全球边缘网络</span>
                 </div>
               </div>
               <span class="probe-region" data-region="global">海外</span>
             </div>
             <div class="provider-ip-row">
-              <button class="address" type="button" title="点击复制 IP" aria-label="IP 地址检测中" disabled>检测中…</button>
+              <button class="address" type="button" title="复制 IP" aria-label="IP 测试中" disabled>测试中...</button>
               <span class="copy-hint" aria-hidden="true">复制</span>
             </div>
             <span class="state" hidden></span>
@@ -268,13 +259,12 @@
                 <span class="monogram mono-ipify">FY</span>
                 <div class="brand-text">
                   <h3>ipify</h3>
-                  <span class="provider-sub">海外公网出口</span>
                 </div>
               </div>
               <span class="probe-region" data-region="global">海外</span>
             </div>
             <div class="provider-ip-row">
-              <button class="address" type="button" title="点击复制 IP" aria-label="IP 地址检测中" disabled>检测中…</button>
+              <button class="address" type="button" title="复制 IP" aria-label="IP 测试中" disabled>测试中...</button>
               <span class="copy-hint" aria-hidden="true">复制</span>
             </div>
             <span class="state" hidden></span>
@@ -288,8 +278,7 @@
         <section class="card routing-panel" id="connectivity">
           <div class="section-heading">
             <div class="heading-main">
-              <h2>常用网站打开快不快</h2>
-              <p>每站请求 6 次，显示成功请求的中位耗时，底部六段线展示每次结果；并非网页完整加载时间</p>
+              <h2>站点测速</h2>
             </div>
           </div>
           <section class="probe-grid" id="probes" aria-label="网站连通性检测"></section>
@@ -299,30 +288,28 @@
       <section class="card feature split-panel" id="routing" role="tabpanel" data-panel aria-labelledby="tab-routing" hidden>
         <div class="panel-header-row">
           <div class="panel-info">
-            <h3>各个网站分流情况</h3>
-            <p>看看你访问不同网站时，对方看到的是你的真实宽带，还是走了代理？</p>
+            <h3>分流检测</h3>
           </div>
-          <button class="control-btn" type="button" id="split-start">↻ 重新测一次</button>
+          <button class="control-btn" type="button" id="split-start">↻ 重测</button>
         </div>
         <div class="table-wrap">
           <table class="split-table">
             <thead>
               <tr>
-                <th scope="col">目标网站</th>
+                <th scope="col">网站</th>
                 <th scope="col">分类</th>
-                <th scope="col">对方看到的 IP</th>
+                <th scope="col">出口 IP</th>
                 <th scope="col">出口地区</th>
-                <th scope="col">分流情况</th>
+                <th scope="col">状态</th>
               </tr>
             </thead>
             <tbody id="split-results"></tbody>
           </table>
         </div>
-        <p class="note">💡 提示：这里直接检测各网站看到你的 IP 地址。如果部分网站因为安全防护拦截了跨域探测，会显示未通，不影响你正常使用这些网站。</p>
       </section>
 
       <noscript>
-        <p class="card about">请在浏览器中启用 JavaScript 以使用网络检测工具。</p>
+        <p class="card about">需启用 JavaScript</p>
       </noscript>
 
       <footer>
