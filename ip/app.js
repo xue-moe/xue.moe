@@ -111,9 +111,16 @@ function createProbe([name, region], index) {
   const tag = document.createElement('span'); tag.className = 'probe-region'; tag.textContent = region;
   tag.dataset.region = region === '国内' ? 'domestic' : 'global';
   heading.append(title, tag); root.appendChild(heading);
-  for (const [className, value] of [['probe-result', '—'], ['probe-state', '等待中']]) {
+  for (const [className, value] of [['probe-result', '—']]) {
     const el = document.createElement('p'); el.className = className; el.textContent = value; root.appendChild(el);
   }
+  const history = document.createElement('div'); history.className = 'probe-history';
+  history.setAttribute('role', 'img'); history.setAttribute('aria-label', '六次检测尚未开始');
+  for (let i = 0; i < 6; i++) {
+    const segment = document.createElement('span'); segment.dataset.state = 'waiting';
+    segment.title = `第 ${i + 1} 次：等待检测`; history.appendChild(segment);
+  }
+  root.appendChild(history);
   $('#probes').appendChild(root);
 }
 targets.forEach(createProbe);
@@ -128,9 +135,12 @@ function medianLatency(samples) {
 async function probe([, , url], index, signal) {
   const root = $(`#probe-${index}`);
   const samples = [];
+  const history = $('.probe-history', root);
+  const segments = [...history.children];
   for (let attempt = 0; attempt < 6; attempt++) {
     if (signal.aborted) return;
-    $('.probe-state', root).textContent = `检测 ${attempt + 1}/6 · 成功 ${samples.length} 次`;
+    const segment = segments[attempt]; segment.dataset.state = 'pending';
+    segment.title = `第 ${attempt + 1} 次：检测中`;
     const start = performance.now();
     try {
       const res = await request(`${url}?_=${Date.now()}-${index}-${attempt}`, { signal, mode: 'no-cors', timeout: 6000 }, 'response');
@@ -138,7 +148,14 @@ async function probe([, , url], index, signal) {
       if (res.body) await res.body.cancel();
       if (signal.aborted) return;
       samples.push(elapsed);
-    } catch (_) { if (signal.aborted) return; }
+      segment.dataset.state = 'ok'; segment.dataset.latency = latencyBand(elapsed);
+      segment.title = `第 ${attempt + 1} 次：${Math.max(1, Math.round(elapsed))} ms`;
+    } catch (_) {
+      if (signal.aborted) return;
+      segment.dataset.state = 'error'; segment.dataset.latency = 'error';
+      segment.title = `第 ${attempt + 1} 次：超时或受限`;
+    }
+    history.setAttribute('aria-label', segments.map(item => item.title).join('；'));
     if (samples.length) {
       const ms = medianLatency(samples);
       root.dataset.latency = latencyBand(ms);
@@ -148,12 +165,9 @@ async function probe([, , url], index, signal) {
   }
   if (signal.aborted) return;
   root.dataset.state = samples.length ? 'ok' : 'error';
-  if (samples.length) {
-    $('.probe-state', root).textContent = `成功 ${samples.length}/6 · 中位耗时`;
-  } else {
+  if (!samples.length) {
     root.dataset.latency = 'error';
     $('.probe-result', root).textContent = '—';
-    $('.probe-state', root).textContent = '成功 0/6 · 超时或受限';
   }
 }
 async function runProbes(signal) {
@@ -161,7 +175,12 @@ async function runProbes(signal) {
     const root = $(`#probe-${i}`);
     root.dataset.state = 'pending'; delete root.dataset.latency;
     $('.probe-result', root).textContent = '…';
-    $('.probe-state', root).textContent = '等待检测';
+    const history = $('.probe-history', root);
+    history.setAttribute('aria-label', '六次检测尚未开始');
+    [...history.children].forEach((segment, index) => {
+      segment.dataset.state = 'waiting'; delete segment.dataset.latency;
+      segment.title = `第 ${index + 1} 次：等待检测`;
+    });
   }
   let next = 0;
   await Promise.all(Array.from({ length: Math.min(4, targets.length) }, async () => {

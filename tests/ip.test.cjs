@@ -242,10 +242,11 @@ test('Yinghualuo uses the browser JSON endpoint and preserves location and ISP',
 
 test('six probe attempts show median of successes and report partial or total failure', async () => {
   for (const outcomes of [[10, 40, null, 1000, 60, 80], [null, null, null, null, null, null]]) {
-    const result = {}, state = {}, root = { dataset: {} };
+    const result = {}, root = { dataset: {} };
+    const history = { children: Array.from({ length: 6 }, () => ({ dataset: {} })), setAttribute() {} };
     let calls = 0, now = 0;
     const context = {
-      $: selector => selector === '.probe-result' ? result : selector === '.probe-state' ? state : root,
+      $: selector => selector === '.probe-result' ? result : selector === '.probe-history' ? history : root,
       performance: { now: () => now },
       request: async () => {
         const value = outcomes[calls++];
@@ -259,8 +260,9 @@ test('six probe attempts show median of successes and report partial or total fa
     await context.probe(['Test', '国内', 'https://example.com/favicon.ico'], 0, new AbortController().signal);
     assert.equal(calls, 6);
     assert.equal(result.textContent, outcomes[0] === null ? '—' : '60 ms');
-    assert.equal(state.textContent, outcomes[0] === null ? '成功 0/6 · 超时或受限' : '成功 5/6 · 中位耗时');
     assert.equal(root.dataset.state, outcomes[0] === null ? 'error' : 'ok');
+    assert.deepEqual(history.children.map(item => item.dataset.latency), outcomes.map(ms => ms === null ? 'error' : context.latencyBand(ms)));
+    assert.doesNotMatch(app, /probe-state/);
     assert.equal(context.medianLatency([1000, 10, 20, 30, 40, 50]), 35);
   }
 });
@@ -269,7 +271,7 @@ test('probe queue limits concurrency to four and does not start after cancellati
   let active = 0, peak = 0, calls = 0;
   const context = {
     targets: Array.from({ length: 8 }, (_, i) => [i]),
-    $: () => ({ dataset: {} }),
+    $: selector => selector === '.probe-history' ? { children: [], setAttribute() {} } : ({ dataset: {} }),
     probe: async () => { calls++; active++; peak = Math.max(peak, active); await Promise.resolve(); active--; }
   };
   vm.createContext(context);

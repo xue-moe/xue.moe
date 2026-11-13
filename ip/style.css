@@ -768,31 +768,6 @@ html[data-theme="dark"] .probe-region[data-region="global"],
   margin-top: 2px;
 }
 
-.speed-legend {
-  font-size: 11px;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.legend-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.dot-fast { background: #10b981; }
-.dot-norm { background: #0284c7; }
-.dot-slow { background: #f59e0b; }
-
 .probe-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -800,6 +775,8 @@ html[data-theme="dark"] .probe-region[data-region="global"],
 }
 
 .probe {
+  position: relative;
+  overflow: hidden;
   background: var(--card-inner);
   border: 1px solid var(--cell-empty);
   border-radius: 14px;
@@ -835,11 +812,6 @@ html[data-theme="dark"] .probe-region[data-region="global"],
   color: var(--text-main);
 }
 
-.probe-state {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
 /* Latency colors */
 [data-latency="fast"] { --latency-color: #059669; }
 [data-latency="normal"] { --latency-color: #0284c7; }
@@ -867,9 +839,24 @@ html[data-theme="dark"] [data-latency="high"],
   color: var(--latency-color);
 }
 
-.probe[data-latency] {
-  border-bottom: 2.5px solid var(--latency-color);
+.probe-history {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 3px;
+  height: 4px;
 }
+
+.probe-history span {
+  background: var(--cell-empty);
+  transition: background-color .2s ease;
+}
+
+.probe-history [data-state="pending"] { background: var(--primary); }
+.probe-history [data-latency] { background: var(--latency-color); }
 
 /* ==========================================================================
    Split Routing Table

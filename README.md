@@ -146,7 +146,7 @@ npx wrangler deploy --config wrangler.ip-http.toml
 - **本机 IP**：`/api/ip` 返回 Cloudflare 实际看到的连接 IP、归属地与 ASN，按协议填入 IPv4 或 IPv6 卡片，另一协议显示“本次未使用”。点击地址即可复制。
 - **国内查询源**：IP.cn、IPIP、樱花落。
 - **国际查询源**：IP.SB、Cloudflare、ipify。各源由浏览器直连获取真实出口；樱花落提供 IP、归属地与运营商；ipify 仅提供地址。服务地域标签不保证实际节点位置。
-- **首页连通性**：检测小红书、Bilibili、腾讯、淘宝、GitHub、Google、Cloudflare、YouTube 的 HTTP 请求耗时；每站检测 6 次，间隔 500 ms，最多同时检测 4 个网站，显示成功请求的中位数与成功次数，并按 100 / 300 / 1000 ms 分档着色。跨域响应不代表完整可用性，数值不是 ICMP Ping。
+- **首页连通性**：检测小红书、Bilibili、腾讯、淘宝、GitHub、Google、Cloudflare、YouTube 的 HTTP 请求耗时；每站检测 6 次，间隔 500 ms，最多同时检测 4 个网站，显示成功请求的中位数，卡片底部六段状态线按每次耗时着色，并按 100 / 300 / 1000 ms 分档着色。跨域响应不代表完整可用性，数值不是 ICMP Ping。
 - **网站分流测试**：独立 Tab 展示访问目标网站时的出口 IP 和国家 / 地区。读取目标网站的 Cloudflare trace，接口受限时单独标明失败。
 
 仅保留本机 IP 与网站分流两个 Tab，进入时自动检测，运行中不重复发起。页面沿用主站配色与共享 `xue-theme` 偏好，使用独立的工具布局。
