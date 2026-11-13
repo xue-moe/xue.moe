@@ -2185,6 +2185,7 @@
     <section role="tabpanel" aria-labelledby="tabBtnTimer" id="panel-timer" class="panel">
       <div class="glass-card timer-wrap">
         <h1 id="timerTitle" style="font-size:20px; font-weight:800; margin-bottom:6px;">专注计时</h1>
+        <p id="timerSub" style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">专注与休息，可自定义时长</p>
 
         <div class="timer-segmented">
           <button class="timer-mode-btn active" data-minutes="25" id="timerMode25">专注 25分钟</button>
@@ -2217,6 +2218,7 @@
     <section role="tabpanel" aria-labelledby="tabBtnText" id="panel-text" class="panel">
       <div class="glass-card">
         <h1 id="textLabTitle" style="font-size:18px; font-weight:800; margin-bottom:8px;">文本分析</h1>
+        <p id="textLabSub" style="font-size:13px; color:var(--text-muted); margin-bottom:18px;">字数统计、字符排错与拼音注音</p>
 
         <textarea id="textInput" class="textarea-box" placeholder="输入或粘贴文本..." autocomplete="off" data-1p-ignore data-bwignore></textarea>
 
@@ -2536,6 +2538,7 @@
         yearProgVal: (pct, dNum, total) => `${pct}% (${dNum} / ${total} 天)`,
         clockHeading: '世界时钟',
         timerTitle: '专注计时',
+        timerSub: '专注与休息，可自定义时长',
         timerMode25: '专注 25 分钟',
         timerMode5: '短休 5 分钟',
         timerMode15: '长休 15 分钟',
@@ -2553,6 +2556,7 @@
         timerCustomApply: '应用时长',
         timerCustomInvalid: '时长须为 1–360 分钟',
         textLabTitle: '文本分析',
+        textLabSub: '字数统计、字符排错与拼音注音',
         textInputPlaceholder: '输入或粘贴文本...',
         inspectorTitle: '字符检视',
         charCountUnit: '字符',
@@ -2714,6 +2718,7 @@
         yearProgVal: (pct, dNum, total) => `${pct}% (${dNum} / ${total} days)`,
         clockHeading: 'World Clocks',
         timerTitle: 'Focus Timer',
+        timerSub: 'Focus, breaks and custom durations',
         timerMode25: 'Focus 25m',
         timerMode5: 'Short Break 5m',
         timerMode15: 'Long Break 15m',
@@ -2731,6 +2736,7 @@
         timerCustomApply: 'Apply duration',
         timerCustomInvalid: 'Enter a whole number from 1 to 360 minutes.',
         textLabTitle: 'Text Analysis',
+        textLabSub: 'Text counts, character checks, Pinyin and Romaji',
         textInputPlaceholder: 'Type or paste text here...',
         inspectorTitle: 'Character Inspector',
         charCountUnit: 'characters',
@@ -5097,6 +5103,7 @@
       // Timer panel
       const timerTitle = document.getElementById('timerTitle');
       if (timerTitle) timerTitle.textContent = t.timerTitle;
+      document.getElementById('timerSub').textContent = t.timerSub;
       const mode25 = document.getElementById('timerMode25');
       if (mode25) mode25.textContent = t.timerMode25;
       const mode5 = document.getElementById('timerMode5');
@@ -5116,6 +5123,7 @@
       // Text Lab panel
       const textLabTitle = document.getElementById('textLabTitle');
       if (textLabTitle) textLabTitle.textContent = t.textLabTitle;
+      document.getElementById('textLabSub').textContent = t.textLabSub;
       const textInput = document.getElementById('textInput');
       if (textInput) textInput.placeholder = t.textInputPlaceholder;
       const inspectorTitle = document.getElementById('inspectorTitle');

@@ -677,6 +677,7 @@ html {
         <h1 id="h1Title">幻方求解</h1>
       </div>
 
+      <p class="sub" id="subDesc">填写已知数字，补全九宫格并校验备选值。</p>
       <div class="layout">
         <div class="grid-wrap" id="grid-section">
           <h2 class="sr-only" id="srOnlyTitle">九宫格输入棋盘</h2>
@@ -691,7 +692,7 @@ html {
         <div class="side" id="settings-section">
           <h2 class="side-title" id="sideTitle">设置</h2>
           <div class="field">
-            <label for="targetSum" id="labelTargetSum">目标和值</label>
+            <label for="targetSum" id="labelTargetSum">目标和值（行、列与对角线之和）</label>
             <input id="targetSum" type="number" step="1" inputmode="numeric" autocomplete="off" data-1p-ignore data-bwignore placeholder="15">
           </div>
 
@@ -768,11 +769,12 @@ html {
         navGrid: "九宫格",
         navSettings: "设置",
         h1Title: "幻方求解",
+        subDesc: "填写已知数字，补全九宫格并校验备选值。",
         srOnlyTitle: "九宫格输入棋盘",
         gridPrevBtn: "◀ 上一组",
         gridNextBtn: "下一组 ▶",
         sideTitle: "设置",
-        labelTargetSum: "目标和值",
+        labelTargetSum: "目标和值（行、列与对角线之和）",
         placeholderTargetSum: "15",
         labelCandidateValues: "备选数字",
         placeholderCandidates: "5, 10, 6",
@@ -816,11 +818,12 @@ html {
         navGrid: "Grid",
         navSettings: "Settings",
         h1Title: "Magic Square",
+        subDesc: "Fill known numbers to solve the grid and check candidates.",
         srOnlyTitle: "Magic Square Grid Input",
         gridPrevBtn: "◀ Prev",
         gridNextBtn: "Next ▶",
         sideTitle: "Settings",
-        labelTargetSum: "Target sum",
+        labelTargetSum: "Target sum (rows, columns, diagonals)",
         placeholderTargetSum: "15",
         labelCandidateValues: "Candidates",
         placeholderCandidates: "5, 10, 6",
@@ -1691,6 +1694,7 @@ html {
       document.getElementById('navLinkSettings').textContent = t.navSettings;
 
       document.getElementById('h1Title').textContent = t.h1Title;
+      document.getElementById('subDesc').textContent = t.subDesc;
       document.getElementById('srOnlyTitle').textContent = t.srOnlyTitle;
       gridPrevBtn.textContent = t.gridPrevBtn;
       gridNextBtn.textContent = t.gridNextBtn;
