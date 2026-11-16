@@ -541,10 +541,10 @@ button {
   display: none !important;
 }
 
-/* Metadata pill strip */
+/* Stacked IP metadata */
 .meta-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 10px;
   border-top: 1px solid var(--cell-empty);
   padding-top: 16px;
@@ -1120,9 +1120,6 @@ footer a:hover {
 }
 .provider-meta[hidden], .meta-item[hidden], [data-field][hidden] {
   display: none;
-}
-.meta-row {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, .7fr);
 }
 .meta-item dd {
   white-space: normal;
