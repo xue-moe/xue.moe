@@ -57,9 +57,9 @@
       </nav>
 
       <div class="sidebar-actions">
-        <button class="control-btn refresh" id="refresh" type="button" title="刷新 IP" aria-label="刷新 IP">
+        <button class="control-btn refresh" id="refresh" type="button" title="重测" aria-label="重测">
           <span class="btn-icon">↻</span>
-          <span class="btn-text">刷新 IP</span>
+          <span class="btn-text">重测</span>
         </button>
         <div class="action-subgroup">
           <button class="control-btn theme-btn" id="theme" type="button" aria-label="切换深浅色模式" title="切换深浅色模式">◐</button>
@@ -141,14 +141,10 @@
             </dl>
           </article>
         </div>
-
-        <p class="privacy-note">第三方直连 · 对方可见出口 IP</p>
         <div class="section-title-wrap">
           <div class="title-left">
-            <h3>出口 IP</h3>
-            <p>不同平台识别的出口地址</p>
+            <h3>IP 查询源</h3>
           </div>
-          <div class="section-controls"><span id="providers-status" role="status"></span><button class="control-btn" id="providers-start" type="button">查询出口</button></div>
         </div>
 
         <div class="provider-grid">
@@ -163,14 +159,15 @@
               <span class="probe-region" data-region="domestic">国内</span>
             </div>
             <div class="provider-ip-row">
-              <button class="address" type="button" title="复制 IP" aria-label="待查询 IP" disabled>待查询</button>
+              <button class="address" type="button" title="复制 IP" aria-label="IP 测试中" disabled>测试中...</button>
               <span class="copy-hint" aria-hidden="true">复制</span>
             </div>
             <span class="state" hidden></span>
-            <div class="provider-meta" hidden>
-              <p class="provider-location" data-field="location">—</p>
-              <p class="provider-isp" data-field="isp">—</p>
-            </div>
+            <dl class="provider-meta" hidden>
+              <div><dt>地区</dt><dd data-field="location">—</dd></div>
+              <div><dt>运营商</dt><dd data-field="isp">—</dd></div>
+              <div><dt>ASN</dt><dd data-field="asn">—</dd></div>
+            </dl>
           </article>
 
           <article class="card provider-card" id="provider-ipip" data-has-ip="false">
@@ -184,14 +181,15 @@
               <span class="probe-region" data-region="domestic">国内</span>
             </div>
             <div class="provider-ip-row">
-              <button class="address" type="button" title="复制 IP" aria-label="待查询 IP" disabled>待查询</button>
+              <button class="address" type="button" title="复制 IP" aria-label="IP 测试中" disabled>测试中...</button>
               <span class="copy-hint" aria-hidden="true">复制</span>
             </div>
             <span class="state" hidden></span>
-            <div class="provider-meta" hidden>
-              <p class="provider-location" data-field="location">—</p>
-              <p class="provider-isp" data-field="isp">—</p>
-            </div>
+            <dl class="provider-meta" hidden>
+              <div><dt>地区</dt><dd data-field="location">—</dd></div>
+              <div><dt>运营商</dt><dd data-field="isp">—</dd></div>
+              <div><dt>ASN</dt><dd data-field="asn">—</dd></div>
+            </dl>
           </article>
 
           <article class="card provider-card" id="provider-yinghualuo" data-has-ip="false">
@@ -205,14 +203,15 @@
               <span class="probe-region" data-region="domestic">国内</span>
             </div>
             <div class="provider-ip-row">
-              <button class="address" type="button" title="复制 IP" aria-label="待查询 IP" disabled>待查询</button>
+              <button class="address" type="button" title="复制 IP" aria-label="IP 测试中" disabled>测试中...</button>
               <span class="copy-hint" aria-hidden="true">复制</span>
             </div>
             <span class="state" hidden></span>
-            <div class="provider-meta" hidden>
-              <p class="provider-location" data-field="location">—</p>
-              <p class="provider-isp" data-field="isp">—</p>
-            </div>
+            <dl class="provider-meta" hidden>
+              <div><dt>地区</dt><dd data-field="location">—</dd></div>
+              <div><dt>运营商</dt><dd data-field="isp">—</dd></div>
+              <div><dt>ASN</dt><dd data-field="asn">—</dd></div>
+            </dl>
           </article>
 
           <article class="card provider-card" id="provider-ipsb" data-has-ip="false">
@@ -226,14 +225,15 @@
               <span class="probe-region" data-region="global">海外</span>
             </div>
             <div class="provider-ip-row">
-              <button class="address" type="button" title="复制 IP" aria-label="待查询 IP" disabled>待查询</button>
+              <button class="address" type="button" title="复制 IP" aria-label="IP 测试中" disabled>测试中...</button>
               <span class="copy-hint" aria-hidden="true">复制</span>
             </div>
             <span class="state" hidden></span>
-            <div class="provider-meta" hidden>
-              <p class="provider-location" data-field="location">—</p>
-              <p class="provider-isp" data-field="isp">—</p>
-            </div>
+            <dl class="provider-meta" hidden>
+              <div><dt>地区</dt><dd data-field="location">—</dd></div>
+              <div><dt>运营商</dt><dd data-field="isp">—</dd></div>
+              <div><dt>ASN</dt><dd data-field="asn">—</dd></div>
+            </dl>
           </article>
 
           <article class="card provider-card" id="provider-cloudflare" data-has-ip="false">
@@ -247,14 +247,15 @@
               <span class="probe-region" data-region="global">海外</span>
             </div>
             <div class="provider-ip-row">
-              <button class="address" type="button" title="复制 IP" aria-label="待查询 IP" disabled>待查询</button>
+              <button class="address" type="button" title="复制 IP" aria-label="IP 测试中" disabled>测试中...</button>
               <span class="copy-hint" aria-hidden="true">复制</span>
             </div>
             <span class="state" hidden></span>
-            <div class="provider-meta" hidden>
-              <p class="provider-location" data-field="location">—</p>
-              <p class="provider-isp" data-field="isp">—</p>
-            </div>
+            <dl class="provider-meta" hidden>
+              <div><dt>地区</dt><dd data-field="location">—</dd></div>
+              <div><dt>运营商</dt><dd data-field="isp">—</dd></div>
+              <div><dt>ASN</dt><dd data-field="asn">—</dd></div>
+            </dl>
           </article>
 
           <article class="card provider-card" id="provider-ipify" data-has-ip="false">
@@ -268,14 +269,15 @@
               <span class="probe-region" data-region="global">海外</span>
             </div>
             <div class="provider-ip-row">
-              <button class="address" type="button" title="复制 IP" aria-label="待查询 IP" disabled>待查询</button>
+              <button class="address" type="button" title="复制 IP" aria-label="IP 测试中" disabled>测试中...</button>
               <span class="copy-hint" aria-hidden="true">复制</span>
             </div>
             <span class="state" hidden></span>
-            <div class="provider-meta" hidden>
-              <p class="provider-location" data-field="location">—</p>
-              <p class="provider-isp" data-field="isp">—</p>
-            </div>
+            <dl class="provider-meta" hidden>
+              <div><dt>地区</dt><dd data-field="location">—</dd></div>
+              <div><dt>运营商</dt><dd data-field="isp">—</dd></div>
+              <div><dt>ASN</dt><dd data-field="asn">—</dd></div>
+            </dl>
           </article>
         </div>
 
@@ -285,7 +287,6 @@
               <h2>站点测速</h2>
               <p>常用站点的响应延迟</p>
             </div>
-            <div class="section-controls"><span id="probes-status" role="status"></span><button class="control-btn" id="probes-start" type="button">开始测试</button></div>
           </div>
           <section class="probe-grid" id="probes" aria-label="网站连通性检测"></section>
         </section>
@@ -297,9 +298,7 @@
             <h3>出口对比</h3>
             <p>查看各站点的出口 IP</p>
           </div>
-          <div class="section-controls"><span id="routing-status" role="status"></span><button class="control-btn" type="button" id="split-start">开始对比</button></div>
         </div>
-        <p class="privacy-note">第三方直连 · 对方可见出口 IP</p>
         <p class="table-scroll-hint">左右滑动查看 ↔</p>
         <div class="table-wrap" tabindex="0" role="region" aria-label="出口对比结果，可横向滚动">
           <table class="split-table">

@@ -66,7 +66,7 @@ test('overview IP is clickable when available and disabled when unavailable', ()
   assert.equal(nodes.location.title, 'Perth'); assert.equal(nodes.location.hidden, false);
   data.set('edge', { error: '暂不可用' }); context.renderCard('edge');
   assert.equal(nodes['.address'].textContent, '暂不可用'); assert.equal(nodes['.address'].disabled, true);
-  assert.equal(nodes.location.hidden, true);
+  assert.equal(nodes.location.hidden, false);
 });
 test('IP page scripts parse and keep the homepage primary colors', () => {
   new vm.Script(app);
@@ -118,7 +118,7 @@ test('tabs show one panel and expose selected state without scrolling', () => {
   assert.deepEqual(panels.filter(p => !p.hidden).map(p => p.id), ['local-ip']);
 });
 
-test('tab entry and revisiting do not start third-party checks', () => {
+test('tab entry and revisiting run diagnostics while repeated selection stays idle', () => {
   const ids = ['local-ip', 'routing']; const calls = [];
   const tabs = ids.map(id => ({ dataset: { tab: id }, setAttribute() {} }));
   const panels = ids.map(id => ({ id }));
@@ -126,13 +126,13 @@ test('tab entry and revisiting do not start third-party checks', () => {
   vm.createContext(ctx);
   vm.runInContext(app.slice(app.indexOf('function selectTab('), app.indexOf('\nfor (const tab of tabs)')), ctx);
   ctx.selectTab('local-ip', false); ctx.selectTab('routing', false); ctx.selectTab('routing', false); ctx.selectTab('local-ip', false);
-  assert.deepEqual(calls, []);
+  assert.deepEqual(calls, ['local-ip', 'routing', 'local-ip']);
 });
 test('automatic and manual tests share an in-flight lock and allow retry after completion', async () => {
   let calls = 0; let release;
-  const ctx = { Promise, Date, AbortController, taskButtons: {}, taskPanels: { routing: 'routing' }, runControllers: new Map(), $: () => ({ setAttribute() {} }), tabRuns: new Map(), tabStatus: new Map(), showRunStatus() {}, tabRunners: { routing: () => { calls++; return new Promise(resolve => { release = resolve; }); } } };
+  const ctx = { Promise, Date, AbortController, runControllers: new Map(), $: () => ({ setAttribute() {} }), tabRuns: new Map(), tabStatus: new Map(), showRunStatus() {}, tabRunners: { routing: () => { calls++; return new Promise(resolve => { release = resolve; }); } } };
   vm.createContext(ctx);
-  vm.runInContext(app.slice(app.indexOf('function runTab('), app.indexOf("$('#split-start').addEventListener")), ctx);
+  vm.runInContext(app.slice(app.indexOf('function runTab('), app.indexOf("window.addEventListener('pagehide'")), ctx);
   const first = ctx.runTab('routing'); const second = ctx.runTab('routing');
   assert.equal(first, second); await Promise.resolve(); assert.equal(calls, 1);
   release(); await first; assert.equal(ctx.tabRuns.size, 0);
@@ -288,13 +288,13 @@ test('probe queue limits concurrency to four and does not start after cancellati
 });
 
 
-test('initial overview queries only the site IP without external checks', async () => {
+test('overview automatically runs site IP, source queries and probes', async () => {
   const calls = [];
   const context = { put() {}, edge: async signal => { calls.push('edge'); assert.equal(signal.aborted, false); }, providers: () => calls.push('providers'), runProbes: () => calls.push('probes') };
   vm.createContext(context);
   vm.runInContext(app.slice(app.indexOf('async function runOverview('), app.indexOf("$('#refresh').addEventListener")), context);
   await context.runOverview(new AbortController().signal);
-  assert.deepEqual(calls, ['edge']);
+  assert.deepEqual(calls, ['edge', 'providers', 'probes']);
 });
 
 test('exit comparison reports only observed differences and failures avoid DNS guesses', () => {
@@ -324,4 +324,46 @@ test('exit comparison uses the current request baseline, not an older shared val
   vm.runInContext(app.slice(app.indexOf('async function runSplit('), app.indexOf('const tabRuns =')), context);
   await context.runSplit(new AbortController().signal);
   assert.equal(results[0].args[4], '出口一致');
+});
+
+
+test('provider metadata fills missing fields for the exact source IP and reuses lookups', async () => {
+  const calls = [];
+  const context = {
+    URL, isIP: (ip, family) => typeof ip === 'string' && ip.includes('.') && family !== 6,
+    locationText: data => data.country,
+    request: async url => { calls.push(url); return { ip: '203.0.113.8', country: 'AU', isp: 'Example ISP', asn: 64500 }; },
+    setTimeout: resolve => resolve()
+  };
+  vm.createContext(context);
+  vm.runInContext(app.slice(app.indexOf('function formatASN('), app.indexOf('async function providers(')), context);
+  const enrich = context.createProviderEnricher(new AbortController().signal);
+  const [a, b] = await Promise.all([enrich({ ip: '203.0.113.8', location: '原始地区' }), enrich({ ip: '203.0.113.8' })]);
+  assert.deepEqual(calls, ['https://api.ip.sb/geoip/203.0.113.8']);
+  assert.equal(a.location, '原始地区'); assert.equal(b.location, 'AU');
+  assert.equal(a.isp, 'Example ISP'); assert.equal(a.asn, 'AS64500');
+  assert.equal(context.formatASN('AS13335'), 'AS13335');
+  assert.equal(context.formatASN('unknown'), '');
+});
+
+test('metadata from another address is rejected and does not replace the primary IP', async () => {
+  const context = {
+    URL, isIP: () => true, locationText: data => data.country,
+    request: async () => ({ ip: '203.0.113.99', country: 'Wrong', isp: 'Wrong', asn: 1 }),
+    setTimeout: resolve => resolve()
+  };
+  vm.createContext(context);
+  vm.runInContext(app.slice(app.indexOf('function formatASN('), app.indexOf('async function providers(')), context);
+  const result = await context.createProviderEnricher(new AbortController().signal)({ ip: '203.0.113.8', location: '原始地区' });
+  assert.equal(result.ip, '203.0.113.8'); assert.equal(result.location, '原始地区');
+  assert.equal(result.isp, undefined); assert.equal(result.asn, undefined);
+});
+
+
+test('IPIP separates its ISP field from country, region and city', () => {
+  const context = {}; vm.createContext(context);
+  vm.runInContext(app.slice(app.indexOf('const providerSources = ['), app.indexOf('function formatASN(')) + ';globalThis.source = providerSources.find(item => item.id === "ipip");', context);
+  const result = context.source.normalize({ data: { ip: '203.0.113.8', location: ['中国', '浙江', '杭州', '电信', ''] } });
+  assert.equal(result.location, '中国 · 浙江 · 杭州');
+  assert.equal(result.isp, '电信');
 });

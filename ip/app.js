@@ -37,8 +37,8 @@ function renderCard(id) {
   address.disabled = !data.ip;
   root.dataset.hasIp = String(Boolean(data.ip));
   const metadata = $('.provider-meta', root);
-  if (metadata) metadata.hidden = !data.location && !data.isp;
-  for (const field of $$('[data-field]', root)) if (!field.closest('.meta-item')) field.hidden = !data[field.dataset.field];
+  if (metadata) metadata.hidden = !data.ip;
+  for (const field of $$('[data-field]', root)) if (!field.closest('.meta-item')) field.hidden = false;
   address.setAttribute('aria-label', data.ip ? `复制 IP ${data.ip}` : '未获取 IP');
 }
 for (const root of $$('.ip-card, .provider-card')) {
@@ -223,33 +223,63 @@ const providerSources = [
     const data = payload.data;
     return { ip: data.ip, location: [data.country, data.province, data.city, data.district].filter(Boolean).join(' · '), isp: data.isp };
   } },
-  { id: 'ipip', name: 'IPIP', group: '国内', url: 'https://myip.ipip.net/json', normalize: data => ({ ip: data.data?.ip, location: data.data?.location?.filter(Boolean).join(' · ') }) },
+  { id: 'ipip', name: 'IPIP', group: '国内', url: 'https://myip.ipip.net/json', normalize: data => ({ ip: data.data?.ip, location: data.data?.location?.slice(0, 3).filter(Boolean).join(' · '), isp: data.data?.location?.[3] }) },
   { id: 'yinghualuo', name: '樱花落', group: '国内', url: 'https://v4.yinghualuo.cn/bejson', normalize: data => ({ ip: data.ip, location: data.location, isp: data.isp }) },
-  { id: 'ipsb', name: 'IP.SB', group: '境外', url: 'https://api.ip.sb/geoip', normalize: data => ({ ip: data.ip, location: locationText(data), isp: data.isp || data.organization }) },
+  { id: 'ipsb', name: 'IP.SB', group: '境外', url: 'https://api.ip.sb/geoip', normalize: data => ({ ip: data.ip, location: locationText(data), isp: data.isp || data.organization, asn: data.asn }) },
   { id: 'cloudflare', name: 'Cloudflare', group: '境外', url: 'https://www.cloudflare.com/cdn-cgi/trace', parse: 'text', normalize: text => {
     const data = parseTrace(text); return { ip: data.ip, location: [data.loc, data.colo].filter(Boolean).join(' · ') };
   } },
   { id: 'ipify', name: 'ipify', group: '境外', url: 'https://api64.ipify.org?format=json', normalize: data => ({ ip: data.ip }) }
 ];
+function formatASN(value) {
+  const number = String(value || '').replace(/^AS/i, '');
+  return /^\d+$/.test(number) ? `AS${number}` : '';
+}
+function canonicalIP(ip) {
+  return isIP(ip, 4) ? ip : new URL(`https://[${ip}]/`).hostname.slice(1, -1);
+}
 async function queryProvider(source, signal) {
   const data = source.load ? await source.load(signal) : source.normalize(await request(source.url, { signal }, source.parse || 'json'));
   if (!isIP(data.ip)) throw new Error('查询源没有返回有效 IP');
-  return data;
+  return { ...data, asn: formatASN(data.asn) };
+}
+function createProviderEnricher(signal) {
+  const cache = new Map();
+  let queue = Promise.resolve();
+  return async data => {
+    if (data.location && data.isp && data.asn) return data;
+    const key = canonicalIP(data.ip);
+    if (!cache.has(key)) {
+      const lookup = queue.then(async () => {
+        if (signal.aborted) return {};
+        const geo = await request(`https://api.ip.sb/geoip/${key}`, { signal, timeout: 4000 });
+        if (!isIP(geo.ip) || canonicalIP(geo.ip) !== key) throw new Error('GeoIP address mismatch');
+        return { location: locationText(geo), isp: geo.isp || geo.organization || geo.asn_organization, asn: formatASN(geo.asn) };
+      }).catch(() => ({}));
+      cache.set(key, lookup);
+      queue = lookup.then(() => new Promise(resolve => setTimeout(resolve, 250)));
+    }
+    const geo = await cache.get(key);
+    return { ...data, location: data.location || geo.location, isp: data.isp || geo.isp, asn: data.asn || geo.asn };
+  };
 }
 async function providers(signal) {
   updateProgress('providers', providerSources.length);
+  const enrich = createProviderEnricher(signal);
   for (const source of providerSources) put(`provider-${source.id}`, { error: '测试中...', status: '' }, signal);
   await Promise.allSettled(providerSources.map(async source => {
     try {
       const data = await queryProvider(source, signal);
       put(`provider-${source.id}`, { ...data, status: '' }, signal);
+      const detailed = await enrich(data);
+      put(`provider-${source.id}`, { ...detailed, status: '' }, signal);
     } catch (error) { put(`provider-${source.id}`, { error: requestFailure(error), status: '' }, signal); }
     finally { if (!signal.aborted) updateProgress('providers'); }
   }));
 }
 async function runOverview(signal) {
   for (const id of ['ipv4', 'ipv6']) put(id, { error: '测试中...', status: '' }, signal);
-  await edge(signal);
+  await Promise.allSettled([edge(signal), providers(signal), runProbes(signal)]);
 }
 $('#refresh').addEventListener('click', () => runTab(activeTab));
 const tabNames = { 'local-ip': '我的 IP', routing: '网站分流' };
@@ -264,9 +294,11 @@ function selectTab(id, updateURL = true) {
   }
   for (const panel of $$('[data-panel]')) panel.hidden = panel.id !== id;
   $('#view-title').textContent = tabNames[id];
+  const changed = activeTab !== id;
   activeTab = id;
   if (updateURL) history.replaceState(null, '', `${location.pathname}${location.search}#${id}`);
-  showRunStatus(id);
+  if (changed) runTab(id);
+  else showRunStatus(id);
 }
 for (const tab of tabs) {
   tab.addEventListener('click', () => selectTab(tab.dataset.tab));
@@ -286,7 +318,6 @@ window.addEventListener('hashchange', () => selectTab(location.hash.slice(1), fa
 const splitTargets = [
   ['www.qualcomm.cn', '国内网站'],
   ['www.cloudflare.com', '海外网络'],
-  ['discord.com', '海外社交'],
   ['www.visa.com', '海外金融'],
   ['medium.com', '海外媒体'],
   ['cdnjs.cloudflare.com', '静态资源'],
@@ -332,10 +363,7 @@ async function runSplit(signal) {
 
 const tabRuns = new Map();
 const tabStatus = new Map();
-const tabRunners = { 'local-ip': runOverview, routing: runSplit, providers, probes: runProbes };
-const taskButtons = { routing: '#split-start', providers: '#providers-start', probes: '#probes-start' };
-const taskLabels = { routing: '开始对比', providers: '查询出口', probes: '开始测试' };
-const taskPanels = { 'local-ip': 'local-ip', routing: 'routing', providers: 'local-ip', probes: 'local-ip' };
+const tabRunners = { 'local-ip': runOverview, routing: runSplit };
 const taskProgress = new Map();
 function compareExit(ip, baseline) {
   return baseline ? ip === baseline ? '出口一致' : '出口不同' : '未对比';
@@ -348,72 +376,37 @@ function updateProgress(id, total) {
   if (!state) return;
   if (!total) state.done++;
   taskProgress.set(id, state);
-  $(`#${id}-status`).textContent = `${state.done}/${state.total}`;
+  const status = $(`#${id}-status`);
+  if (status) status.textContent = `${state.done}/${state.total}`;
 }
-function toggleTask(id) {
-  if (runControllers.has(id)) runControllers.get(id).abort();
-  else runTab(id);
-}
-
-
 function showRunStatus(id) {
-  const panel = taskPanels[id] || id;
-  if (panel !== activeTab) return;
-  const busy = [...tabRuns.keys()].some(key => taskPanels[key] === panel);
+  if (id !== activeTab) return;
+  const busy = tabRuns.has(id);
   $('.workspace-heading').dataset.busy = String(busy);
-  $('#run-status').textContent = busy ? '测试中...' : tabStatus.get(panel) || '就绪';
-  $('#refresh').disabled = tabRuns.has(activeTab);
-  const refreshLabel = activeTab === 'local-ip' ? '刷新 IP' : '重新对比';
-  $('#refresh').setAttribute('aria-label', refreshLabel);
-  $('#refresh').title = refreshLabel;
+  $('#run-status').textContent = busy ? '测试中...' : tabStatus.get(id) || '就绪';
+  $('#refresh').disabled = busy;
+  $('#refresh').setAttribute('aria-label', '重测');
+  $('#refresh').title = '重测';
   const btnText = $('#refresh .btn-text');
-  if (btnText) btnText.textContent = tabRuns.has(activeTab) ? '测试中...' : activeTab === 'local-ip' ? '刷新 IP' : '重新对比';
+  if (btnText) btnText.textContent = busy ? '测试中...' : '重测';
 }
 function runTab(id) {
   if (!tabRunners[id]) return Promise.resolve();
   if (tabRuns.has(id)) return tabRuns.get(id);
   const controller = new AbortController(); runControllers.set(id, controller);
-  const button = taskButtons[id] && $(taskButtons[id]);
-  const region = id === 'providers' ? $('.provider-grid') : id === 'probes' ? $('#probes') : id === 'routing' ? $('#split-results') : $('#local-ip');
+  const region = id === 'routing' ? $('#split-results') : $('#local-ip');
   region.setAttribute('aria-busy', 'true');
-  if (button) button.textContent = '停止';
   const task = Promise.resolve().then(() => tabRunners[id](controller.signal)).then(() => {
-    const status = controller.signal.aborted ? '已停止' : `完成 · ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`;
-    tabStatus.set(taskPanels[id], status);
-    if (controller.signal.aborted && id !== 'local-ip') {
-      $(`#${id}-status`).textContent = '已停止';
-      if (id === 'providers') for (const source of providerSources) {
-        const key = `provider-${source.id}`;
-        if (values.get(key)?.error === '测试中...') put(key, { error: '已停止' });
-      }
-      if (id === 'probes') for (const card of $$('.probe[data-state="pending"]')) {
-        card.dataset.state = 'stopped';
-        const result = $('.probe-result', card);
-        if (result.textContent === '…') result.textContent = '—';
-        const history = $('.probe-history', card);
-        for (const segment of history.children) if (segment.dataset.state === 'pending') {
-          segment.dataset.state = 'waiting'; segment.title = '已停止';
-        }
-        history.setAttribute('aria-label', [...history.children].map(segment => segment.title).join('；'));
-      }
-      if (id === 'routing') for (const row of $$('#split-results tr')) {
-        if (row.lastElementChild.textContent === '测试中...') row.lastElementChild.textContent = '已停止';
-      }
-    }
+    tabStatus.set(id, controller.signal.aborted ? '已停止' : `完成 · ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`);
   }).catch(() => {
-    tabStatus.set(taskPanels[id], '测试失败');
+    tabStatus.set(id, '测试失败');
   }).finally(() => {
     tabRuns.delete(id); runControllers.delete(id);
     region.setAttribute('aria-busy', 'false');
-    if (button) button.textContent = taskLabels[id];
     showRunStatus(id);
   });
   tabRuns.set(id, task); showRunStatus(id);
   return task;
 }
-$('#split-start').addEventListener('click', () => toggleTask('routing'));
-$('#providers-start').addEventListener('click', () => toggleTask('providers'));
-$('#probes-start').addEventListener('click', () => toggleTask('probes'));
 window.addEventListener('pagehide', () => { for (const controller of runControllers.values()) controller.abort(); });
 selectTab(location.hash.slice(1), false);
-runTab('local-ip');

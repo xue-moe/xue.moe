@@ -1106,28 +1106,13 @@ footer a:hover {
   }
 }
 
-/* Manual checks and compact empty states. */
-.privacy-note {
-  color: var(--text-muted);
-  font-size: 12px;
-  line-height: 1.6;
-}
+/* Compact metadata and empty states. */
 .section-title-wrap {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-}
-.section-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-.section-controls [role="status"] {
-  font: 12px ui-monospace, monospace;
-  color: var(--text-muted);
 }
 .address:disabled + .copy-hint,
 [data-has-ip="false"] .meta-row {
@@ -1198,3 +1183,15 @@ footer a:hover {
   .sidebar-actions .home-link span { display: none; }
   .sidebar-actions .home-link::before { content: '⌂'; font-size: 21px; }
 }
+
+.provider-meta > div {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11px;
+  line-height: 1.55;
+}
+.provider-meta dt { color: var(--text-muted); }
+.provider-meta dd { margin: 0; overflow-wrap: anywhere; color: var(--text-main); }
+.provider-meta [data-field="asn"] { font-family: ui-monospace, monospace; }
