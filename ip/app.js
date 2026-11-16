@@ -107,7 +107,7 @@ const targets = [
   ['淘宝', '国内', 'https://www.taobao.com/favicon.ico'],
   ['GitHub', '海外', 'https://github.com/favicon.ico'],
   ['Google', '海外', 'https://www.google.com/favicon.ico'],
-  ['微软', '海外', 'https://www.microsoft.com/favicon.ico'],
+  ['Microsoft', '海外', 'https://www.microsoft.com/favicon.ico'],
   ['YouTube', '海外', 'https://www.youtube.com/favicon.ico']
 ];
 function createProbe([name, region], index) {
