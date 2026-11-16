@@ -242,33 +242,86 @@ test('Yinghualuo uses the browser JSON endpoint and preserves location and ISP',
   assert.deepEqual(JSON.parse(JSON.stringify(result)), { ip: '203.0.113.8', location: '测试地区', isp: '测试运营商' });
 });
 
-test('six probe attempts show median of successes and report partial or total failure', async () => {
+function timedProbeHarness(outcomes) {
+  const result = {}, root = { dataset: {} };
+  const history = { children: Array.from({ length: 6 }, () => ({ dataset: {} })), setAttribute() {} };
+  const timers = new Map(), starts = [], arrivals = [], frames = [];
+  let now = 0, timerId = 0;
+  const schedule = (callback, delay) => {
+    const id = ++timerId;
+    timers.set(id, { at: now + delay, callback });
+    return id;
+  };
+  const context = {
+    $: selector => selector === '.probe-result' ? result : selector === '.probe-history' ? history : root,
+    performance: { now: () => now }, setTimeout: schedule, clearTimeout: id => timers.delete(id),
+    request: (url, options) => {
+      assert.equal(options.method, 'HEAD'); assert.equal(options.mode, 'no-cors');
+      const index = starts.length; starts.push(now);
+      const outcome = outcomes[index];
+      return new Promise((resolve, reject) => {
+        const id = schedule(() => {
+          options.signal.removeEventListener('abort', cancel);
+          arrivals.push(index);
+          if (outcome === null) reject(new Error('timeout'));
+          else resolve({});
+        }, outcome === null ? 60 : outcome);
+        const cancel = () => { timers.delete(id); reject(Object.assign(new Error('cancelled'), { name: 'AbortError' })); };
+        options.signal.addEventListener('abort', cancel, { once: true });
+      });
+    }
+  };
+  vm.createContext(context);
+  vm.runInContext(app.slice(app.indexOf('function latencyBand('), app.indexOf('async function runProbes(')), context);
+  return {
+    context, starts, arrivals, result, root, history, frames, schedule,
+    async drain() {
+      for (let turns = 0; turns < 100; turns++) {
+        for (let i = 0; i < 10; i++) await Promise.resolve();
+        if (!timers.size) return;
+        const [id, job] = [...timers].sort((a, b) => a[1].at - b[1].at || a[0] - b[0])[0];
+        timers.delete(id); now = job.at; job.callback();
+        for (let i = 0; i < 10; i++) await Promise.resolve();
+        frames.push({ at: now, colors: history.children.map(item => item.dataset.latency) });
+      }
+      throw new Error('Unexpected timer loop');
+    }
+  };
+}
+
+test('six fixed-interval probes summarize successes and total failure', async () => {
   for (const outcomes of [[10, 40, null, 1000, 60, 80], [null, null, null, null, null, null]]) {
-    const result = {}, root = { dataset: {} };
-    const history = { children: Array.from({ length: 6 }, () => ({ dataset: {} })), setAttribute() {} };
-    let calls = 0, now = 0;
-    const context = {
-      $: selector => selector === '.probe-result' ? result : selector === '.probe-history' ? history : root,
-      performance: { now: () => now },
-      request: async (url, options) => {
-        assert.equal(options.method, 'HEAD');
-        assert.equal(options.mode, 'no-cors');
-        const value = outcomes[calls++];
-        if (value === null) throw new Error('timeout');
-        now += value; return {};
-      },
-      setTimeout: resolve => resolve()
-    };
-    vm.createContext(context);
-    vm.runInContext(app.slice(app.indexOf('function latencyBand('), app.indexOf('async function runProbes(')), context);
-    await context.probe(['Test', '国内', 'https://example.com/favicon.ico'], 0, new AbortController().signal);
-    assert.equal(calls, 6);
-    assert.equal(result.textContent, outcomes[0] === null ? '—' : '60 ms');
-    assert.equal(root.dataset.state, outcomes[0] === null ? 'error' : 'ok');
-    assert.deepEqual(history.children.map(item => item.dataset.latency), outcomes.map(ms => ms === null ? 'error' : context.latencyBand(ms)));
+    const h = timedProbeHarness(outcomes);
+    const task = h.context.probe(['Test', '国内', 'https://example.com/favicon.ico'], 0, new AbortController().signal);
+    await h.drain(); await task;
+    assert.deepEqual(h.starts, [0, 500, 1000, 1500, 2000, 2500]);
+    assert.equal(h.result.textContent, outcomes[0] === null ? '—' : '60 ms');
+    assert.equal(h.root.dataset.state, outcomes[0] === null ? 'error' : 'ok');
+    assert.deepEqual(h.history.children.map(item => item.dataset.latency), h.arrivals.map(index => outcomes[index] === null ? 'error' : h.context.latencyBand(outcomes[index])));
     assert.doesNotMatch(app, /probe-state/);
-    assert.equal(context.medianLatency([1000, 10, 20, 30, 40, 50]), 35);
+    assert.equal(h.context.medianLatency([1000, 10, 20, 30, 40, 50]), 35);
   }
+});
+
+test('slow first response does not delay later requests and colors fill from the left', async () => {
+  const h = timedProbeHarness([1600, 100, 20, 30, 40, 50]);
+  const task = h.context.probe(['Test', '国内', 'https://example.com/favicon.ico'], 0, new AbortController().signal);
+  await h.drain(); await task;
+  assert.deepEqual(h.starts, [0, 500, 1000, 1500, 2000, 2500]);
+  assert.deepEqual(h.arrivals, [1, 2, 3, 0, 4, 5]);
+  assert.deepEqual(h.frames.find(frame => frame.at === 600).colors, ['normal', undefined, undefined, undefined, undefined, undefined]);
+  assert.deepEqual(h.history.children.map(item => item.dataset.latency), ['normal', 'fast', 'fast', 'high', 'fast', 'fast']);
+});
+
+test('cancellation clears queued probe starts and prevents late rendering', async () => {
+  const h = timedProbeHarness([4000, 4000, 4000, 4000, 4000, 4000]);
+  const controller = new AbortController();
+  const task = h.context.probe(['Test', '国内', 'https://example.com/favicon.ico'], 0, controller.signal);
+  h.schedule(() => controller.abort(), 750);
+  await h.drain(); await task;
+  assert.deepEqual(h.starts, [0, 500]);
+  assert.equal(h.history.children.some(item => item.dataset.latency), false);
+  assert.equal(h.result.textContent, undefined);
 });
 
 test('probe queue limits concurrency to four and does not start after cancellation', async () => {

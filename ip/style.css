@@ -552,25 +552,17 @@ button {
 }
 
 .meta-item {
-  background: var(--card-inner);
-  border: 1px solid var(--cell-empty);
-  border-radius: 12px;
-  padding: 10px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
   min-width: 0;
-  transition: border-color .2s ease;
-}
-
-.meta-item:hover {
-  border-color: var(--primary-glow);
 }
 
 .meta-item dt {
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--text-muted);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .meta-item dd {

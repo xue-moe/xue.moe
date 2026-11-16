@@ -144,23 +144,39 @@ async function probe([, , url], index, signal) {
   const samples = [];
   const history = $('.probe-history', root);
   const segments = [...history.children];
-  for (let attempt = 0; attempt < 6; attempt++) {
+  for (const segment of segments) segment.title = '等待结果';
+  history.setAttribute('aria-label', '测试中...');
+  let completed = 0;
+  const wait = delay => new Promise(resolve => {
+    let timer;
+    const finish = () => {
+      clearTimeout(timer);
+      signal.removeEventListener('abort', finish);
+      resolve();
+    };
+    signal.addEventListener('abort', finish, { once: true });
+    timer = setTimeout(finish, delay);
+    if (signal.aborted) finish();
+  });
+  async function attempt(number) {
     if (signal.aborted) return;
-    const segment = segments[attempt]; segment.dataset.state = 'pending';
-    segment.title = `第 ${attempt + 1} 次：检测中`;
     const start = performance.now();
+    let elapsed;
     try {
-      const res = await request(`${url}?_=${Date.now()}-${index}-${attempt}`, { signal, method: 'HEAD', mode: 'no-cors', timeout: 6000 }, 'response');
-      const elapsed = performance.now() - start;
+      const res = await request(`${url}?_=${Date.now()}-${index}-${number}`, { signal, method: 'HEAD', mode: 'no-cors', timeout: 6000 }, 'response');
+      elapsed = performance.now() - start;
       if (res.body) await res.body.cancel();
-      if (signal.aborted) return;
+    } catch (_) { elapsed = undefined; }
+    if (signal.aborted) return;
+    // Slots follow arrival order, independent of the request's starting position.
+    const segment = segments[completed++];
+    if (elapsed !== undefined) {
       samples.push(elapsed);
       segment.dataset.state = 'ok'; segment.dataset.latency = latencyBand(elapsed);
-      segment.title = `第 ${attempt + 1} 次：${Math.max(1, Math.round(elapsed))} ms`;
-    } catch (_) {
-      if (signal.aborted) return;
+      segment.title = `${Math.max(1, Math.round(elapsed))} ms`;
+    } else {
       segment.dataset.state = 'error'; segment.dataset.latency = 'error';
-      segment.title = `第 ${attempt + 1} 次：超时或受限`;
+      segment.title = '超时或受限';
     }
     history.setAttribute('aria-label', segments.map(item => item.title).join('；'));
     if (samples.length) {
@@ -168,8 +184,13 @@ async function probe([, , url], index, signal) {
       root.dataset.latency = latencyBand(ms);
       $('.probe-result', root).textContent = `${ms} ms`;
     }
-    if (attempt < 5 && !signal.aborted) await new Promise(resolve => setTimeout(resolve, 500));
   }
+  const started = performance.now();
+  const attempts = [attempt(0)];
+  for (let number = 1; number < 6; number++) {
+    attempts.push(wait(Math.max(0, started + number * 500 - performance.now())).then(() => attempt(number)));
+  }
+  await Promise.all(attempts);
   if (signal.aborted) return;
   root.dataset.state = samples.length ? 'ok' : 'error';
   $('.probe-result', root).title = samples.length ? 'HTTP 响应耗时' : '超时或请求受限';
