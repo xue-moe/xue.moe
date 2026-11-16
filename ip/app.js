@@ -2,7 +2,7 @@
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const values = new Map();
-let runController;
+const runControllers = new Map();
 let toastTimer;
 function toast(text) {
   $('#toast').textContent = text;
@@ -30,9 +30,15 @@ function renderCard(id) {
   for (const field of $$('[data-field]', root)) {
     const name = field.dataset.field;
     field.textContent = data[name] || '—';
+    field.title = data[name] || '';
+    field.closest('.meta-item')?.toggleAttribute('hidden', !data[name]);
   }
   const address = $('.address', root);
   address.disabled = !data.ip;
+  root.dataset.hasIp = String(Boolean(data.ip));
+  const metadata = $('.provider-meta', root);
+  if (metadata) metadata.hidden = !data.location && !data.isp;
+  for (const field of $$('[data-field]', root)) if (!field.closest('.meta-item')) field.hidden = !data[field.dataset.field];
   address.setAttribute('aria-label', data.ip ? `复制 IP ${data.ip}` : '未获取 IP');
 }
 for (const root of $$('.ip-card, .provider-card')) {
@@ -87,6 +93,7 @@ async function edge(signal) {
         asn: data.asn ? `AS${data.asn}` : '', status: ''
       } : { error: '本次未使用', status: '' }, signal);
     }
+    return data.ip;
   } catch (_) {
     if (signal.aborted) return;
     values.delete('edge');
@@ -165,16 +172,19 @@ async function probe([, , url], index, signal) {
   }
   if (signal.aborted) return;
   root.dataset.state = samples.length ? 'ok' : 'error';
+  $('.probe-result', root).title = samples.length ? 'HTTP 响应耗时' : '超时或请求受限';
   if (!samples.length) {
     root.dataset.latency = 'error';
     $('.probe-result', root).textContent = '—';
   }
 }
 async function runProbes(signal) {
+  updateProgress('probes', targets.length);
   for (let i = 0; i < targets.length; i++) {
     const root = $(`#probe-${i}`);
     root.dataset.state = 'pending'; delete root.dataset.latency;
     $('.probe-result', root).textContent = '…';
+    $('.probe-result', root).removeAttribute('title');
     const history = $('.probe-history', root);
     history.setAttribute('aria-label', '待测');
     [...history.children].forEach((segment, index) => {
@@ -187,6 +197,7 @@ async function runProbes(signal) {
     while (!signal.aborted && next < targets.length) {
       const index = next++;
       await probe(targets[index], index, signal);
+      if (!signal.aborted) updateProgress('probes');
     }
   }));
 }
@@ -226,20 +237,19 @@ async function queryProvider(source, signal) {
   return data;
 }
 async function providers(signal) {
+  updateProgress('providers', providerSources.length);
   for (const source of providerSources) put(`provider-${source.id}`, { error: '测试中...', status: '' }, signal);
   await Promise.allSettled(providerSources.map(async source => {
     try {
       const data = await queryProvider(source, signal);
       put(`provider-${source.id}`, { ...data, status: '' }, signal);
-    } catch (_) { put(`provider-${source.id}`, { error: '暂不可用', status: '' }, signal); }
+    } catch (error) { put(`provider-${source.id}`, { error: requestFailure(error), status: '' }, signal); }
+    finally { if (!signal.aborted) updateProgress('providers'); }
   }));
 }
-async function runOverview() {
-  runController?.abort();
-  const controller = new AbortController(); runController = controller;
-  const { signal } = controller;
+async function runOverview(signal) {
   for (const id of ['ipv4', 'ipv6']) put(id, { error: '测试中...', status: '' }, signal);
-  await Promise.allSettled([edge(signal), providers(signal), runProbes(signal)]);
+  await edge(signal);
 }
 $('#refresh').addEventListener('click', () => runTab(activeTab));
 const tabNames = { 'local-ip': '我的 IP', routing: '网站分流' };
@@ -254,10 +264,9 @@ function selectTab(id, updateURL = true) {
   }
   for (const panel of $$('[data-panel]')) panel.hidden = panel.id !== id;
   $('#view-title').textContent = tabNames[id];
-  const changed = activeTab !== id;
   activeTab = id;
   if (updateURL) history.replaceState(null, '', `${location.pathname}${location.search}#${id}`);
-  if (changed) runTab(id);
+  showRunStatus(id);
 }
 for (const tab of tabs) {
   tab.addEventListener('click', () => selectTab(tab.dataset.tab));
@@ -299,52 +308,112 @@ function splitRow(host, category, ip, country, status) {
   return tr;
 }
 splitTargets.forEach(([host, category]) => $('#split-results').appendChild(splitRow(host, category, null, null, '待测')));
-async function runSplit() {
-  const button = $('#split-start'); button.disabled = true;
+async function runSplit(signal) {
+  updateProgress('routing', splitTargets.length);
+  const baseline = await edge(signal);
+  if (signal.aborted) return;
   const root = $('#split-results'); root.replaceChildren();
   const rows = splitTargets.map(([host, category]) => {
     const tr = splitRow(host, category, null, null, '测试中...'); root.appendChild(tr); return tr;
   });
   await Promise.allSettled(splitTargets.map(async ([host, category], index) => {
     try {
-      const trace = parseTrace(await request(`https://${host}/cdn-cgi/trace`, { timeout: 7000 }, 'text'));
+      const trace = parseTrace(await request(`https://${host}/cdn-cgi/trace`, { signal, timeout: 7000 }, 'text'));
       if (!isIP(trace.ip)) throw new Error('目标没有返回出口 IP');
-      const baseline = values.get('edge')?.ip;
-      const status = baseline ? (trace.ip === baseline ? '直连' : '分流') : '已识别';
+      if (signal.aborted) return;
+      const status = compareExit(trace.ip, baseline);
       rows[index].replaceWith(splitRow(host, category, trace.ip, trace.loc, status));
-    } catch (_) { rows[index].replaceWith(splitRow(host, category, null, null, '受限')); }
+    } catch (error) {
+      if (signal.aborted) return;
+      rows[index].replaceWith(splitRow(host, category, null, null, requestFailure(error)));
+    } finally { if (!signal.aborted) updateProgress('routing'); }
   }));
-  button.disabled = false;
 }
 
 const tabRuns = new Map();
 const tabStatus = new Map();
-const tabRunners = { 'local-ip': runOverview, routing: runSplit };
+const tabRunners = { 'local-ip': runOverview, routing: runSplit, providers, probes: runProbes };
+const taskButtons = { routing: '#split-start', providers: '#providers-start', probes: '#probes-start' };
+const taskLabels = { routing: '开始对比', providers: '查询出口', probes: '开始测试' };
+const taskPanels = { 'local-ip': 'local-ip', routing: 'routing', providers: 'local-ip', probes: 'local-ip' };
+const taskProgress = new Map();
+function compareExit(ip, baseline) {
+  return baseline ? ip === baseline ? '出口一致' : '出口不同' : '未对比';
+}
+function requestFailure(error) {
+  return error.name === 'AbortError' ? '超时' : '请求失败';
+}
+function updateProgress(id, total) {
+  const state = total ? { done: 0, total } : taskProgress.get(id);
+  if (!state) return;
+  if (!total) state.done++;
+  taskProgress.set(id, state);
+  $(`#${id}-status`).textContent = `${state.done}/${state.total}`;
+}
+function toggleTask(id) {
+  if (runControllers.has(id)) runControllers.get(id).abort();
+  else runTab(id);
+}
+
 
 function showRunStatus(id) {
-  if (id !== activeTab) return;
-  const busy = tabRuns.has(id);
-  $('#run-status').textContent = busy ? '测试中...' : tabStatus.get(id) || '就绪';
-  $('#refresh').disabled = busy;
+  const panel = taskPanels[id] || id;
+  if (panel !== activeTab) return;
+  const busy = [...tabRuns.keys()].some(key => taskPanels[key] === panel);
+  $('.workspace-heading').dataset.busy = String(busy);
+  $('#run-status').textContent = busy ? '测试中...' : tabStatus.get(panel) || '就绪';
+  $('#refresh').disabled = tabRuns.has(activeTab);
+  const refreshLabel = activeTab === 'local-ip' ? '刷新 IP' : '重新对比';
+  $('#refresh').setAttribute('aria-label', refreshLabel);
+  $('#refresh').title = refreshLabel;
   const btnText = $('#refresh .btn-text');
-  if (btnText) btnText.textContent = busy ? '测试中...' : '重测';
-  else $('#refresh').textContent = busy ? '测试中...' : '↻ 重测';
+  if (btnText) btnText.textContent = tabRuns.has(activeTab) ? '测试中...' : activeTab === 'local-ip' ? '刷新 IP' : '重新对比';
 }
 function runTab(id) {
   if (!tabRunners[id]) return Promise.resolve();
-  if (tabRuns.has(id)) { showRunStatus(id); return tabRuns.get(id); }
-  const task = Promise.resolve().then(() => tabRunners[id]()).then(() => {
-    tabStatus.set(id, `完成 · ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`);
+  if (tabRuns.has(id)) return tabRuns.get(id);
+  const controller = new AbortController(); runControllers.set(id, controller);
+  const button = taskButtons[id] && $(taskButtons[id]);
+  const region = id === 'providers' ? $('.provider-grid') : id === 'probes' ? $('#probes') : id === 'routing' ? $('#split-results') : $('#local-ip');
+  region.setAttribute('aria-busy', 'true');
+  if (button) button.textContent = '停止';
+  const task = Promise.resolve().then(() => tabRunners[id](controller.signal)).then(() => {
+    const status = controller.signal.aborted ? '已停止' : `完成 · ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`;
+    tabStatus.set(taskPanels[id], status);
+    if (controller.signal.aborted && id !== 'local-ip') {
+      $(`#${id}-status`).textContent = '已停止';
+      if (id === 'providers') for (const source of providerSources) {
+        const key = `provider-${source.id}`;
+        if (values.get(key)?.error === '测试中...') put(key, { error: '已停止' });
+      }
+      if (id === 'probes') for (const card of $$('.probe[data-state="pending"]')) {
+        card.dataset.state = 'stopped';
+        const result = $('.probe-result', card);
+        if (result.textContent === '…') result.textContent = '—';
+        const history = $('.probe-history', card);
+        for (const segment of history.children) if (segment.dataset.state === 'pending') {
+          segment.dataset.state = 'waiting'; segment.title = '已停止';
+        }
+        history.setAttribute('aria-label', [...history.children].map(segment => segment.title).join('；'));
+      }
+      if (id === 'routing') for (const row of $$('#split-results tr')) {
+        if (row.lastElementChild.textContent === '测试中...') row.lastElementChild.textContent = '已停止';
+      }
+    }
   }).catch(() => {
-    tabStatus.set(id, '测试失败');
+    tabStatus.set(taskPanels[id], '测试失败');
   }).finally(() => {
-    tabRuns.delete(id);
+    tabRuns.delete(id); runControllers.delete(id);
+    region.setAttribute('aria-busy', 'false');
+    if (button) button.textContent = taskLabels[id];
     showRunStatus(id);
   });
-  tabRuns.set(id, task);
-  showRunStatus(id);
+  tabRuns.set(id, task); showRunStatus(id);
   return task;
 }
-$('#split-start').addEventListener('click', () => runTab('routing'));
-window.addEventListener('pagehide', () => runController?.abort());
+$('#split-start').addEventListener('click', () => toggleTask('routing'));
+$('#providers-start').addEventListener('click', () => toggleTask('providers'));
+$('#probes-start').addEventListener('click', () => toggleTask('probes'));
+window.addEventListener('pagehide', () => { for (const controller of runControllers.values()) controller.abort(); });
 selectTab(location.hash.slice(1), false);
+runTab('local-ip');

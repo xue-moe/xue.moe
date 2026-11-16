@@ -55,16 +55,18 @@ test('IP validation rejects malformed upstream data and handles both address fam
   assert.equal(context.isIP('::1', 4), false); assert.equal(context.isIP('1.1.1.1', 6), false);
 });
 test('overview IP is clickable when available and disabled when unavailable', () => {
-  const nodes = { '.address': { setAttribute() {} }, '.state': {}, location: { dataset: { field: 'location' } }, colo: { dataset: { field: 'colo' } } };
+  const nodes = { '.address': { setAttribute() {} }, '.state': {}, location: { dataset: { field: 'location' }, closest: () => null }, colo: { dataset: { field: 'colo' }, closest: () => null } };
   const data = new Map([['edge', { ip: '203.0.113.1', location: 'Perth', colo: 'PER' }]]);
-  const context = { values: data, document: { getElementById: () => ({}) }, $: selector => nodes[selector], $$: () => [nodes.location, nodes.colo] };
+  const context = { values: data, document: { getElementById: () => ({ dataset: {} }) }, $: selector => nodes[selector], $$: () => [nodes.location, nodes.colo] };
   vm.createContext(context);
   vm.runInContext(app.slice(app.indexOf('function renderCard('), app.indexOf("for (const root of $$('.ip-card, .provider-card'))")), context);
   context.renderCard('edge');
   assert.equal(nodes['.address'].textContent, '203.0.113.1'); assert.equal(nodes['.address'].disabled, false);
   assert.equal(nodes.location.textContent, 'Perth'); assert.equal(nodes.colo.textContent, 'PER');
+  assert.equal(nodes.location.title, 'Perth'); assert.equal(nodes.location.hidden, false);
   data.set('edge', { error: '暂不可用' }); context.renderCard('edge');
   assert.equal(nodes['.address'].textContent, '暂不可用'); assert.equal(nodes['.address'].disabled, true);
+  assert.equal(nodes.location.hidden, true);
 });
 test('IP page scripts parse and keep the homepage primary colors', () => {
   new vm.Script(app);
@@ -105,7 +107,7 @@ test('tabs show one panel and expose selected state without scrolling', () => {
   const ids = ['local-ip', 'routing'];
   const tabs = ids.map(id => ({ dataset: { tab: id }, setAttribute(key, value) { this[key] = value; } }));
   const panels = ids.map(id => ({ id })); const title = {};
-  const ctx = { activeTab: null, runTab() {}, tabs, tabNames: Object.fromEntries(ids.map(id => [id, id])), $$: () => panels, $: () => title };
+  const ctx = { activeTab: null, showRunStatus() {}, runTab() {}, tabs, tabNames: Object.fromEntries(ids.map(id => [id, id])), $$: () => panels, $: () => title };
   vm.createContext(ctx);
   vm.runInContext(app.slice(app.indexOf('function selectTab('), app.indexOf('\nfor (const tab of tabs)')), ctx);
   ctx.selectTab('routing', false);
@@ -116,19 +118,19 @@ test('tabs show one panel and expose selected state without scrolling', () => {
   assert.deepEqual(panels.filter(p => !p.hidden).map(p => p.id), ['local-ip']);
 });
 
-test('tab entry runs tests once, revisiting runs again, and repeated selection stays idle', () => {
+test('tab entry and revisiting do not start third-party checks', () => {
   const ids = ['local-ip', 'routing']; const calls = [];
   const tabs = ids.map(id => ({ dataset: { tab: id }, setAttribute() {} }));
   const panels = ids.map(id => ({ id }));
-  const ctx = { activeTab: null, tabs, tabNames: Object.fromEntries(ids.map(id => [id, id])), $$: () => panels, $: () => ({}), runTab: id => calls.push(id) };
+  const ctx = { activeTab: null, showRunStatus() {}, tabs, tabNames: Object.fromEntries(ids.map(id => [id, id])), $$: () => panels, $: () => ({}), runTab: id => calls.push(id) };
   vm.createContext(ctx);
   vm.runInContext(app.slice(app.indexOf('function selectTab('), app.indexOf('\nfor (const tab of tabs)')), ctx);
   ctx.selectTab('local-ip', false); ctx.selectTab('routing', false); ctx.selectTab('routing', false); ctx.selectTab('local-ip', false);
-  assert.deepEqual(calls, ['local-ip', 'routing', 'local-ip']);
+  assert.deepEqual(calls, []);
 });
 test('automatic and manual tests share an in-flight lock and allow retry after completion', async () => {
   let calls = 0; let release;
-  const ctx = { Promise, Date, tabRuns: new Map(), tabStatus: new Map(), showRunStatus() {}, tabRunners: { routing: () => { calls++; return new Promise(resolve => { release = resolve; }); } } };
+  const ctx = { Promise, Date, AbortController, taskButtons: {}, taskPanels: { routing: 'routing' }, runControllers: new Map(), $: () => ({ setAttribute() {} }), tabRuns: new Map(), tabStatus: new Map(), showRunStatus() {}, tabRunners: { routing: () => { calls++; return new Promise(resolve => { release = resolve; }); } } };
   vm.createContext(ctx);
   vm.runInContext(app.slice(app.indexOf('function runTab('), app.indexOf("$('#split-start').addEventListener")), ctx);
   const first = ctx.runTab('routing'); const second = ctx.runTab('routing');
@@ -270,8 +272,8 @@ test('six probe attempts show median of successes and report partial or total fa
 test('probe queue limits concurrency to four and does not start after cancellation', async () => {
   let active = 0, peak = 0, calls = 0;
   const context = {
-    targets: Array.from({ length: 8 }, (_, i) => [i]),
-    $: selector => selector === '.probe-history' ? { children: [], setAttribute() {} } : ({ dataset: {} }),
+    targets: Array.from({ length: 8 }, (_, i) => [i]), updateProgress() {},
+    $: selector => selector === '.probe-history' ? { children: [], setAttribute() {} } : ({ dataset: {}, removeAttribute() {} }),
     probe: async () => { calls++; active++; peak = Math.max(peak, active); await Promise.resolve(); active--; }
   };
   vm.createContext(context);
@@ -281,4 +283,43 @@ test('probe queue limits concurrency to four and does not start after cancellati
   const controller = new AbortController(); controller.abort();
   await context.runProbes(controller.signal);
   assert.equal(calls, 8);
+});
+
+
+test('initial overview queries only the site IP without external checks', async () => {
+  const calls = [];
+  const context = { put() {}, edge: async signal => { calls.push('edge'); assert.equal(signal.aborted, false); }, providers: () => calls.push('providers'), runProbes: () => calls.push('probes') };
+  vm.createContext(context);
+  vm.runInContext(app.slice(app.indexOf('async function runOverview('), app.indexOf("$('#refresh').addEventListener")), context);
+  await context.runOverview(new AbortController().signal);
+  assert.deepEqual(calls, ['edge']);
+});
+
+test('exit comparison reports only observed differences and failures avoid DNS guesses', () => {
+  const context = {}; vm.createContext(context);
+  vm.runInContext(app.slice(app.indexOf('function compareExit('), app.indexOf('function updateProgress(')), context);
+  assert.equal(context.compareExit('203.0.113.1', '203.0.113.1'), '出口一致');
+  assert.equal(context.compareExit('203.0.113.1', '2001:db8::1'), '出口不同');
+  assert.equal(context.compareExit('203.0.113.1', undefined), '未对比');
+  assert.equal(context.requestFailure({ name: 'AbortError' }), '超时');
+  assert.equal(context.requestFailure({ name: 'TypeError' }), '请求失败');
+});
+
+
+test('exit comparison uses the current request baseline, not an older shared value', async () => {
+  const results = [];
+  const context = {
+    splitTargets: [['example.com', '测试']], updateProgress() {},
+    edge: async () => '203.0.113.1', values: new Map([['edge', { ip: '203.0.113.99' }]]),
+    request: async (url, { signal }) => { assert.equal(signal.aborted, false); return 'ip=203.0.113.1\nloc=AU'; },
+    parseTrace: text => Object.fromEntries(text.split('\n').map(line => line.split('='))),
+    isIP: () => true,
+    compareExit: (ip, baseline) => ip === baseline ? '出口一致' : '出口不同',
+    splitRow: (...args) => ({ replaceWith(row) { results.push(row); }, args }),
+    $: () => ({ replaceChildren() {}, appendChild() {} })
+  };
+  vm.createContext(context);
+  vm.runInContext(app.slice(app.indexOf('async function runSplit('), app.indexOf('const tabRuns =')), context);
+  await context.runSplit(new AbortController().signal);
+  assert.equal(results[0].args[4], '出口一致');
 });
