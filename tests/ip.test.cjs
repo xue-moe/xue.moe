@@ -250,7 +250,9 @@ test('six probe attempts show median of successes and report partial or total fa
     const context = {
       $: selector => selector === '.probe-result' ? result : selector === '.probe-history' ? history : root,
       performance: { now: () => now },
-      request: async () => {
+      request: async (url, options) => {
+        assert.equal(options.method, 'HEAD');
+        assert.equal(options.mode, 'no-cors');
         const value = outcomes[calls++];
         if (value === null) throw new Error('timeout');
         now += value; return {};

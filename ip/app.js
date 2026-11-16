@@ -150,7 +150,7 @@ async function probe([, , url], index, signal) {
     segment.title = `第 ${attempt + 1} 次：检测中`;
     const start = performance.now();
     try {
-      const res = await request(`${url}?_=${Date.now()}-${index}-${attempt}`, { signal, mode: 'no-cors', timeout: 6000 }, 'response');
+      const res = await request(`${url}?_=${Date.now()}-${index}-${attempt}`, { signal, method: 'HEAD', mode: 'no-cors', timeout: 6000 }, 'response');
       const elapsed = performance.now() - start;
       if (res.body) await res.body.cancel();
       if (signal.aborted) return;
